@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="upload-container">
+    <div class="upload-card">
+        <i class="bi bi-cloud-arrow-up upload-icon"></i>
+        <h2 class="upload-title">Upload Your Documents</h2>
+        <p class="upload-description">
+            Drag & drop a ZIP file here or click to browse<br>
+            Supported formats: PDF, DOCX, TXT, CSV, Markdown
+        </p>
+        
+        <form method="POST" enctype="multipart/form-data" id="upload-form">
+            <div class="file-upload-area" id="file-upload-area">
+                <input type="file" id="file" name="file" class="d-none" accept=".zip" required>
+                <label for="file" class="file-upload-label">
+                    <i class="bi bi-file-earmark-zip" style="font-size: 2rem;"></i>
+                    <h5 id="upload-instruction">Drag & drop files here</h5>
+                    <p class="text-muted" id="file-name">or click to browse (ZIP files only)</p>
+                    <div class="progress mt-3 d-none" id="upload-progress">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                             role="progressbar" style="width: 0%"></div>
+                    </div>
+                </label>
+            </div>
+            <button type="submit" class="btn-new-chat" id="upload-button" style="width: auto; padding: 0.75rem 2rem;" disabled>
+                <i class="bi bi-upload"></i> Upload and Process
+            </button>
+        </form>
+        
+        <div class="supported-files mt-4">
+            <div class="supported-files-title">Supported File Types Inside ZIP:</div>
+            <div class="supported-files-badges">
+                <span class="badge">PDF</span>
+                <span class="badge">DOCX</span>
+                <span class="badge">TXT</span>
+                <span class="badge">CSV</span>
+                <span class="badge">Markdown</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('file');
+    const fileNameDisplay = document.getElementById('file-name');
+    const uploadInstruction = document.getElementById('upload-instruction');
+    const uploadForm = document.getElementById('upload-form');
+    const uploadProgress = document.getElementById('upload-progress');
+    const progressBar = uploadProgress.querySelector('.progress-bar');
+    const uploadButton = document.getElementById('upload-button');
+    const fileUploadArea = document.getElementById('file-upload-area');
+
+    // Handle drag and drop events
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        fileUploadArea.addEventListener(eventName, preventDefaults, false);
+    });
+
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+        fileUploadArea.addEventListener(eventName, highlight, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        fileUploadArea.addEventListener(eventName, unhighlight, false);
+    });
+
+    function highlight() {
+        fileUploadArea.classList.add('drag-highlight');
+    }
+
+    function unhighlight() {
+        fileUploadArea.classList.remove('drag-highlight');
+    }
+
+    // Handle dropped files
+    fileUploadArea.addEventListener('drop', handleDrop, false);
+
+    function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        
+        if (files.length > 0) {
+            const file = files[0];
+            if (file.name.endsWith('.zip')) {
+                fileInput.files = files;
+                updateFileDisplay(file.name);
+            } else {
+                alert('Please upload a ZIP file only.');
+            }
+        }
+    }
+
+    // Handle file selection via click
+    fileInput.addEventListener('change', function() {
+        if (this.files.length > 0) {
+            updateFileDisplay(this.files[0].name);
+        }
+    });
+
+    function updateFileDisplay(filename) {
+        fileNameDisplay.textContent = filename;
+        fileNameDisplay.classList.remove('text-muted');
+        fileNameDisplay.classList.add('text-primary', 'fw-bold');
+        uploadInstruction.textContent = 'Ready to upload:';
+        fileUploadArea.classList.add('file-selected');
+        uploadButton.disabled = false;
+    }
+
+    // Handle form submission with progress
+    uploadForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        if (!fileInput.files.length) return;
+        
+        const formData = new FormData(this);
+        const xhr = new XMLHttpRequest();
+        
+        // Show loading state
+        uploadProgress.classList.remove('d-none');
+        uploadButton.disabled = true;
+        uploadButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
+        
+        xhr.upload.addEventListener('progress', function(e) {
+            if (e.lengthComputable) {
+                const percentComplete = (e.loaded / e.total) * 100;
+                progressBar.style.width = percentComplete + '%';
+                progressBar.setAttribute('aria-valuenow', percentComplete);
+            }
+        });
+        
+        xhr.addEventListener('load', function() {
+            if (xhr.status === 200) {
+                window.location.href = "{{ url_for('new_chat') }}";
+            } else {
+                alert('Upload failed. Please try again.');
+                resetUploadForm();
+            }
+        });
+        
+        xhr.addEventListener('error', function() {
+            alert('Upload failed. Please try again.');
+            resetUploadForm();
+        });
+        
+        xhr.open('POST', "{{ url_for('index') }}", true);
+        xhr.send(formData);
+    });
+    
+    function resetUploadForm() {
+        uploadProgress.classList.add('d-none');
+        progressBar.style.width = '0%';
+        uploadButton.disabled = false;
+        uploadButton.innerHTML = '<i class="bi bi-upload"></i> Upload and Process';
+    }
+});
+</script>
+
+<style>
+.file-upload-area {
+    border: 2px dashed #e5e7eb;
+    border-radius: 8px;
+    padding: 2rem;
+    margin: 1.5rem 0;
+    transition: all 0.2s;
+    text-align: center;
+    cursor: pointer;
+}
+
+.file-upload-area:hover {
+    border-color: var(--primary-color);
+    background: #f9fafb;
+}
+
+.file-selected {
+    border-color: var(--primary-color);
+    background-color: rgba(16, 163, 127, 0.05);
+}
+
+.drag-highlight {
+    border-color: var(--primary-color) !important;
+    background-color: rgba(16, 163, 127, 0.1) !important;
+    transform: scale(1.01);
+}
+
+.file-upload-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+#upload-button:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+</style>
+{% endblock %}

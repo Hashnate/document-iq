@@ -1,0 +1,459 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="app-container">
+    <div class="sidebar">
+        <button class="btn-new-chat" onclick="location.href='{{ url_for('new_chat') }}'">
+            <i class="bi bi-plus-lg"></i> New chat
+        </button>
+        <div class="chat-history">
+            {% for id, chat in chats.items() %}
+            <div class="chat-item-wrapper {% if id == chat_id %}active{% endif %}" data-chat-id="{{ id }}">
+                <a href="{{ url_for('chat', chat_id=id) }}" class="chat-item">
+                    <i class="bi bi-chat-left chat-item-icon"></i>
+                    <span class="chat-item-title">{{ chat.title }}</span>
+                    <button class="btn-delete-chat" data-chat-id="{{ id }}" title="Delete chat">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="chat-container">
+        <div class="chat-messages" id="chat-messages">
+            {% for message in conversation.messages %}
+            <div class="message">
+                <div class="message-user">
+                    <div class="message-avatar">
+                        {% if message.role == 'user' %}
+                        <i class="bi bi-person-fill"></i>
+                        {% else %}
+                        <i class="bi bi-robot"></i>
+                        {% endif %}
+                    </div>
+                    <div class="message-content">
+                        <div
+                            class="message-text {% if message.role == 'assistant' %}message-assistant{% else %}message-user-highlight{% endif %}">
+                            {{ message.content|replace('\n', '<br>')|safe }}
+                        </div>
+                        {% if message.role == 'assistant' and message.sources %}
+                        <div class="message-sources">
+                            <div class="supported-files-title">Sources:</div>
+                            {% for source in message.sources %}
+                            <div class="message-source">
+                                <i class="bi bi-file-text message-source-icon"></i>
+                                <span>{{ source }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Add this file preview container -->
+        <div id="file-preview-container" class="file-preview-container">
+            <div class="file-preview-header">
+                <h6>Document Preview</h6>
+                <button id="close-preview" class="btn-close"></button>
+            </div>
+            <div id="file-preview-content" class="file-preview-content"></div>
+            <div id="file-preview-meta" class="file-preview-meta"></div>
+        </div>
+
+        <div class="chat-input-container">
+            <form id="chat-form" method="POST" class="chat-input-wrapper">
+                <textarea name="question" class="chat-input" placeholder="Ask about your documents..."
+                    required></textarea>
+                <button type="submit" class="btn-send" id="send-button">
+                    <i class="bi bi-send"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const chatMessages = document.getElementById('chat-messages');
+        const chatForm = document.getElementById('chat-form');
+        const sendButton = document.getElementById('send-button');
+        const textarea = chatForm.querySelector('textarea');
+        const previewContainer = document.getElementById('file-preview-container');
+        const closePreviewBtn = document.getElementById('close-preview');
+
+        // Auto-scroll to bottom
+        function scrollToBottom() {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        scrollToBottom();
+
+        // Auto-resize textarea
+        textarea.addEventListener('input', function () {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        });
+        textarea.style.height = textarea.scrollHeight + 'px';
+
+        // Close preview panel
+        closePreviewBtn?.addEventListener('click', function () {
+            previewContainer.style.display = 'none';
+        });
+
+        // Form submission handler
+        if (chatForm) {
+            document.getElementById('chat-form').addEventListener('submit', async function (e) {
+                e.preventDefault();
+
+                const textarea = this.querySelector('textarea');
+                const question = textarea.value.trim();
+                const chatId = window.location.pathname.split('/').pop();
+
+                if (!question) {
+                    alert('Please enter a question');
+                    return;
+                }
+
+                try {
+                    // Disable form during processing
+                    textarea.disabled = true;
+                    const submitButton = this.querySelector('button[type="submit"]');
+                    submitButton.disabled = true;
+                    submitButton.innerHTML = '<i class="bi bi-arrow-clockwise spin"></i>';
+
+                    // Add user message to UI
+                    addMessageToUI('user', question);
+
+                    // Create assistant message placeholder
+                    const assistantMessageId = addMessageToUI('assistant',
+                        '<div class="loading-indicator">' +
+                        '<div class="loading-spinner"></div>' +
+                        '<span>Processing your question...</span>' +
+                        '</div>'
+                    );
+
+                    // Send to server
+                    const response = await fetch(`/chat/${chatId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: JSON.stringify({ question: question })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(await response.text());
+                    }
+
+                    const data = await response.json();
+
+                    // Update assistant message
+                    updateMessageInUI(assistantMessageId, 'assistant',
+                        data.answer.replace(/\n/g, '<br>'),
+                        data.sources
+                    );
+
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Failed to send question. Please try again.');
+                } finally {
+                    textarea.disabled = false;
+                    textarea.value = '';
+                    textarea.focus();
+                    const submitButton = document.querySelector('button[type="submit"]');
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = '<i class="bi bi-send"></i>';
+                }
+            });
+
+            // Helper functions for UI updates
+            function addMessageToUI(role, content) {
+                const messageId = 'msg-' + Date.now();
+                const chatMessages = document.getElementById('chat-messages');
+
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message';
+                messageDiv.id = messageId;
+                messageDiv.innerHTML = `
+                    <div class="message-user">
+                        <div class="message-avatar">
+                            <i class="bi ${role === 'user' ? 'bi-person-fill' : 'bi-robot'}"></i>
+                        </div>
+                        <div class="message-content">
+                            <div class="message-text ${role === 'assistant' ? 'message-assistant' : 'message-user-highlight'}">
+                                ${content}
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                chatMessages.appendChild(messageDiv);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                return messageId;
+            }
+
+            function updateMessageInUI(messageId, role, content, sources = []) {
+                const messageDiv = document.getElementById(messageId);
+                if (!messageDiv) return;
+
+                // First process bold formatting (**text**)
+                let processedContent = content.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+
+                // Process references in content with the new format [[ref:filename||page||highlight]]
+                processedContent = content.replace(
+                    /\[\[ref:([^\|\]]+)(?:\|\|([^\|\]]+))?(?:\|\|([^\|\]]+))?\]\]/g,
+                    function (match, filename, page, highlight) {
+                        // Extract just the filename part if path is included
+                        const cleanFilename = filename.split('/').pop().split('\\').pop();
+                        return `<a href="#" class="reference-link" 
+                data-file="${cleanFilename}" 
+                data-page="${page || ''}" 
+                data-highlight="${highlight || ''}"
+                onclick="event.preventDefault(); showFilePreview('${cleanFilename}', '${page || ''}', '${highlight || ''}')">
+                [${cleanFilename}${page ? ', ' + page : ''}]
+            </a>`;
+                    }
+                );
+
+                let sourcesHTML = '';
+                if (sources && sources.length > 0) {
+                    sourcesHTML = `<div class="message-sources"><div>Sources:</div>`;
+                    sources.forEach(source => {
+                        sourcesHTML += `<div class="message-source">
+                            <i class="bi bi-file-text"></i>
+                            <span class="source-link" 
+                                onclick="showFilePreview('${source}')">
+                                ${source}
+                            </span>
+                        </div>`;
+                    });
+                    sourcesHTML += '</div>';
+                }
+
+                messageDiv.querySelector('.message-content').innerHTML = `
+                    <div class="message-text ${role === 'assistant' ? 'message-assistant' : 'message-user-highlight'}">
+                        ${processedContent}
+                        ${sourcesHTML}
+                    </div>
+                `;
+
+                document.getElementById('chat-messages').scrollTop =
+                    document.getElementById('chat-messages').scrollHeight;
+            }
+        }
+
+        // Global function to show file preview
+        window.showFilePreview = async function (filename, page = '', highlight = '') {
+            const previewContent = document.getElementById('file-preview-content');
+            const previewMeta = document.getElementById('file-preview-meta');
+
+            // Show the preview container
+            previewContainer.style.display = 'block';
+
+            try {
+                // Show loading state
+                previewContent.innerHTML = `
+            <div class="loading-indicator">
+                <div class="loading-spinner"></div>
+                <span>Loading file content...</span>
+            </div>
+        `;
+
+                // Fetch file content from server
+                const response = await fetch(`/get_file_content?path=${encodeURIComponent(filename)}&page=${page || ''}&highlight=${encodeURIComponent(highlight || '')}`);
+                const data = await response.json();
+
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                // Display the content
+                previewContent.innerHTML = data.content || 'No content found';
+                previewMeta.textContent = `Showing: ${filename}${page ? `, page ${page}` : ''}`;
+
+                // Scroll to highlight if found
+                const mark = previewContent.querySelector('mark');
+                if (mark) {
+                    mark.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            } catch (error) {
+                previewContent.innerHTML = `Error loading file: ${error.message}`;
+                console.error('Error loading file:', error);
+            }
+        };
+        // Delete chat functionality
+        document.querySelectorAll('.btn-delete-chat').forEach(button => {
+            button.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                const chatId = this.getAttribute('data-chat-id');
+                const chatItem = this.closest('.chat-item-wrapper');
+
+                if (confirm('Are you sure you want to delete this chat?')) {
+                    const originalHTML = this.innerHTML;
+                    this.innerHTML = '<i class="bi bi-arrow-clockwise spin"></i>';
+                    this.disabled = true;
+
+                    fetch(`/delete_chat/${chatId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                        .then(response => {
+                            if (!response.ok) {
+                                return response.json().then(err => { throw err; });
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            if (data.success) {
+                                chatItem.style.opacity = '0';
+                                setTimeout(() => chatItem.remove(), 300);
+                            } else {
+                                throw new Error(data.error || 'Failed to delete chat');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Delete error:', error);
+                            alert(error.message || 'Error deleting chat');
+                            this.innerHTML = originalHTML;
+                            this.disabled = false;
+                        });
+                }
+            });
+        });
+    });
+</script>
+<style>
+    .message-user-highlight {
+        padding: 1rem;
+        background: #e3f2fd;
+        border-radius: 8px;
+        border: 1px solid #bbdefb;
+        margin-bottom: 0.5rem;
+    }
+
+    .message-assistant {
+        padding: 1rem;
+        background: #f9fafb;
+        border-radius: 8px;
+        border: 1px solid #e5e7eb;
+        margin-bottom: 0.5rem;
+        min-height: 40px;
+    }
+
+    .loading-indicator {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #6b7280;
+        font-size: 0.875rem;
+    }
+
+    .loading-spinner {
+        width: 16px;
+        height: 16px;
+        border: 2px solid rgba(16, 163, 127, 0.2);
+        border-top-color: var(--primary-color);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    .error-message {
+        color: #ef4444;
+        padding: 0.5rem;
+    }
+
+    @keyframes spin {
+        from {
+            transform: rotate(0deg);
+        }
+
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    .message-sources {
+        margin-top: 1rem;
+        font-size: 0.875rem;
+        color: #6b7280;
+    }
+
+    .message-source {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 4px;
+    }
+
+    .message-source-icon {
+        color: #9ca3af;
+    }
+
+    .bi-arrow-clockwise.spin {
+        animation: spin 1s linear infinite;
+    }
+
+    /* File preview styles */
+    .file-preview-container {
+        display: none;
+        border-top: 1px solid #e5e7eb;
+        padding: 1rem;
+        background: white;
+        position: sticky;
+        bottom: calc(var(--input-height) + 2rem);
+        z-index: 700;
+        box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.05);
+    }
+
+    .file-preview-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+
+    .file-preview-content {
+        max-height: 300px;
+        overflow-y: auto;
+        padding: 0.5rem;
+        background: #f9f9f9;
+        border-radius: 8px;
+        line-height: 1.6;
+        font-size: 0.9rem;
+        white-space: pre-wrap;
+    }
+
+    .file-preview-content mark {
+        background-color: #ffeb3b;
+        padding: 0 2px;
+    }
+
+    .file-preview-meta {
+        font-size: 0.8rem;
+        color: #6b7280;
+        margin-top: 0.5rem;
+    }
+
+    .reference-link,
+    .source-link {
+        color: var(--primary-color);
+        cursor: pointer;
+        text-decoration: none;
+    }
+
+    .reference-link:hover,
+    .source-link:hover {
+        text-decoration: underline;
+    }
+</style>
+{% endblock %}

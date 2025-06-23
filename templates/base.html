@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document IQ - {% block title %}{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body style="height: 100vh; overflow: hidden;">
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
+                <i class="bi bi-robot"></i> Document IQ
+            </a>
+            <div class="d-flex align-items-center">
+                <button id="file-explorer-toggle" class="btn btn-sm btn-outline-light me-2">
+                    <i class="bi bi-folder2-open"></i> File Explorer
+                </button>
+                <!-- <span class="badge bg-primary me-2">v1.0</span> -->
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+   <div id="file-explorer" class="file-explorer">
+    <div class="file-explorer-header">
+        <h5><i class="bi bi-folder-fill"></i> Uploaded Files</h5>
+        <button id="close-explorer" class="btn btn-sm btn-close"></button>
+    </div>
+    <div class="file-explorer-body">
+        <div id="file-tree" class="file-tree"></div>
+        <!-- File preview will be appended here by JavaScript -->
+    </div>
+</div>
+
+    {% include 'partials/_flash_messages.html' %}
+
+    {% block content %}{% endblock %}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Combined all JavaScript in one DOMContentLoaded listener
+        document.addEventListener('DOMContentLoaded', function () {
+            // Auto-scroll to bottom of chat
+            function scrollToBottom() {
+                const chatMessages = document.getElementById('chat-messages');
+                if (chatMessages) {
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                }
+            }
+            scrollToBottom();
+
+            // Form submission handler
+            const chatForm = document.getElementById('chat-form');
+            if (chatForm) {
+                chatForm.addEventListener('submit', function () {
+                    const loadingIndicator = document.getElementById('loading-indicator');
+                    if (loadingIndicator) loadingIndicator.style.display = 'flex';
+                });
+            }
+
+            // File upload handler
+            const fileUpload = document.getElementById('file-upload');
+            if (fileUpload) {
+                fileUpload.addEventListener('change', function () {
+                    if (this.files.length > 0) {
+                        const loadingIndicator = document.getElementById('loading-indicator');
+                        if (loadingIndicator) loadingIndicator.style.display = 'flex';
+
+                        let formData = new FormData();
+                        formData.append('file', this.files[0]);
+
+                        fetch("{{ url_for('index') }}", {
+                            method: 'POST',
+                            body: formData
+                        }).then(response => {
+                            window.location.reload();
+                        });
+                    }
+                });
+            }
+
+            // File explorer functionality
+            const explorerToggle = document.getElementById('file-explorer-toggle');
+            const fileExplorer = document.getElementById('file-explorer');
+            const closeExplorer = document.getElementById('close-explorer');
+            const fileTree = document.getElementById('file-tree');
+
+            if (explorerToggle && fileExplorer) {
+                explorerToggle.addEventListener('click', function () {
+                    fileExplorer.classList.toggle('open');
+                    if (fileExplorer.classList.contains('open') && fileTree && fileTree.innerHTML === '') {
+                        loadFileTree();
+                    }
+                });
+            }
+
+            if (closeExplorer && fileExplorer) {
+                closeExplorer.addEventListener('click', function () {
+                    fileExplorer.classList.remove('open');
+                });
+            }
+
+            function loadFileTree() {
+                fetch('/get_file_structure')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (fileTree) {
+                            fileTree.innerHTML = buildTreeHTML(data);
+                            setupTreeInteractions();
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error loading file tree:', error);
+                        if (fileTree) {
+                            fileTree.innerHTML = '<div class="text-muted">No files uploaded yet</div>';
+                        }
+                    });
+            }
+
+            function buildTreeHTML(items, level = 0) {
+                if (!items || items.length === 0) {
+                    return '<div class="text-muted">No files found</div>';
+                }
+
+                let html = '<ul>';
+                items.forEach(item => {
+                    if (item.type === 'directory') {
+                        html += `
+                        <li>
+                            <div class="folder">
+                                <i class="bi ${item.children && item.children.length ? 'bi-folder-fill' : 'bi-folder'}"></i>
+                                <span>${item.name}</span>
+                            </div>
+                            ${item.children ? buildTreeHTML(item.children, level + 1) : ''}
+                        </li>
+                        `;
+                    } else {
+                        const iconClass = getFileIconClass(item.name);
+                        html += `
+                        <li>
+                            <div class="file">
+                                <i class="bi ${iconClass}"></i>
+                                <span>${item.name}</span>
+                            </div>
+                        </li>
+                        `;
+                    }
+                });
+                html += '</ul>';
+                return html;
+            }
+
+            function getFileIconClass(filename) {
+                const ext = filename.split('.').pop().toLowerCase();
+                switch (ext) {
+                    case 'pdf': return 'bi-file-earmark-pdf-fill file-icon-pdf';
+                    case 'docx': return 'bi-file-earmark-word-fill file-icon-doc';
+                    case 'txt': return 'bi-file-earmark-text-fill file-icon-txt';
+                    case 'md': return 'bi-file-earmark-text-fill file-icon-md';
+                    case 'csv': return 'bi-file-earmark-excel-fill file-icon-csv';
+                    case 'json': return 'bi-file-earmark-code-fill file-icon-json';
+                    case 'xml': return 'bi-file-earmark-code-fill file-icon-xml';
+                    default: return 'bi-file-earmark-fill file-icon-default';
+                }
+            }
+
+            function setupTreeInteractions() {
+                document.querySelectorAll('.file-tree .folder').forEach(folder => {
+                    folder.addEventListener('click', function (e) {
+                        if (e.target === this || e.target === this.querySelector('span')) {
+                            const ul = this.parentElement.querySelector('ul');
+                            if (ul) {
+                                ul.style.display = ul.style.display === 'none' ? 'block' : 'none';
+                                const icon = this.querySelector('.bi');
+                                if (ul.style.display === 'none') {
+                                    icon.classList.remove('bi-folder-fill');
+                                    icon.classList.add('bi-folder');
+                                } else {
+                                    icon.classList.remove('bi-folder');
+                                    icon.classList.add('bi-folder-fill');
+                                }
+                            }
+                        }
+                    });
+                });
+            }
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+
+</html>
