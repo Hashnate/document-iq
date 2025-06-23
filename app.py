@@ -22,7 +22,7 @@ class Config:
     ALLOWED_EXTENSIONS = {'zip'}
     MAX_CONTENT_LENGTH = 500 * 1024 * 1024  # 500MB
     OLLAMA_URL = os.getenv('OLLAMA_URL', 'http://localhost:11434/api/generate')
-    OLLAMA_MODEL = os.getenv('OLLAMA_MODEL', 'llama3.2:latest')
+    OLLAMA_MODEL = os.getenv('OLLAMA_MODEL', 'deepseek-r1')
     MAX_FILE_SIZE = 100 * 1024 * 1024  # 100MB per file in ZIP
     MAX_RETRIES = 3  # For Ollama API calls
 
