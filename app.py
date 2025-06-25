@@ -7,14 +7,26 @@ import requests
 import uuid
 import json
 from datetime import datetime
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, Response
+import time
 from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
 import logging
 from logging.handlers import RotatingFileHandler
-
+import threading
 # Load environment variables
 load_dotenv()
+
+
+# Global progress tracking with thread safety
+progress_data = {
+    'current': 0,
+    'total': 100,
+    'message': '',
+    'error': None,
+    'redirect_url': None  # Add this to track where to redirect
+}
+progress_lock = threading.Lock()
 
 # Configuration
 class Config:
@@ -29,6 +41,9 @@ class Config:
     MAX_RETRIES = 3  # For Ollama API calls
     LOG_FILE = 'app.log'
     LOG_LEVEL = logging.INFO
+    SERVER_NAME = '127.0.0.1:5000'  # Or your actual domain
+    # APPLICATION_ROOT = '/'
+    PREFERRED_URL_SCHEME = 'http'  # or 'https' if using SSL
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -55,23 +70,44 @@ def allowed_file(filename):
            filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
 def extract_zip(zip_path, extract_to):
-    """Safely extract ZIP file to directory with validation"""
+    """Extract ZIP file while preserving the exact folder structure and handling edge cases"""
     try:
         with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-            # Validate ZIP contents before extraction
-            for file in zip_ref.infolist():
-                if file.file_size > app.config['MAX_FILE_SIZE']:
-                    raise ValueError(f"File {file.filename} exceeds maximum size limit")
-                if file.filename.startswith(('/', '..')) or '\\' in file.filename:
-                    raise ValueError("Invalid file path in ZIP")
+            # Get all file information
+            file_infos = zip_ref.infolist()
+            total_files = len(file_infos)
             
-            zip_ref.extractall(extract_to)
+            for i, file_info in enumerate(file_infos):
+                # Skip directory entries and macOS metadata
+                if file_info.is_dir() or '__MACOSX' in file_info.filename:
+                    continue
+                    
+                # Preserve the exact path structure from the ZIP
+                file_path = file_info.filename
+                
+                # Create target directory if needed
+                target_dir = os.path.join(extract_to, os.path.dirname(file_path))
+                os.makedirs(target_dir, exist_ok=True)
+                
+                # Extract the file
+                try:
+                    with zip_ref.open(file_info) as source, open(os.path.join(extract_to, file_path), 'wb') as target:
+                        shutil.copyfileobj(source, target)
+                except Exception as e:
+                    app.logger.error(f"Failed to extract {file_path}: {str(e)}")
+                    continue
+                
+                # Update progress if needed
+                if i % 10 == 0:  # Update every 10 files
+                    progress = int((i / total_files) * 100)
+                    update_progress(progress, 100, f"Extracting {file_path}...")
+                    
         return True
     except zipfile.BadZipFile:
         raise ValueError("The uploaded file is not a valid ZIP file")
     except Exception as e:
         raise ValueError(f"Error extracting ZIP file: {str(e)}")
-
+        
 def read_file(file_path):
     """Safely extract text from various file types with error handling"""
     text = ""
@@ -310,14 +346,28 @@ def delete_chat(chat_id):
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
-    """Handle file uploads"""
+    """Handle file uploads and progress tracking"""
     if request.method == 'POST':
-        app.logger.info('Received file upload request')
+        # Initialize progress tracking
+        with progress_lock:
+            progress_data.update({
+                'current': 0,
+                'total': 100,
+                'message': 'Starting upload...',
+                'error': None,
+                'redirect_url': None
+            })
+
         # Clean previous files
-        clean_directory(app.config['UPLOAD_FOLDER'])
-        clean_directory(app.config['EXTRACT_FOLDER'])
-        app.logger.debug('Cleaned upload and extract directories')
-        
+        try:
+            clean_directory(app.config['UPLOAD_FOLDER'])
+            clean_directory(app.config['EXTRACT_FOLDER'])
+            app.logger.debug('Cleaned upload and extract directories')
+        except Exception as e:
+            app.logger.error(f'Cleanup error: {str(e)}')
+            flash('Error cleaning previous files', 'error')
+            return redirect(request.url)
+
         # Check if file was uploaded
         if 'file' not in request.files:
             app.logger.warning('No file part in request')
@@ -325,118 +375,118 @@ def index():
             return redirect(request.url)
         
         file = request.files['file']
-        app.logger.debug(f'Received file: {file.filename}')
-        
         if file.filename == '':
             app.logger.warning('Empty filename in request')
             flash('No file selected', 'error')
             return redirect(request.url)
-        
-        if file and allowed_file(file.filename):
+
+        if not allowed_file(file.filename):
+            app.logger.warning(f'Invalid file type attempted: {file.filename}')
+            flash('Only ZIP files are allowed', 'error')
+            return redirect(request.url)
+
+        try:
+            # Save file immediately in main thread
+            filename = secure_filename(file.filename)
+            zip_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(zip_path)
+            app.logger.info(f'Saved uploaded file to: {zip_path}')
+
+            # Verify file was saved correctly
+            if not os.path.exists(zip_path):
+                raise ValueError("File failed to save properly")
+
+            # Push application context for the thread
+            ctx = app.app_context()
+            ctx.push()
+
+            # Start background processing
+            thread = threading.Thread(
+                target=process_upload_task,
+                args=(zip_path,)
+            )
+            thread.daemon = True
+            thread.start()
+
+            # Return immediately - progress will be handled via SSE
+            return '', 202  # HTTP 202 Accepted
+
+        except ValueError as e:
+            app.logger.error(f'Validation error: {str(e)}')
             try:
-                filename = secure_filename(file.filename)
-                zip_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-                file.save(zip_path)
-                app.logger.info(f'Saved uploaded file to: {zip_path}')
-                
-                # Extract ZIP with validation
-                extract_zip(zip_path, app.config['EXTRACT_FOLDER'])
-                app.logger.info(f'Extracted ZIP file to: {app.config["EXTRACT_FOLDER"]}')
-                
-                # Count readable files
-                file_count = 0
-                for root, _, files in os.walk(app.config['EXTRACT_FOLDER']):
-                    for file in files:
-                        file_path = os.path.join(root, file)
-                        if read_file(file_path) is not None:
-                            file_count += 1
-                app.logger.info(f'Found {file_count} readable files in ZIP')
-                
-                if file_count == 0:
-                    app.logger.warning('No readable text files found in the ZIP')
-                    flash('No readable text files found in the ZIP', 'error')
-                    return redirect(request.url)
-                
-                flash(f'Successfully processed {file_count} files', 'success')
-                app.logger.info('File upload and processing completed successfully')
-                return redirect(url_for('new_chat'))
-            
-            except ValueError as e:
-                app.logger.error(f'Validation error processing file: {str(e)}')
-                flash(str(e), 'error')
-                return redirect(request.url)
-            except Exception as e:
-                app.logger.error(f"File processing error: {str(e)}", exc_info=True)
-                flash('An error occurred while processing your file', 'error')
-                return redirect(request.url)
-        
-        app.logger.warning(f'Invalid file type attempted: {file.filename}')
-        flash('Only ZIP files are allowed', 'error')
-        return redirect(request.url)
-    
+                if os.path.exists(zip_path):
+                    os.remove(zip_path)
+            except:
+                pass
+            flash(str(e), 'error')
+            return redirect(request.url)
+
+        except Exception as e:
+            app.logger.error(f"Upload error: {str(e)}", exc_info=True)
+            try:
+                if os.path.exists(zip_path):
+                    os.remove(zip_path)
+            except:
+                pass
+            flash('An error occurred during upload', 'error')
+            return redirect(request.url)
+
+    # GET request - show upload form
     app.logger.debug('Rendering index page')
     return render_template('index.html')
 
 @app.route('/get_file_structure')
 def get_file_structure():
-    """Return the file structure of the extracted files"""
-    app.logger.info('Received request for file structure')
+    """Return the accurate file structure with multi-level hierarchy"""
     base_path = app.config['EXTRACT_FOLDER']
     file_structure = []
 
-    def build_tree(path, name):
+    def build_tree(current_path, relative_path=""):
+        """Recursively build the accurate file tree structure"""
+        name = os.path.basename(current_path)
         item = {
             'name': name,
-            'path': os.path.relpath(path, base_path),
-            'type': 'directory' if os.path.isdir(path) else 'file',
-            'extension': os.path.splitext(name)[1].lower() if os.path.isfile(path) else None
+            'path': os.path.join(relative_path, name) if relative_path else name,
+            'type': 'directory' if os.path.isdir(current_path) else 'file',
+            'extension': os.path.splitext(name)[1].lower() if os.path.isfile(current_path) else None
         }
         
-        if os.path.isdir(path):
+        if os.path.isdir(current_path):
             item['children'] = []
             try:
-                for entry in os.listdir(path):
-                    full_path = os.path.join(path, entry)
-                    if os.path.isdir(full_path) or entry.lower().endswith(('.pdf', '.docx', '.txt', '.md', '.csv', '.json', '.xml')):
-                        item['children'].append(build_tree(full_path, entry))
+                for entry in sorted(os.listdir(current_path)):
+                    full_path = os.path.join(current_path, entry)
+                    # Skip hidden files and system files
+                    if not entry.startswith('.') and not entry == '__MACOSX':
+                        child_relative = os.path.join(relative_path, name) if relative_path else name
+                        item['children'].append(build_tree(full_path, child_relative))
             except Exception as e:
-                app.logger.error(f"Error reading directory {path}: {str(e)}")
-        
+                app.logger.error(f"Error reading directory {current_path}: {str(e)}")
         return item
 
     if os.path.exists(base_path):
-        for entry in os.listdir(base_path):
+        for entry in sorted(os.listdir(base_path)):
             full_path = os.path.join(base_path, entry)
-            file_structure.append(build_tree(full_path, entry))
+            if not entry.startswith('.') and not entry == '__MACOSX':
+                file_structure.append(build_tree(full_path))
     
-    app.logger.debug(f'Returning file structure with {len(file_structure)} items')
     return jsonify(file_structure)
+
 
 @app.route('/get_file_content')
 def get_file_content():
-    """Return file content with context around the reference"""
-    file_path = request.args.get('path')
-    page = request.args.get('page', type=int)
-    highlight = request.args.get('highlight', '')
+    """Return file content using the full relative path"""
+    rel_path = request.args.get('path')
     
-    app.logger.info(f'Received request for file content: {file_path}, page: {page}, highlight: {highlight}')
-    
-    if not file_path:
-        app.logger.warning('No file path provided in request')
+    if not rel_path:
         return jsonify({'error': 'File path required'}), 400
     
-    # Search for the file in the extracted directory
-    full_path = None
-    for root, _, files in os.walk(app.config['EXTRACT_FOLDER']):
-        # Compare filenames without paths
-        if os.path.basename(file_path) in files:
-            full_path = os.path.join(root, os.path.basename(file_path))
-            break
+    full_path = os.path.join(app.config['EXTRACT_FOLDER'], rel_path)
     
-    if not full_path or not os.path.exists(full_path):
-        app.logger.error(f'File not found: {file_path}')
+    if not os.path.exists(full_path):
         return jsonify({'error': 'File not found'}), 404
     
+    # Rest of your file reading logic...
     try:
         file_ext = os.path.splitext(full_path)[1].lower()
         content = ""
@@ -444,44 +494,224 @@ def get_file_content():
         if file_ext == '.pdf':
             with open(full_path, 'rb') as file:
                 reader = PyPDF2.PdfReader(file)
-                if page is not None and 0 <= page < len(reader.pages):
-                    content = reader.pages[page].extract_text()
-                elif len(reader.pages) > 0:
-                    content = reader.pages[0].extract_text()
+                content = "\n".join(page.extract_text() for page in reader.pages)
         
         elif file_ext == '.docx':
             doc = docx.Document(full_path)
-            if page is not None and 0 <= page < len(doc.paragraphs):
-                content = doc.paragraphs[page].text
-            elif len(doc.paragraphs) > 0:
-                content = doc.paragraphs[0].text
+            content = "\n".join(para.text for para in doc.paragraphs)
         
         elif file_ext in ('.txt', '.md', '.csv', '.json', '.xml'):
             with open(full_path, 'r', encoding='utf-8', errors='ignore') as file:
                 content = file.read()
         
-        # Find highlight in content
-        highlight_index = content.lower().find(highlight.lower()) if highlight else -1
-        context = ""
-        
-        if highlight_index >= 0:
-            start = max(0, highlight_index - 100)
-            end = min(len(content), highlight_index + len(highlight) + 100)
-            context = content[start:end]
-            context = context.replace(highlight, f"<mark>{highlight}</mark>", 1)
-        
-        app.logger.debug(f'Successfully retrieved content from {file_path}')
         return jsonify({
             'file': os.path.basename(full_path),
-            'page': page,
-            'content': context if context else content,
-            'full_path': full_path
+            'content': content,
+            'path': rel_path
         })
     
     except Exception as e:
-        app.logger.error(f'Error reading file {file_path}: {str(e)}', exc_info=True)
         return jsonify({'error': str(e)}), 500
 
+# Add this helper function at the top
+def format_file_size(size_bytes):
+    """Convert bytes to MB with 2 decimal places"""
+    return round(size_bytes / (1024 * 1024), 2)
+
+def update_progress(current, total, message="", redirect_url=None):
+    """Update progress information with thread safety"""
+    with progress_lock:
+        progress_data['current'] = current
+        progress_data['total'] = total
+        progress_data['message'] = message
+        if redirect_url:
+            progress_data['redirect_url'] = redirect_url
+        if current >= total:
+            progress_data['error'] = None
+
+@app.route('/progress_stream')
+def progress_stream():
+    """Server-Sent Events for progress updates"""
+    def event_stream():
+        last_progress = -1
+        try:
+            while True:
+                with progress_lock:
+                    current = progress_data['current']
+                    total = progress_data['total']
+                    message = progress_data['message']
+                    error = progress_data['error']
+                    redirect_url = progress_data.get('redirect_url')
+                    progress = int((current / total) * 100) if total > 0 else 0
+                
+                # Force send when redirect_url is available
+                if redirect_url or progress != last_progress or error:
+                    data = {
+                        'progress': progress,
+                        'message': message,
+                        'error': error,
+                        'redirect': redirect_url
+                    }
+                    yield f"data: {json.dumps(data)}\n\n"
+                    last_progress = progress
+                
+                # Exit conditions
+                if progress >= 100 or error:
+                    # Send explicit completion event
+                    yield "event: complete\ndata: {}\n\n"
+                    break
+                
+                time.sleep(0.5)
+        except GeneratorExit:
+            app.logger.info("Client disconnected from progress stream")
+    
+    return Response(event_stream(), mimetype="text/event-stream")
+def process_upload_task(zip_path):
+    """Background task for processing upload with progress updates"""
+    # Create application context for this thread
+    with app.app_context():
+        try:
+            # Initialize progress
+            update_progress(0, 100, "Starting processing...")
+            app.logger.info(f"Starting processing of {zip_path}")
+
+            # Validate ZIP exists and is accessible
+            if not os.path.exists(zip_path):
+                error_msg = "Uploaded file not found"
+                app.logger.error(error_msg)
+                raise ValueError(error_msg)
+
+            # Validate file size
+            file_size = os.path.getsize(zip_path)
+            if file_size == 0:
+                error_msg = "Uploaded file is empty"
+                app.logger.error(error_msg)
+                raise ValueError(error_msg)
+
+            update_progress(10, 100, "Validating ZIP structure...")
+            app.logger.info("Validating ZIP structure")
+
+            # Validate ZIP file
+            try:
+                with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+                    # Get file list and validate
+                    file_list = zip_ref.infolist()
+                    if not file_list:
+                        error_msg = "ZIP file contains no files"
+                        app.logger.error(error_msg)
+                        raise ValueError(error_msg)
+
+                    # Check for any files that exceed size limit
+                    for file_info in file_list:
+                        if not file_info.is_dir() and file_info.file_size > app.config['MAX_FILE_SIZE']:
+                            error_msg = f"File '{file_info.filename}' exceeds maximum size limit of {app.config['MAX_FILE_SIZE']//(1024*1024)}MB"
+                            app.logger.error(error_msg)
+                            raise ValueError(error_msg)
+
+            except zipfile.BadZipFile:
+                error_msg = "Invalid ZIP file format"
+                app.logger.error(error_msg)
+                raise ValueError(error_msg)
+            except zipfile.LargeZipFile:
+                error_msg = "ZIP file requires ZIP64 support"
+                app.logger.error(error_msg)
+                raise ValueError(error_msg)
+            except Exception as e:
+                error_msg = f"Error validating ZIP file: {str(e)}"
+                app.logger.error(error_msg)
+                raise ValueError(error_msg)
+
+            # Clean extraction directory
+            try:
+                clean_directory(app.config['EXTRACT_FOLDER'])
+                update_progress(20, 100, "Cleaned extraction directory")
+            except Exception as e:
+                error_msg = f"Error cleaning extraction directory: {str(e)}"
+                app.logger.error(error_msg)
+                raise ValueError(error_msg)
+
+            # Extract files using the improved extract_zip function
+            update_progress(30, 100, "Extracting files...")
+            app.logger.info(f"Extracting ZIP contents to {app.config['EXTRACT_FOLDER']}")
+
+            try:
+                success = extract_zip(zip_path, app.config['EXTRACT_FOLDER'])
+                if not success:
+                    raise ValueError("Failed to extract ZIP file")
+                
+                # Get list of extracted files for processing
+                extracted_files = []
+                for root, _, files in os.walk(app.config['EXTRACT_FOLDER']):
+                    for file in files:
+                        file_path = os.path.join(root, file)
+                        # Skip system files and hidden files
+                        if not any(part.startswith('.') or part == '__MACOSX' 
+                                for part in file_path.split(os.sep)):
+                            extracted_files.append(file_path)
+                
+                if not extracted_files:
+                    error_msg = "No valid files extracted from ZIP"
+                    app.logger.error(error_msg)
+                    raise ValueError(error_msg)
+                
+                update_progress(50, 100, f"Extracted {len(extracted_files)} files")
+            except Exception as e:
+                error_msg = f"Extraction failed: {str(e)}"
+                app.logger.error(error_msg)
+                raise ValueError(error_msg)
+
+            # Process extracted files (50-90%)
+            update_progress(50, 100, "Processing extracted files...")
+            app.logger.info(f"Processing {len(extracted_files)} extracted files")
+            
+            processed_count = 0
+            for i, file_path in enumerate(extracted_files):
+                try:
+                    # Try to read the file content
+                    if read_file(file_path) is not None:
+                        processed_count += 1
+                    
+                    # Update progress (50-90%)
+                    progress = 50 + int((i / len(extracted_files)) * 40)
+                    update_progress(progress, 100, f"Processing {os.path.basename(file_path)}...")
+
+                except Exception as e:
+                    app.logger.error(f"Error processing {file_path}: {str(e)}")
+                    continue
+
+            if processed_count == 0:
+                error_msg = "No readable text files found in the extracted files"
+                app.logger.error(error_msg)
+                raise ValueError(error_msg)
+
+            # Finalize
+            update_progress(95, 100, "Finalizing...")
+            app.logger.info(f"Successfully processed {processed_count} files")
+            
+            # Get redirect URL
+            redirect_url = url_for('new_chat')
+            update_progress(100, 100, "Processing complete!", redirect_url=redirect_url)
+
+        except zipfile.BadZipFile:
+            error_msg = "Invalid ZIP file format"
+            app.logger.error(error_msg)
+            update_progress(100, 100, f"Error: {error_msg}")
+        except zipfile.LargeZipFile:
+            error_msg = "ZIP file requires ZIP64 support"
+            app.logger.error(error_msg)
+            update_progress(100, 100, f"Error: {error_msg}")
+        except Exception as e:
+            app.logger.error(f"Upload processing failed: {str(e)}", exc_info=True)
+            update_progress(100, 100, f"Error: {str(e)}")
+            
+            # Cleanup on failure
+            try:
+                if os.path.exists(zip_path):
+                    os.remove(zip_path)
+                if os.path.exists(app.config['EXTRACT_FOLDER']):
+                    shutil.rmtree(app.config['EXTRACT_FOLDER'], ignore_errors=True)
+            except Exception as cleanup_error:
+                app.logger.error(f"Cleanup failed: {str(cleanup_error)}")
 if __name__ == '__main__':
     app.logger.info('Starting application')
-    app.run(host="0.0.0.0", port=8000)
+    app.run(debug=True)

@@ -910,3 +910,25 @@ body {
     color: #6b7280;
     margin-top: 0.5rem;
 }
+
+
+.progress {
+    position: relative;
+    height: 24px;
+    border-radius: 12px;
+}
+
+.progress-bar {
+    position: relative;
+    line-height: 24px;
+    transition: width 0.3s ease;
+}
+
+.upload-percentage {
+    position: absolute;
+    right: 10px;
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+    text-shadow: 0 0 2px rgba(0,0,0,0.5);
+}
