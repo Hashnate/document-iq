@@ -4,7 +4,7 @@
 <div class="app-container">
     <div class="sidebar">
         <button class="btn-new-chat" onclick="location.href='{{ url_for('new_chat') }}'">
-            <i class="bi bi-plus-lg"></i> New chat
+            <i class="bi bi-plus-lg"></i> New Query
         </button>
         <div class="chat-history">
             {% for id, chat in chats.items() %}
@@ -34,15 +34,18 @@
                         {% endif %}
                     </div>
                     <div class="message-content">
-                        <div
-                            class="message-text {% if message.role == 'assistant' %}message-assistant{% else %}message-user-highlight{% endif %}">
-                            {{ message.content|replace('\n', '<br>')|safe }}
+                        <div class="message-text {% if message.role == 'assistant' %}message-assistant{% else %}message-user-highlight{% endif %}">
+                            {% if message.role == 'assistant' %}
+                                {{ message.content|process_references|safe }}
+                            {% else %}
+                                {{ message.content|replace('\n', '<br>')|safe }}
+                            {% endif %}
                         </div>
                         {% if message.role == 'assistant' and message.sources %}
                         <div class="message-sources">
                             <div class="supported-files-title">Sources:</div>
                             {% for source in message.sources %}
-                            <div class="message-source">
+                            <div class="message-source" onclick="showFilePreview('{{ source }}')">
                                 <i class="bi bi-file-text message-source-icon"></i>
                                 <span>{{ source }}</span>
                             </div>
@@ -55,11 +58,11 @@
             {% endfor %}
         </div>
 
-        <!-- Add this file preview container -->
+        <!-- File preview container -->
         <div id="file-preview-container" class="file-preview-container">
             <div class="file-preview-header">
                 <h6>Document Preview</h6>
-                <button id="close-preview" class="btn-close"></button>
+                <button id="close-preview" class="btn-close" onclick="closeFilePreview()"></button>
             </div>
             <div id="file-preview-content" class="file-preview-content"></div>
             <div id="file-preview-meta" class="file-preview-meta"></div>
@@ -67,8 +70,7 @@
 
         <div class="chat-input-container">
             <form id="chat-form" method="POST" class="chat-input-wrapper">
-                <textarea name="question" class="chat-input" placeholder="Ask about your documents..."
-                    required></textarea>
+                <textarea name="question" class="chat-input" placeholder="Ask a query..." required></textarea>
                 <button type="submit" class="btn-send" id="send-button">
                     <i class="bi bi-send"></i>
                 </button>
@@ -78,293 +80,127 @@
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const chatMessages = document.getElementById('chat-messages');
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize all components
+        initChatForm();
+        initReferenceHandlers();
+        initFilePreview();
+        initChatHistory();
+    });
+
+    function initChatForm() {
         const chatForm = document.getElementById('chat-form');
-        const sendButton = document.getElementById('send-button');
+        if (!chatForm) return;
+
         const textarea = chatForm.querySelector('textarea');
-        const previewContainer = document.getElementById('file-preview-container');
-        const closePreviewBtn = document.getElementById('close-preview');
-
-        // Auto-scroll to bottom
-        function scrollToBottom() {
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        }
-        scrollToBottom();
-
+        
         // Auto-resize textarea
-        textarea.addEventListener('input', function () {
+        textarea.addEventListener('input', function() {
             this.style.height = 'auto';
             this.style.height = (this.scrollHeight) + 'px';
         });
         textarea.style.height = textarea.scrollHeight + 'px';
 
-
-        textarea.addEventListener('keydown', function (e) {
+        // Handle Enter key submission
+        textarea.addEventListener('keydown', function(e) {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
                 chatForm.dispatchEvent(new Event('submit'));
             }
         });
 
-
-        // Close preview panel
-        closePreviewBtn?.addEventListener('click', function () {
-            previewContainer.style.display = 'none';
-        });
-
         // Form submission handler
-        if (chatForm) {
-            document.getElementById('chat-form').addEventListener('submit', async function (e) {
-                e.preventDefault();
+        chatForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const question = textarea.value.trim();
+            if (!question) return;
 
-                const textarea = this.querySelector('textarea');
-                const question = textarea.value.trim();
-                const chatId = window.location.pathname.split('/').pop();
+            // Disable form during processing
+            textarea.disabled = true;
+            const submitButton = chatForm.querySelector('button[type="submit"]');
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<i class="bi bi-arrow-clockwise spin"></i>';
 
-                if (!question) {
-                    alert('Please enter a question');
-                    return;
-                }
+            // Add user message
+            addMessageToUI('user', question);
 
-                try {
-                    // Disable form during processing
-                    textarea.disabled = true;
-                    const submitButton = this.querySelector('button[type="submit"]');
-                    submitButton.disabled = true;
-                    submitButton.innerHTML = '<i class="bi bi-arrow-clockwise spin"></i>';
-
-                    // Add user message to UI
-                    addMessageToUI('user', question);
-
-                    // Create assistant message placeholder
-                    const assistantMessageId = addMessageToUI('assistant',
-                        '<div class="loading-indicator">' +
-                        '<div class="loading-spinner"></div>' +
-                        '<span>Processing your question...</span>' +
-                        '</div>'
-                    );
-
-                    // Send to server
-                    const response = await fetch(`/chat/${chatId}`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-Requested-With': 'XMLHttpRequest'
-                        },
-                        body: JSON.stringify({ question: question })
-                    });
-
-                    if (!response.ok) {
-                        throw new Error(await response.text());
-                    }
-
-                    const data = await response.json();
-
-                    // Update assistant message
-                    updateMessageInUI(assistantMessageId, 'assistant',
-                        data.answer.replace(/\n/g, '<br>'),
-                        data.sources
-                    );
-
-                } catch (error) {
-                    console.error('Error:', error);
-                    alert('Failed to send question. Please try again.');
-                } finally {
-                    textarea.disabled = false;
-                    textarea.value = '';
-                    textarea.focus();
-                    const submitButton = document.querySelector('button[type="submit"]');
-                    submitButton.disabled = false;
-                    submitButton.innerHTML = '<i class="bi bi-send"></i>';
-                }
-            });
-
-            // Helper functions for UI updates
-            function addMessageToUI(role, content) {
-                const messageId = 'msg-' + Date.now();
-                const chatMessages = document.getElementById('chat-messages');
-
-                const messageDiv = document.createElement('div');
-                messageDiv.className = 'message';
-                messageDiv.id = messageId;
-                messageDiv.innerHTML = `
-                    <div class="message-user">
-                        <div class="message-avatar">
-                            <i class="bi ${role === 'user' ? 'bi-person-fill' : 'bi-robot'}"></i>
-                        </div>
-                        <div class="message-content">
-                            <div class="message-text ${role === 'assistant' ? 'message-assistant' : 'message-user-highlight'}">
-                                ${content}
-                            </div>
-                        </div>
-                    </div>
-                `;
-
-                chatMessages.appendChild(messageDiv);
-                chatMessages.scrollTop = chatMessages.scrollHeight;
-                return messageId;
-            }
-            function updateMessageInUI(messageId, role, content, sources = []) {
-                const messageDiv = document.getElementById(messageId);
-                if (!messageDiv) return;
-
-                // Process markdown formatting
-                let processedContent = content
-                    // Bold text (**text**)
-                    .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
-                    // Italic text (*text*)
-                    .replace(/\*(.*?)\*/g, '<em>$1</em>')
-                    // Headers (### Header)
-                    .replace(/^### (.*$)/gm, '<h3>$1</h3>')
-                    // Bullet points
-                    .replace(/^\s*-\s+(.*$)/gm, '<li>$1</li>')
-                    // Numbered lists
-                    .replace(/^\s*\d+\.\s+(.*$)/gm, '<li>$1</li>')
-                    // Simple table detection (very basic)
-                    .replace(/(\|.*\|.*\n\|[-:]+\|[-:]+\|.*\n)((\|.*\|.*\n)+)/g,
-                        '<table class="answer-table">$1$2</table>')
-                    // Line breaks
-                    .replace(/\n/g, '<br>');
-
-                // Convert any lists we found
-                processedContent = processedContent
-                    .replace(/<li>.*?<\/li>/g, function (match) {
-                        return match;
-                    });
-
-                // Wrap lists in ul/ol tags
-                processedContent = processedContent.replace(/(<li>.*?<\/li>(<br>)?)+/g, function (match) {
-                    return '<ul>' + match.replace(/<br><li>/g, '<li>') + '</ul>';
-                });
-
-                // Process references in content with the new format [[ref:filename||page||highlight]]
-                processedContent = processedContent.replace(
-                    /\[\[ref:([^\|\]]+)(?:\|\|([^\|\]]+))?(?:\|\|([^\|\]]+))?\]\]/g,
-                    function (match, filename, page, highlight) {
-                        // Extract just the filename part if path is included
-                        const cleanFilename = filename.split('/').pop().split('\\').pop();
-                        return `<a href="#" class="reference-link" 
-                data-file="${filename}" 
-                data-page="${page || ''}" 
-                data-highlight="${highlight || ''}"
-                onclick="event.preventDefault(); showFilePreview('${filename}', '${page || ''}', '${highlight || ''}')">
-                [${cleanFilename}${page ? ', p.' + page : ''}]
-            </a>`;
-                    }
-                );
-
-                let sourcesHTML = '';
-                if (sources && sources.length > 0) {
-                    sourcesHTML = `
-            <div class="message-sources">
-                <div class="sources-header">
-                    <span>References</span>
-                    <button class="btn-toggle-sources" onclick="toggleSources(this)">Show/Hide</button>
-                </div>
-                <div class="sources-list">
-                    ${sources.map(source => `
-                        <div class="message-source">
-                            <i class="bi bi-file-text"></i>
-                            <span class="source-link" 
-                                onclick="showFilePreview('${source}')">
-                                ${source.split('/').pop().split('\\').pop()}
-                            </span>
-                        </div>
-                    `).join('')}
-                </div>
-            </div>`;
-                }
-
-                messageDiv.querySelector('.message-content').innerHTML = `
-        <div class="message-text ${role === 'assistant' ? 'message-assistant' : 'message-user-highlight'}">
-            ${processedContent}
-            ${sourcesHTML}
-        </div>
-    `;
-
-                // Format any tables we found
-                formatTablesInMessage(messageDiv);
-
-                document.getElementById('chat-messages').scrollTop =
-                    document.getElementById('chat-messages').scrollHeight;
-            }
-
-            function formatTablesInMessage(container) {
-                const tables = container.querySelectorAll('.answer-table');
-                tables.forEach(table => {
-                    // Add basic table styling
-                    table.innerHTML = table.innerHTML
-                        .replace(/\|/g, '</td><td>')
-                        .replace(/<td>\s*<td>/g, '<tr><td>')
-                        .replace(/<td><br><td>/g, '</td></tr><tr><td>');
-                    table.innerHTML = '<tr>' + table.innerHTML + '</td></tr>';
-                    table.classList.add('styled-table');
-                });
-            }
-
-            // Add to your global functions
-            window.toggleSources = function (button) {
-                const sourcesList = button.closest('.message-sources').querySelector('.sources-list');
-                sourcesList.classList.toggle('collapsed');
-            };
-
-        }
-
-        // Global function to show file preview
-        window.showFilePreview = async function (filename, page = '', highlight = '') {
-            const previewContent = document.getElementById('file-preview-content');
-            const previewMeta = document.getElementById('file-preview-meta');
-            const previewContainer = document.getElementById('file-preview-container');
-
-            // Show the preview container
-            previewContainer.style.display = 'block';
+            // Add loading indicator for assistant
+            const assistantMessageId = addMessageToUI('assistant', 
+                '<div class="loading-indicator">' +
+                '<div class="loading-spinner"></div>' +
+                '<span>Processing your request...</span>' +
+                '</div>'
+            );
 
             try {
-                // Show loading state
-                previewContent.innerHTML = `
-            <div class="loading-indicator">
-                <div class="loading-spinner"></div>
-                <span>Loading file content...</span>
-            </div>
-        `;
+                // Send to server
+                const chatId = window.location.pathname.split('/').pop();
+                const response = await fetch(`/chat/${chatId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({ question: question })
+                });
 
-                // Fetch file content from server
-                const response = await fetch(`/get_file_content?path=${encodeURIComponent(filename)}`);
+                if (!response.ok) throw new Error(await response.text());
                 const data = await response.json();
 
-                if (data.error) {
-                    throw new Error(data.error);
-                }
-
-                // Display the content with basic formatting
-                let content = data.content || 'No content found';
-
-                // Apply highlighting if provided
-                if (highlight) {
-                    const highlightRegex = new RegExp(`(${highlight.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')})`, 'gi');
-                    content = content.replace(highlightRegex, '<mark>$1</mark>');
-                }
-
-                previewContent.innerHTML = `<pre>${content}</pre>`;
-                previewMeta.textContent = `Showing: ${filename.split('/').pop().split('\\').pop()}${page ? `, page ${page}` : ''}`;
-
-                // Scroll to highlight if found
-                const mark = previewContent.querySelector('mark');
-                if (mark) {
-                    mark.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    // Add some context around the highlight
-                    previewContent.scrollTop = Math.max(0, mark.offsetTop - 100);
-                }
+                // Update assistant message with processed references
+                updateMessageInUI(assistantMessageId, 'assistant', data.answer, data.sources);
             } catch (error) {
-                previewContent.innerHTML = `<div class="error-message">Error loading file: ${error.message}</div>`;
-                console.error('Error loading file:', error);
+                console.error('Error:', error);
+                updateMessageInUI(assistantMessageId, 'assistant', 
+                    'Error: Failed to process your request. Please try again.');
+            } finally {
+                textarea.disabled = false;
+                textarea.value = '';
+                textarea.style.height = 'auto'; // Reset height
+                textarea.focus();
+                submitButton.disabled = false;
+                submitButton.innerHTML = '<i class="bi bi-send"></i>';
             }
-        };
+        });
+    }
 
+    function initReferenceHandlers() {
+        // Delegate reference clicks to the chat messages container
+        document.getElementById('chat-messages').addEventListener('click', function(e) {
+            const refLink = e.target.closest('.reference-link');
+            if (refLink) {
+                e.preventDefault();
+                const filename = refLink.dataset.filename;
+                const page = refLink.dataset.page || '';
+                const highlight = refLink.dataset.highlight || '';
+                showFilePreview(filename, page, highlight);
+            }
+        });
+    }
+
+    function initFilePreview() {
+        // Close preview when clicking outside
+        document.addEventListener('click', function(e) {
+            const previewContainer = document.getElementById('file-preview-container');
+            if (previewContainer.style.display === 'block' && 
+                !previewContainer.contains(e.target) &&
+                !e.target.closest('.reference-link')) {
+                closeFilePreview();
+            }
+        });
+
+        // Close with ESC key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeFilePreview();
+            }
+        });
+    }
+
+    function initChatHistory() {
         // Delete chat functionality
         document.querySelectorAll('.btn-delete-chat').forEach(button => {
-            button.addEventListener('click', function (e) {
+            button.addEventListener('click', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
 
@@ -383,32 +219,183 @@
                             'X-Requested-With': 'XMLHttpRequest'
                         }
                     })
-                        .then(response => {
-                            if (!response.ok) {
-                                return response.json().then(err => { throw err; });
-                            }
-                            return response.json();
-                        })
-                        .then(data => {
-                            if (data.success) {
-                                chatItem.style.opacity = '0';
-                                setTimeout(() => chatItem.remove(), 300);
-                            } else {
-                                throw new Error(data.error || 'Failed to delete chat');
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Delete error:', error);
-                            alert(error.message || 'Error deleting chat');
-                            this.innerHTML = originalHTML;
-                            this.disabled = false;
-                        });
+                    .then(response => {
+                        if (!response.ok) {
+                            return response.json().then(err => { throw err; });
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.success) {
+                            chatItem.style.opacity = '0';
+                            setTimeout(() => chatItem.remove(), 300);
+                        } else {
+                            throw new Error(data.error || 'Failed to delete chat');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Delete error:', error);
+                        alert(error.message || 'Error deleting chat');
+                        this.innerHTML = originalHTML;
+                        this.disabled = false;
+                    });
                 }
             });
         });
-    });
+    }
+
+    function addMessageToUI(role, content) {
+        const messageId = 'msg-' + Date.now();
+        const chatMessages = document.getElementById('chat-messages');
+
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'message';
+        messageDiv.id = messageId;
+        messageDiv.innerHTML = `
+            <div class="message-user">
+                <div class="message-avatar">
+                    <i class="bi ${role === 'user' ? 'bi-person-fill' : 'bi-robot'}"></i>
+                </div>
+                <div class="message-content">
+                    <div class="message-text ${role === 'assistant' ? 'message-assistant' : 'message-user-highlight'}">
+                        ${role === 'assistant' ? processContentWithReferences(content) : content.replace(/\n/g, '<br>')}
+                    </div>
+                </div>
+            </div>
+        `;
+
+        chatMessages.appendChild(messageDiv);
+        scrollToBottom();
+        return messageId;
+    }
+
+    function updateMessageInUI(messageId, role, content, sources = []) {
+        const messageDiv = document.getElementById(messageId);
+        if (!messageDiv) return;
+
+        const processedContent = processContentWithReferences(content);
+        let sourcesHTML = '';
+
+        if (sources && sources.length > 0) {
+            sourcesHTML = `
+                <div class="message-sources">
+                    <div class="supported-files-title">Sources:</div>
+                    ${sources.map(source => `
+                        <div class="message-source" onclick="showFilePreview('${escapeHtml(source)}')">
+                            <i class="bi bi-file-text message-source-icon"></i>
+                            <span>${escapeHtml(source.split('/').pop().split('\\').pop())}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        messageDiv.querySelector('.message-content').innerHTML = `
+            <div class="message-text ${role === 'assistant' ? 'message-assistant' : 'message-user-highlight'}">
+                ${processedContent}
+                ${sourcesHTML}
+            </div>
+        `;
+
+        scrollToBottom();
+    }
+
+   function processContentWithReferences(content) {
+        let documentCounter = 0;
+        const documentMap = new Map(); // Maps filenames to their reference numbers
+        let currentDocument = '';
+        
+        // Process markdown formatting first
+        let processed = content
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+            .replace(/^### (.*$)/gm, '<h3>$1</h3>')
+            .replace(/^\s*-\s+(.*$)/gm, '<li>$1</li>')
+            .replace(/^\s*\d+\.\s+(.*$)/gm, '<li>$1</li>')
+            .replace(/\n/g, '<br>');
+
+        // Then process references with document-based numbering
+        processed = processed.replace(
+            /\[\^([^\|\]]+)(?:\|\|([^\|\]]+))?(?:\|\|([^\|\]]+))?\]/g, 
+            function(match, filename, page, highlight) {
+                // If this is a new document, increment the counter
+                if (!documentMap.has(filename)) {
+                    documentCounter++;
+                    documentMap.set(filename, documentCounter);
+                }
+                
+                const docNumber = documentMap.get(filename);
+                return `<sup class="reference-link" 
+                          data-filename="${escapeHtml(filename)}"
+                          data-page="${escapeHtml(page || '')}"
+                          data-highlight="${escapeHtml(highlight || '')}">
+                        [${docNumber}]</sup>`;
+            }
+        );
+
+        return processed;
+    }
+
+    function escapeHtml(unsafe) {
+        return unsafe
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    function scrollToBottom() {
+        const chatMessages = document.getElementById('chat-messages');
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    async function showFilePreview(filename, page = '', highlight = '') {
+        const previewContainer = document.getElementById('file-preview-container');
+        const previewContent = document.getElementById('file-preview-content');
+        const previewMeta = document.getElementById('file-preview-meta');
+
+        previewContainer.style.display = 'block';
+        previewContent.innerHTML = `
+            <div class="loading-indicator">
+                <div class="loading-spinner"></div>
+                <span>Loading file content...</span>
+            </div>
+        `;
+
+        try {
+            const response = await fetch(`/get_file_content?path=${encodeURIComponent(filename)}&page=${page}&highlight=${encodeURIComponent(highlight)}`);
+            const data = await response.json();
+
+            if (data.error) throw new Error(data.error);
+
+            let content = data.content || 'No content found';
+            if (highlight) {
+                const highlightRegex = new RegExp(`(${highlight.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')})`, 'gi');
+                content = content.replace(highlightRegex, '<mark>$1</mark>');
+            }
+
+            previewContent.innerHTML = `<pre>${content}</pre>`;
+            previewMeta.textContent = `Showing: ${filename.split('/').pop().split('\\').pop()}${page ? `, page ${page}` : ''}`;
+
+            // Scroll to highlight if found
+            const mark = previewContent.querySelector('mark');
+            if (mark) {
+                mark.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                previewContent.scrollTop = Math.max(0, mark.offsetTop - 100);
+            }
+        } catch (error) {
+            previewContent.innerHTML = `<div class="error-message">Error loading file: ${error.message}</div>`;
+            console.error('Error loading file:', error);
+        }
+    }
+
+    function closeFilePreview() {
+        document.getElementById('file-preview-container').style.display = 'none';
+    }
 </script>
 <style>
+    /* Message styling */
     .message-user-highlight {
         padding: 1rem;
         background: #e3f2fd;
@@ -423,9 +410,78 @@
         border-radius: 8px;
         border: 1px solid #e5e7eb;
         margin-bottom: 0.5rem;
-        min-height: 40px;
+        line-height: 1.6;
     }
 
+    /* Reference styling */
+    .reference-link {
+        color: #666;
+        background-color: rgba(0, 0, 0, 0.05);
+        text-decoration: none;
+        font-size: 0.85em;
+        padding: 0 0.2em;
+        border-radius: 2px;
+        cursor: pointer;
+        vertical-align: super;
+    }
+
+    .reference-link:hover {
+        background-color: var(--primary-color);
+    }
+
+    /* File preview styling */
+    .file-preview-container {
+        display: none;
+        position: fixed;
+        right: 20px;
+        bottom: 80px;
+        width: 400px;
+        max-height: 60vh;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        z-index: 1000;
+        border: 1px solid #e5e7eb;
+        overflow: hidden;
+    }
+
+    .file-preview-header {
+        padding: 12px 16px;
+        background: #f9fafb;
+        border-bottom: 1px solid #e5e7eb;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .file-preview-content {
+        padding: 16px;
+        overflow-y: auto;
+        max-height: calc(60vh - 100px);
+    }
+
+    .file-preview-content pre {
+        white-space: pre-wrap;
+        font-family: 'Courier New', monospace;
+        font-size: 0.9rem;
+        line-height: 1.5;
+        margin: 0;
+    }
+
+    .file-preview-content mark {
+        background-color: #ffeb3b;
+        padding: 0 2px;
+    }
+
+    .file-preview-meta {
+        padding: 8px 16px;
+        font-size: 0.8rem;
+        color: #6b7280;
+        background: #f9fafb;
+        border-top: 1px solid #e5e7eb;
+    }
+
+    /* Loading indicator */
     .loading-indicator {
         display: flex;
         align-items: center;
@@ -443,21 +499,12 @@
         animation: spin 1s linear infinite;
     }
 
-    .error-message {
-        color: #ef4444;
-        padding: 0.5rem;
-    }
-
     @keyframes spin {
-        from {
-            transform: rotate(0deg);
-        }
-
-        to {
-            transform: rotate(360deg);
-        }
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
     }
 
+    /* Sources list */
     .message-sources {
         margin-top: 1rem;
         font-size: 0.875rem;
@@ -469,209 +516,17 @@
         align-items: center;
         gap: 6px;
         margin-bottom: 4px;
+        cursor: pointer;
+        padding: 4px;
+        border-radius: 4px;
+    }
+
+    .message-source:hover {
+        background-color: rgba(0, 0, 0, 0.05);
     }
 
     .message-source-icon {
         color: #9ca3af;
-    }
-
-    .bi-arrow-clockwise.spin {
-        animation: spin 1s linear infinite;
-    }
-
-    /* File preview styles */
-    .file-preview-container {
-        display: none;
-        border-top: 1px solid #e5e7eb;
-        padding: 1rem;
-        background: white;
-        position: sticky;
-        bottom: calc(var(--input-height) + 2rem);
-        z-index: 700;
-        box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.05);
-    }
-
-    .file-preview-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 0.5rem;
-    }
-
-    .file-preview-content {
-        max-height: 300px;
-        overflow-y: auto;
-        padding: 0.5rem;
-        background: #f9f9f9;
-        border-radius: 8px;
-        line-height: 1.6;
-        font-size: 0.9rem;
-        white-space: pre-wrap;
-    }
-
-    .file-preview-content mark {
-        background-color: #ffeb3b;
-        padding: 0 2px;
-    }
-
-    .file-preview-meta {
-        font-size: 0.8rem;
-        color: #6b7280;
-        margin-top: 0.5rem;
-    }
-
-    .reference-link,
-    .source-link {
-        color: var(--primary-color);
-        cursor: pointer;
-        text-decoration: none;
-    }
-
-    .reference-link:hover,
-    .source-link:hover {
-        text-decoration: underline;
-    }
-
-
-    /* Add these to your existing styles */
-    .message-sources {
-        margin-top: 1rem;
-        font-size: 0.875rem;
-        color: #6b7280;
-        max-height: none;
-        transition: max-height 0.3s ease;
-    }
-
-    .message-sources.collapsed {
-        max-height: 100px;
-        overflow: hidden;
-    }
-
-    .message-sources-toggle {
-        color: var(--primary-color);
-        cursor: pointer;
-        font-size: 0.8rem;
-        margin-top: 0.5rem;
-        display: inline-block;
-    }
-
-    .message-sources-toggle:hover {
-        text-decoration: underline;
-    }
-
-    .message-source {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        margin-bottom: 4px;
-    }
-
-
-    /* Add these to your existing styles */
-    .message-assistant {
-        padding: 1rem;
-        background: #f9fafb;
-        border-radius: 8px;
-        border: 1px solid #e5e7eb;
-        margin-bottom: 0.5rem;
-        min-height: 40px;
-        line-height: 1.6;
-    }
-
-    .message-assistant b {
-        font-weight: 600;
-        color: #333;
-    }
-
-    .message-assistant em {
-        font-style: italic;
-        color: #555;
-    }
-
-    .message-assistant h3 {
-        font-size: 1.1rem;
-        margin: 1rem 0 0.5rem 0;
-        color: var(--primary-color);
-        border-bottom: 1px solid #eee;
-        padding-bottom: 0.3rem;
-    }
-
-    .message-assistant ul,
-    .message-assistant ol {
-        margin: 0.5rem 0 0.5rem 1.5rem;
-        padding-left: 1rem;
-    }
-
-    .message-assistant li {
-        margin-bottom: 0.3rem;
-    }
-
-    .styled-table {
-        width: 100%;
-        border-collapse: collapse;
-        margin: 0.5rem 0;
-        font-size: 0.9rem;
-    }
-
-    .styled-table td {
-        padding: 0.5rem;
-        border: 1px solid #ddd;
-    }
-
-    .styled-table tr:nth-child(even) {
-        background-color: #f2f2f2;
-    }
-
-    .styled-table tr:first-child {
-        background-color: var(--primary-color);
-        color: white;
-        font-weight: bold;
-    }
-
-    .sources-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 0.5rem;
-    }
-
-    .btn-toggle-sources {
-        background: none;
-        border: none;
-        color: var(--primary-color);
-        cursor: pointer;
-        font-size: 0.8rem;
-        padding: 0.2rem 0.5rem;
-        border-radius: 4px;
-    }
-
-    .btn-toggle-sources:hover {
-        background-color: #f0f0f0;
-    }
-
-    .sources-list {
-        max-height: 200px;
-        overflow-y: auto;
-        transition: max-height 0.3s ease;
-    }
-
-    .sources-list.collapsed {
-        max-height: 0;
-        overflow: hidden;
-    }
-
-    .reference-link {
-        color: var(--primary-color);
-        text-decoration: none;
-        background-color: #e3f2fd;
-        padding: 0.1rem 0.3rem;
-        border-radius: 3px;
-        font-size: 0.9em;
-    }
-
-    .reference-link:hover {
-        text-decoration: underline;
-        background-color: #bbdefb;
     }
 </style>
 {% endblock %}

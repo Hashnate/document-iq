@@ -44,9 +44,9 @@ class Config:
     ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'zip'}
     MAX_CONTENT_LENGTH = 500 * 1024 * 1024  # 500MB
     OLLAMA_URL = os.getenv('OLLAMA_URL', 'http://127.0.0.1:11434/api/generate')
-    OLLAMA_MODEL = os.getenv('OLLAMA_MODEL', 'llama3.2:latest')
+    OLLAMA_MODEL = os.getenv('OLLAMA_MODEL', 'llama3:70b-instruct-q4_K_M')
     OLLAMA_TIMEOUT = 300  # 5 minutes timeout
-    MAX_FILE_SIZE = 100 * 1024 * 1024  # 100MB per file in ZIP
+    MAX_FILE_SIZE = 500 * 1024 * 1024  # 100MB per file in ZIP
     MAX_RETRIES = 3
     LOG_FILE = os.path.join(os.getcwd(), 'app.log')
     LOG_LEVEL = logging.INFO
@@ -173,13 +173,12 @@ def get_answer_from_text(text, question):
         f"Context: {text[:1500000]}\n\n"
         f"Question: {question}\n"
         "Provide a detailed, well-structured answer with the following formatting:\n"
-        "1. Use **bold** for important terms and section titles\n"
-        "2. Use *italics* for emphasis\n"
-        "3. Use bullet points for lists\n"
-        "4. Use tables when comparing items or presenting structured data\n"
-        "5. Include clear section headings\n"
-        "6. For references, use the format [[ref:filename.ext||page||highlight]]\n"
-        "7. Always include a 'References' section at the end listing all sources\n\n"
+        "1. Use markdown formatting (**bold**, *italics*, bullet points, tables when appropriate)\n"
+        "2. For references, use this exact format: [^filename||page||highlight]\n"
+        "   - filename: source document name with extension\n"
+        "   - page: page number (if applicable)\n"
+        "   - highlight: key phrase from source (if applicable)\n"
+        "3. Place each reference marker immediately after the relevant claim or statement\n\n"
         "Answer:"
     )
     
@@ -239,20 +238,20 @@ def datetimeformat(value, format='%b %d, %H:%M'):
 
 @app.route('/new_chat', methods=['GET', 'POST'])
 def new_chat():
-    """Create a new chat session"""
-    app.logger.info('Received request to create new chat')
+    """Create a new query session"""
+    app.logger.info('Received request to create new query')
     try:
         chat_id = str(uuid.uuid4())
         conversations[chat_id] = {
             'created_at': datetime.now().isoformat(),
-            'title': 'New Chat',
+            'title': 'New Query',
             'messages': []
         }
-        app.logger.info(f'Created new chat with ID: {chat_id}')
+        app.logger.info(f'Created new query with ID: {chat_id}')
         return redirect(url_for('chat', chat_id=chat_id))
     except Exception as e:
-        app.logger.error(f'Error creating new chat: {str(e)}', exc_info=True)
-        flash('Error creating new chat session', 'error')
+        app.logger.error(f'Error creating new query: {str(e)}', exc_info=True)
+        flash('Error creating new query session', 'error')
         return redirect(url_for('index'))
 
 @app.route('/chat/<chat_id>', methods=['GET', 'POST'])
@@ -341,7 +340,7 @@ def chat(chat_id):
             app.logger.error(f"Error processing chat request: {str(e)}", exc_info=True)
             return jsonify({
                 'status': 'error',
-                'message': 'An error occurred while processing your question'
+                'message': 'An error occurred while processing your request'
             }), 500
 
     app.logger.debug(f'Rendering chat interface for chat ID: {chat_id}')
@@ -559,6 +558,41 @@ def progress_stream():
     return Response(event_stream(), mimetype="text/event-stream")
 
 
+@app.template_filter('process_references')
+def process_references(text):
+    """Template filter to process references in text"""
+    reference_counter = 1
+    references = []
+    
+    def replace_reference(match):
+        nonlocal reference_counter
+        filename = match.group(1)
+        page = match.group(2) or ''
+        highlight = match.group(3) or ''
+        
+        ref_id = reference_counter
+        reference_counter += 1
+        
+        # Store reference data
+        references.append({
+            'id': ref_id,
+            'filename': filename,
+            'page': page,
+            'highlight': highlight
+        })
+        
+        # Return the reference link
+        return f'<sup class="reference-link" data-ref="{ref_id}">[{ref_id}]</sup>'
+    
+    # Process all references in the text
+    processed_text = re.sub(
+        r'\[\^([^\|\]]+)(?:\|\|([^\|\]]+))?(?:\|\|([^\|\]]+))?\]',
+        replace_reference,
+        text
+    )
+    
+    return processed_text
+    
 
 if __name__ == '__main__':
     try:
