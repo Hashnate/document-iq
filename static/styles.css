@@ -1,15 +1,25 @@
+
+
+
 :root {
     --primary-color: #10a37f;
     --secondary-color: #2563eb;
     --sidebar-width: 280px;
     --navbar-height: 60px;
     --input-height: 56px;
+
+            --accent-color: #10a37f;
+            --light-color: #f8f9fa;
+            --dark-color: #212529;
+            --success-color: #10a37f;
+            --error-color: #f72585;
 }
+
 
 /* Base Styles */
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    background-color: #f7f7f8;
+    background-color: #ffffff;
     color: #222;
     margin: 0;
     padding: 0;
@@ -295,18 +305,21 @@ body {
     margin-bottom: 1.5rem;
 }
 
-.file-upload-area {
-    border: 2px dashed #e5e7eb;
-    border-radius: 8px;
-    padding: 2rem;
-    margin: 1.5rem 0;
-    transition: all 0.2s;
-}
+    .file-upload-area {
+        border: 2px dashed #e5e7eb;
+        border-radius: 8px;
+        padding: 2rem;
+        margin: 1.5rem 0;
+        transition: all 0.2s;
+        text-align: center;
+        cursor: pointer;
+        background: #f9fafb;
+    }
 
-.file-upload-area:hover {
-    border-color: var(--primary-color);
-    background: #f9fafb;
-}
+    .file-upload-area:hover {
+        border-color: var(--primary-color);
+        background: #f3f4f6;
+    }
 
 .file-upload-label {
     display: flex;
@@ -433,7 +446,7 @@ body {
     .sidebar {
         display: none;
     }
-    
+
     .chat-container {
         max-width: 100%;
         height: calc(100vh - var(--navbar-height));
@@ -499,16 +512,6 @@ body {
 }
 
 
-/* Upload progress styles */
-.progress {
-    height: 8px;
-    border-radius: 4px;
-    background-color: #e9ecef;
-}
-
-.progress-bar {
-    transition: width 0.3s ease;
-}
 
 /* File selected state */
 .file-selected {
@@ -912,17 +915,6 @@ body {
 }
 
 
-.progress {
-    position: relative;
-    height: 24px;
-    border-radius: 12px;
-}
-
-.progress-bar {
-    position: relative;
-    line-height: 24px;
-    transition: width 0.3s ease;
-}
 
 .upload-percentage {
     position: absolute;
@@ -932,3 +924,156 @@ body {
     font-weight: bold;
     text-shadow: 0 0 2px rgba(0,0,0,0.5);
 }
+
+/* Navbar button styles */
+.navbar .btn-outline-light {
+    border-color: rgba(255, 255, 255, 0.2);
+    color: var(--bs-btn-color);
+}
+
+.navbar .btn-outline-light:hover {
+    border-color: rgba(255, 255, 255, 0.5);
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+#go-to-chat-btn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+
+
+        .container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        /* .upload-area {
+            border: 2px dashed var(--accent-color);
+            border-radius: 12px;
+            padding: 3rem 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            margin-bottom: 2rem;
+            background-color: rgba(72, 149, 239, 0.05);
+        } */
+
+        /* .upload-area:hover {
+            background-color: rgba(72, 149, 239, 0.1);
+        }
+
+        .upload-area.active {
+            border-color: var(--success-color);
+            background-color: rgba(76, 201, 240, 0.1);
+        } */
+
+        .upload-icon {
+            font-size: 3rem;
+            color: var(--accent-color);
+            margin-bottom: 1rem;
+        }
+
+        .upload-text {
+            margin-bottom: 1rem;
+            color: var(--dark-color);
+        }
+
+        .upload-text strong {
+            color: var(--primary-color);
+        }
+
+        .progress-container {
+            margin-top: 2rem;
+            display: none;
+        }
+
+        .progress-bar {
+            height: 10px;
+            background: #e9ecef;
+            border-radius: 5px;
+            margin-bottom: 0.5rem;
+            overflow: hidden;
+        }
+
+        .progress {
+            height: 100%;
+            background: var(--success-color);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+
+        .progress-percent {
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .file-list {
+            margin-top: 2rem;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 0.8rem;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .file-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        /* .file-icon {
+            margin-right: 1rem;
+            color: var(--accent-color);
+        } */
+
+        .file-name {
+            flex-grow: 1;
+            word-break: break-all;
+        }
+
+        .file-size {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+        .success-message {
+            color: var(--success-color);
+            text-align: center;
+            margin-top: 1rem;
+            font-weight: 500;
+            display: none;
+        }
+
+        .error-message {
+            color: var(--error-color);
+            text-align: center;
+            margin-top: 1rem;
+            font-weight: 500;
+            display: none;
+        }
+

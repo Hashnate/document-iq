@@ -19,10 +19,18 @@
                 <i class="bi bi-robot"></i> Document IQ
             </a>
             <div class="d-flex align-items-center">
+                <!-- Updated Chat Button -->
+                {% if chats and not request.path.startswith('/chat/') %}
+                {% set last_chat_id = chats.keys()|list|last %}
+                <a href="{{ url_for('chat', chat_id=last_chat_id) }}" class="btn btn-sm btn-outline-light me-2"
+                    id="go-to-chat-btn">
+                    <i class="bi bi-chat-left-text"></i> Continue Chat
+                </a>
+                {% endif %}
+
                 <button id="file-explorer-toggle" class="btn btn-sm btn-outline-light me-2">
                     <i class="bi bi-folder2-open"></i> File Explorer
                 </button>
-                <!-- <span class="badge bg-primary me-2">v1.0</span> -->
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                     <span class="navbar-toggler-icon"></span>
                 </button>
@@ -30,16 +38,16 @@
         </div>
     </nav>
 
-   <div id="file-explorer" class="file-explorer">
-    <div class="file-explorer-header">
-        <h5><i class="bi bi-folder-fill"></i> Uploaded Files</h5>
-        <button id="close-explorer" class="btn btn-sm btn-close"></button>
+    <div id="file-explorer" class="file-explorer">
+        <div class="file-explorer-header">
+            <h5><i class="bi bi-folder-fill"></i> Uploaded Files</h5>
+            <button id="close-explorer" class="btn btn-sm btn-close"></button>
+        </div>
+        <div class="file-explorer-body">
+            <div id="file-tree" class="file-tree"></div>
+            <!-- File preview will be appended here by JavaScript -->
+        </div>
     </div>
-    <div class="file-explorer-body">
-        <div id="file-tree" class="file-tree"></div>
-        <!-- File preview will be appended here by JavaScript -->
-    </div>
-</div>
 
     {% include 'partials/_flash_messages.html' %}
 
