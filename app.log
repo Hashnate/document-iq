@@ -292,3 +292,52 @@
 2025-06-27 07:40:48,868 - app - INFO - Updated chat title to: is there any date or times men...
 2025-06-27 07:40:48,872 - app - INFO - Successfully processed chat request
 2025-06-27 07:59:12,755 - app - INFO - Starting application on port 8000
+2025-06-28 00:08:25,050 - app - INFO - Starting application on port 8000
+2025-06-28 00:08:47,055 - app - INFO - Starting application on port 8000
+2025-06-28 00:10:42,214 - app - INFO - Starting application on port 8000
+2025-06-28 00:11:08,138 - app - INFO - Starting application on port 8000
+2025-06-28 00:11:25,216 - app - INFO - Starting application on port 8000
+2025-06-28 00:11:36,616 - app - INFO - Starting application on port 8000
+2025-06-28 00:11:56,183 - app - INFO - Received request to create new query
+2025-06-28 00:11:56,184 - app - INFO - Created new query with ID: 7f72d88d-56e7-4c78-8f72-c6c3f937aa12
+2025-06-28 00:11:56,200 - app - INFO - Received request for chat ID: 7f72d88d-56e7-4c78-8f72-c6c3f937aa12
+2025-06-28 00:12:01,755 - app - INFO - Received request for chat ID: 7f72d88d-56e7-4c78-8f72-c6c3f937aa12
+2025-06-28 00:12:01,756 - app - INFO - Processing files in extraction folder
+2025-06-28 00:12:01,799 - app - INFO - Sending request to Ollama API
+2025-06-28 00:12:28,082 - app - INFO - Updated chat title to: summarise it
+2025-06-28 00:12:28,088 - app - INFO - Successfully processed chat request
+2025-06-28 00:12:57,132 - app - INFO - Received request for chat ID: 7f72d88d-56e7-4c78-8f72-c6c3f937aa12
+2025-06-28 00:12:57,135 - app - INFO - Processing files in extraction folder
+2025-06-28 00:12:57,170 - app - INFO - Sending request to Ollama API
+2025-06-28 00:13:01,605 - app - INFO - Successfully processed chat request
+2025-06-28 06:44:03,453 - app - INFO - Received request to create new query
+2025-06-28 06:44:03,454 - app - INFO - Created new query with ID: 4c6255f4-11c0-4a9e-b6d8-8b112dda0cf2
+2025-06-28 06:44:03,467 - app - INFO - Received request for chat ID: 4c6255f4-11c0-4a9e-b6d8-8b112dda0cf2
+2025-06-28 06:44:07,525 - app - INFO - Received request for chat ID: 4c6255f4-11c0-4a9e-b6d8-8b112dda0cf2
+2025-06-28 06:44:07,526 - app - INFO - Processing files in extraction folder
+2025-06-28 06:44:07,564 - app - INFO - Sending request to Ollama API
+2025-06-28 06:45:01,608 - app - INFO - Updated chat title to: summarise it
+2025-06-28 06:45:01,611 - app - INFO - Successfully processed chat request
+2025-06-28 06:46:57,412 - app - INFO - Successfully extracted ZIP file: Tender_Bulletin_01_13.02.2025.zip
+2025-06-28 06:46:58,427 - app - INFO - Received request to create new query
+2025-06-28 06:46:58,428 - app - INFO - Created new query with ID: edf4c48d-1c6a-4e34-ac0e-d6606c8582c7
+2025-06-28 06:46:58,442 - app - INFO - Received request for chat ID: edf4c48d-1c6a-4e34-ac0e-d6606c8582c7
+2025-06-28 06:47:06,881 - app - INFO - Received request for chat ID: edf4c48d-1c6a-4e34-ac0e-d6606c8582c7
+2025-06-28 06:47:06,882 - app - INFO - Processing files in extraction folder
+2025-06-28 06:47:11,009 - app - INFO - Sending request to Ollama API
+2025-06-28 06:47:46,686 - app - INFO - Updated chat title to: summerise it
+2025-06-28 06:47:46,689 - app - INFO - Successfully processed chat request
+2025-06-28 06:57:34,878 - app - INFO - Successfully extracted ZIP file: Tender_Bulletin_01_13.02.2025.zip
+2025-06-28 06:57:35,894 - app - INFO - Received request to create new query
+2025-06-28 06:57:35,894 - app - INFO - Created new query with ID: c04caabb-8dc2-4c59-aebe-2b474817cc45
+2025-06-28 06:57:35,909 - app - INFO - Received request for chat ID: c04caabb-8dc2-4c59-aebe-2b474817cc45
+2025-06-28 06:57:40,312 - app - INFO - Received request for chat ID: c04caabb-8dc2-4c59-aebe-2b474817cc45
+2025-06-28 06:57:40,313 - app - INFO - Processing files in extraction folder
+2025-06-28 06:57:44,477 - app - INFO - Sending request to Ollama API
+2025-06-28 06:58:27,992 - app - INFO - Updated chat title to: summarise it
+2025-06-28 06:58:27,994 - app - INFO - Successfully processed chat request
+2025-06-29 09:49:41,721 - app - INFO - Starting application on port 8000
+2025-06-29 09:49:41,937 - app - INFO - Starting application on port 8000
+2025-06-29 12:43:39,317 - app - INFO - Starting application on port 8000
+2025-06-29 12:43:39,530 - app - INFO - Starting application on port 8000
+2025-06-29 15:52:50,728 - app - INFO - Starting application on port 8000

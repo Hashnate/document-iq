@@ -7,13 +7,14 @@ import requests
 import uuid
 import json
 from datetime import datetime
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, Response
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, Response, stream_with_context
 import time
 from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
 import logging
 from logging.handlers import RotatingFileHandler
 import threading
+import re
 
 # Load environment variables
 load_dotenv()
@@ -44,16 +45,16 @@ class Config:
     ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'zip'}
     MAX_CONTENT_LENGTH = 500 * 1024 * 1024  # 500MB
     OLLAMA_URL = os.getenv('OLLAMA_URL', 'http://127.0.0.1:11434/api/generate')
-    OLLAMA_MODEL = os.getenv('OLLAMA_MODEL', 'llama3:70b-instruct-q4_K_M')
-    OLLAMA_TIMEOUT = 300  # 5 minutes timeout
-    MAX_FILE_SIZE = 500 * 1024 * 1024  # 100MB per file in ZIP
+    OLLAMA_MODEL = os.getenv('OLLAMA_MODEL', 'gemma3:12b')
+    OLLAMA_TIMEOUT = 600  # Increased to 10 minutes
+    MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB per file in ZIP
     MAX_RETRIES = 3
     LOG_FILE = os.path.join(os.getcwd(), 'app.log')
     LOG_LEVEL = logging.INFO
     SERVER_NAME = os.getenv('RUNPOD_ENDPOINT_URL', '0.0.0.0:8000')
     PREFERRED_URL_SCHEME = 'https'
-
-
+    MAX_CONTEXT_LENGTH = 5000  # Characters per file
+    STREAM_TIMEOUT = 500  # Seconds
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -74,6 +75,10 @@ handler.setFormatter(formatter)
 app.logger.addHandler(handler)
 logging.getLogger().setLevel(app.config['LOG_LEVEL'])
 
+
+# In-memory storage for conversations
+conversations = {}
+
 # Ensure directories exist with proper permissions
 def ensure_directories():
     """Create required directories with proper permissions"""
@@ -87,9 +92,6 @@ def ensure_directories():
             raise
 
 ensure_directories()
-
-# In-memory storage for conversations
-conversations = {}
 
 def allowed_file(filename):
     """Check if the file has an allowed extension"""
@@ -107,6 +109,11 @@ def extract_zip(zip_path, extract_to):
                 try:
                     file_path = file_info.filename
                     target_path = os.path.join(extract_to, file_path)
+                    
+                    # Skip files larger than MAX_FILE_SIZE
+                    if file_info.file_size > app.config['MAX_FILE_SIZE']:
+                        app.logger.warning(f"Skipping large file: {file_path} ({file_info.file_size} bytes)")
+                        continue
                     
                     # Ensure target directory exists
                     os.makedirs(os.path.dirname(target_path), exist_ok=True)
@@ -131,12 +138,17 @@ def extract_zip(zip_path, extract_to):
         raise ValueError(f"ZIP extraction failed: {str(e)}")
 
 def read_file(file_path):
-    """Improved file reading with better encoding handling"""
+    """Improved file reading with better encoding handling and size limits"""
     text = ""
     file_ext = os.path.splitext(file_path)[1].lower()
     
     try:
         if '__MACOSX' in file_path or file_path.endswith('._.DS_Store'):
+            return None
+            
+        # Check file size
+        if os.path.getsize(file_path) > app.config['MAX_FILE_SIZE']:
+            app.logger.warning(f"File too large, skipping: {file_path}")
             return None
             
         # PDF files
@@ -156,7 +168,7 @@ def read_file(file_path):
             for encoding in encodings:
                 try:
                     with open(file_path, 'r', encoding=encoding) as file:
-                        text = file.read(100000)  # Read first 100KB
+                        text = file.read(app.config['MAX_CONTEXT_LENGTH'])
                     break
                 except UnicodeDecodeError:
                     continue
@@ -167,8 +179,8 @@ def read_file(file_path):
     
     return text if text.strip() else None
 
-def get_answer_from_text(text, question):
-    """Enhanced Ollama API integration with better formatting instructions"""
+def get_answer_stream(text, question):
+    """Stream response from Ollama API with timeout handling"""
     prompt = (
         f"Context: {text[:1500000]}\n\n"
         f"Question: {question}\n"
@@ -182,30 +194,36 @@ def get_answer_from_text(text, question):
         "Answer:"
     )
     
-    for attempt in range(app.config['MAX_RETRIES']):
-        try:
-            response = requests.post(
-                app.config['OLLAMA_URL'],
-                json={
-                    "model": app.config['OLLAMA_MODEL'],
-                    "prompt": prompt,
-                    "stream": False,
-                    "options": {
-                        "temperature": 0.3,
-                        "num_ctx": 15000,
-                        "format": "markdown"  # Request markdown formatted output
-                    }
-                },
-                timeout=app.config['OLLAMA_TIMEOUT']
-            )
-            response.raise_for_status()
-            return response.json().get("response", "No answer generated")
-        except requests.exceptions.RequestException as e:
-            if attempt == app.config['MAX_RETRIES'] - 1:
-                return f"Error: Failed after {app.config['MAX_RETRIES']} attempts. {str(e)}"
-            time.sleep(1)
-    
-    return "Error: Unexpected error getting answer"
+    try:
+        response = requests.post(
+            app.config['OLLAMA_URL'],
+            json={
+                "model": app.config['OLLAMA_MODEL'],
+                "prompt": prompt,
+                "stream": True,
+                "options": {
+                    "temperature": 0.3,
+                    "num_ctx": 8000,  # Reduced context window
+                    "num_predict": 500,  # Limit response length
+                    "format": "markdown"
+                }
+            },
+            stream=True,
+            timeout=app.config['OLLAMA_TIMEOUT']
+        )
+        response.raise_for_status()
+        
+        for line in response.iter_lines():
+            if line:
+                chunk = json.loads(line)
+                if 'response' in chunk:
+                    yield chunk['response']
+                    
+    except requests.exceptions.Timeout:
+        yield "Error: The request timed out. Please try again with a simpler query."
+    except requests.exceptions.RequestException as e:
+        yield f"Error: Failed to get streaming response. {str(e)}"
+
 def clean_directory(directory):
     """Safely clean all files in directory"""
     for filename in os.listdir(directory):
@@ -256,7 +274,7 @@ def new_chat():
 
 @app.route('/chat/<chat_id>', methods=['GET', 'POST'])
 def chat(chat_id):
-    """Handle both displaying and processing chat messages"""
+    """Handle both displaying and streaming processing of chat messages"""
     app.logger.info(f'Received request for chat ID: {chat_id}')
     
     if chat_id not in conversations:
@@ -266,88 +284,101 @@ def chat(chat_id):
         return redirect(url_for('index'))
 
     if request.method == 'POST':
-        try:
-            app.logger.debug(f'Processing POST request for chat ID: {chat_id}')
-            
-            if request.is_json:
-                data = request.get_json()
-                question = data.get('question', '').strip()
-                app.logger.debug(f'Received JSON data: {data}')
-            else:
-                question = request.form.get('question', '').strip()
-                app.logger.debug(f'Received form data: {request.form}')
+        def generate_response():
+            try:
+                # Get the question from request
+                if request.is_json:
+                    data = request.get_json()
+                    question = data.get('question', '').strip()
+                    app.logger.debug(f'Received JSON data: {data}')
+                else:
+                    question = request.form.get('question', '').strip()
+                    app.logger.debug(f'Received form data: {request.form}')
 
-            if not question:
-                app.logger.warning("Empty question received")
-                return jsonify({'status': 'error', 'message': 'Please enter a question'}), 400
+                if not question:
+                    yield json.dumps({'status': 'error', 'message': 'Please enter a question'})
+                    return
 
-            conversations[chat_id]['messages'].append({
-                'role': 'user',
-                'content': question,
-                'timestamp': datetime.now().isoformat()
-            })
-            app.logger.debug(f'Added user message to conversation: {question[:50]}...')
+                # Save user message
+                conversations[chat_id]['messages'].append({
+                    'role': 'user',
+                    'content': question,
+                    'timestamp': datetime.now().isoformat()
+                })
 
-            file_contents = []
-            app.logger.info('Processing files in extraction folder')
-            for root, _, files in os.walk(app.config['EXTRACT_FOLDER']):
-                for file in files:
-                    file_path = os.path.join(root, file)
-                    try:
-                        text = read_file(file_path)
-                        if text:
-                            file_contents.append({
-                                'filename': file,
-                                'path': os.path.relpath(file_path, app.config['EXTRACT_FOLDER']),
-                                'text': text
-                            })
-                            app.logger.debug(f'Processed file: {file}')
-                    except Exception as e:
-                        app.logger.error(f"Error processing {file_path}: {str(e)}")
-                        continue
+                # Prepare file context with size limits
+                file_contents = []
+                app.logger.info('Processing files in extraction folder')
+                for root, _, files in os.walk(app.config['EXTRACT_FOLDER']):
+                    for file in files:
+                        file_path = os.path.join(root, file)
+                        try:
+                            text = read_file(file_path)
+                            if text:
+                                file_contents.append({
+                                    'filename': file,
+                                    'path': os.path.relpath(file_path, app.config['EXTRACT_FOLDER']),
+                                    'text': text
+                                })
+                                app.logger.debug(f'Processed file: {file}')
+                        except Exception as e:
+                            app.logger.error(f"Error processing {file_path}: {str(e)}")
+                            continue
 
-            combined_context = "\n\n".join(
-                f"[FILE: {file['path']}]\n{file['text'][:10000]}"
-                for file in file_contents
-            ) if file_contents else "No files available for context"
-            app.logger.debug(f'Combined context length: {len(combined_context)}')
+                combined_context = "\n\n".join(
+                    f"[FILE: {file['path']}]\n{file['text'][:app.config['MAX_CONTEXT_LENGTH']]}"
+                    for file in file_contents
+                ) if file_contents else "No files available for context"
+                app.logger.debug(f'Combined context length: {len(combined_context)}')
 
-            app.logger.info('Sending request to Ollama API')
-            answer = get_answer_from_text(combined_context, question)
-            app.logger.debug(f'Received answer from Ollama: {answer[:100]}...')
+                # Stream model response with timeout handling
+                full_answer = ""
+                start_time = time.time()
+                yield json.dumps({'status': 'stream_start'}) + "\n"
+                
+                for chunk in get_answer_stream(combined_context, question):
+                    if time.time() - start_time > app.config['STREAM_TIMEOUT']:
+                        raise TimeoutError("Response generation timed out")
+                        
+                    yield json.dumps({'status': 'stream_chunk', 'content': chunk}) + "\n"
+                    full_answer += chunk
 
-            conversations[chat_id]['messages'].append({
-                'role': 'assistant',
-                'content': answer,
-                'sources': [f['path'] for f in file_contents],
-                'timestamp': datetime.now().isoformat()
-            })
+                # Finalize response
+                yield json.dumps({
+                    'status': 'stream_end',
+                    'sources': [f['path'] for f in file_contents],
+                    'conversation_id': chat_id
+                }) + "\n"
 
-            if len(conversations[chat_id]['messages']) == 2:
-                new_title = question[:30] + ("..." if len(question) > 30 else "")
-                conversations[chat_id]['title'] = new_title
-                app.logger.info(f'Updated chat title to: {new_title}')
+                # Save assistant reply after stream
+                conversations[chat_id]['messages'].append({
+                    'role': 'assistant',
+                    'content': full_answer,
+                    'sources': [f['path'] for f in file_contents],
+                    'timestamp': datetime.now().isoformat()
+                })
 
-            app.logger.info('Successfully processed chat request')
-            return jsonify({
-                'status': 'success',
-                'answer': answer,
-                'sources': [f['path'] for f in file_contents],
-                'conversation_id': chat_id
-            })
+                if len(conversations[chat_id]['messages']) == 2:
+                    new_title = question[:30] + ("..." if len(question) > 30 else "")
+                    conversations[chat_id]['title'] = new_title
+                    app.logger.info(f'Updated chat title to: {new_title}')
 
-        except Exception as e:
-            app.logger.error(f"Error processing chat request: {str(e)}", exc_info=True)
-            return jsonify({
-                'status': 'error',
-                'message': 'An error occurred while processing your request'
-            }), 500
+            except TimeoutError:
+                error_msg = "Error: Response generation timed out. Please try again with a simpler query."
+                app.logger.warning(error_msg)
+                yield json.dumps({'status': 'error', 'message': error_msg}) + "\n"
+            except Exception as e:
+                app.logger.error(f"Streaming error: {str(e)}", exc_info=True)
+                yield json.dumps({'status': 'error', 'message': str(e)}) + "\n"
 
+        return Response(stream_with_context(generate_response()), mimetype='application/x-ndjson')
+
+    # GET request: render chat interface
     app.logger.debug(f'Rendering chat interface for chat ID: {chat_id}')
     return render_template('chat.html',
-                        chat_id=chat_id,
-                        conversation=conversations[chat_id],
-                        chats=conversations)
+                           chat_id=chat_id,
+                           conversation=conversations[chat_id],
+                           chats=conversations)
 
 @app.route('/delete_chat/<chat_id>', methods=['POST'])
 def delete_chat(chat_id):
@@ -516,6 +547,7 @@ def get_file_content():
     
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
 @app.route('/progress_stream')
 def progress_stream():
     """Server-Sent Events for progress updates"""
@@ -557,7 +589,6 @@ def progress_stream():
     
     return Response(event_stream(), mimetype="text/event-stream")
 
-
 @app.template_filter('process_references')
 def process_references(text):
     """Template filter to process references in text"""
@@ -591,8 +622,28 @@ def process_references(text):
         text
     )
     
-    return processed_text
+    # Add references section if any references exist
+    if references:
+        references_section = '<div class="references-section"><h4>References</h4><ol>'
+        for ref in sorted(references, key=lambda x: x['id']):
+            ref_text = ref['filename']
+            if ref['page']:
+                ref_text += f", page {ref['page']}"
+            if ref['highlight']:
+                ref_text += f" ({ref['highlight']})"
+            references_section += f'<li id="ref-{ref["id"]}">{ref_text}</li>'
+        references_section += '</ol></div>'
+        
+        processed_text += references_section
     
+    return processed_text
+
+@app.after_request
+def after_request(response):
+    """Add headers to prevent timeouts"""
+    response.headers["X-Cloudflare-Time"] = "600"
+    response.headers["Connection"] = "keep-alive"
+    return response
 
 if __name__ == '__main__':
     try:
