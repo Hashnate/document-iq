@@ -341,3 +341,234 @@
 2025-06-29 12:43:39,317 - app - INFO - Starting application on port 8000
 2025-06-29 12:43:39,530 - app - INFO - Starting application on port 8000
 2025-06-29 15:52:50,728 - app - INFO - Starting application on port 8000
+2025-06-29 19:37:11,271 - app - INFO - Starting application on port 8000
+2025-06-30 11:28:27,311 - app - INFO - Starting application on port 8000
+2025-06-30 11:28:27,524 - app - INFO - Starting application on port 8000
+2025-06-30 11:28:55,184 - app - INFO - Successfully extracted ZIP file: Tender_Bulletin_01_13.02.2025.zip
+2025-06-30 11:28:56,254 - app - INFO - Received request to create new query
+2025-06-30 11:28:56,254 - app - INFO - Created new query with ID: 9c39c731-652e-4e30-8cd4-7b029082797b
+2025-06-30 11:28:56,264 - app - INFO - Received request for chat ID: 9c39c731-652e-4e30-8cd4-7b029082797b
+2025-06-30 11:29:07,856 - app - INFO - Received request for chat ID: 9c39c731-652e-4e30-8cd4-7b029082797b
+2025-06-30 11:29:07,858 - app - INFO - Processing files in extraction folder
+2025-06-30 11:30:04,977 - app - INFO - Updated chat title to: List the civil scope of servic...
+2025-06-30 11:32:38,743 - app - INFO - Received request for chat ID: 9c39c731-652e-4e30-8cd4-7b029082797b
+2025-06-30 11:32:38,745 - app - INFO - Processing files in extraction folder
+2025-06-30 11:35:47,333 - app - INFO - Received request to create new query
+2025-06-30 11:35:47,334 - app - INFO - Created new query with ID: 0d540dfe-0b3c-4436-966e-1753115241df
+2025-06-30 11:35:47,345 - app - INFO - Received request for chat ID: 0d540dfe-0b3c-4436-966e-1753115241df
+2025-06-30 11:36:16,802 - app - INFO - Received request to create new query
+2025-06-30 11:36:16,803 - app - INFO - Created new query with ID: 273bd8aa-bdf2-49bc-9acb-528ae9f83c7c
+2025-06-30 11:36:16,810 - app - INFO - Received request for chat ID: 273bd8aa-bdf2-49bc-9acb-528ae9f83c7c
+2025-06-30 11:36:55,480 - app - INFO - Received request for chat ID: 273bd8aa-bdf2-49bc-9acb-528ae9f83c7c
+2025-06-30 11:36:55,482 - app - INFO - Processing files in extraction folder
+2025-06-30 11:37:15,610 - app - INFO - Updated chat title to: list the vision for the soluti...
+2025-06-30 11:48:13,439 - app - INFO - Starting application on port 8000
+2025-06-30 11:48:15,733 - app - INFO - Starting application on port 8000
+2025-06-30 11:48:22,025 - app - INFO - Starting application on port 8000
+2025-06-30 11:48:23,314 - app - INFO - Starting application on port 8000
+2025-06-30 11:48:25,597 - app - INFO - Starting application on port 8000
+2025-06-30 11:48:54,104 - app - INFO - Starting application on port 8000
+2025-06-30 11:49:03,133 - app - INFO - Starting application on port 8000
+2025-06-30 11:49:03,330 - app - INFO - Starting application on port 8000
+2025-06-30 11:49:15,220 - app - INFO - Received request to create new query
+2025-06-30 11:49:15,221 - app - INFO - Created new query with ID: 059c885c-8971-4ec9-91fe-7773417fe4c0
+2025-06-30 11:49:15,236 - app - INFO - Received request for chat ID: 059c885c-8971-4ec9-91fe-7773417fe4c0
+2025-06-30 11:49:16,520 - app - INFO - Received request for chat ID: 059c885c-8971-4ec9-91fe-7773417fe4c0
+2025-06-30 11:49:16,521 - app - INFO - Processing files in extraction folder
+2025-06-30 11:49:47,132 - app - INFO - Starting application on port 8000
+2025-06-30 11:49:47,358 - app - INFO - Starting application on port 8000
+2025-06-30 11:49:52,381 - app - INFO - Received request to create new query
+2025-06-30 11:49:52,381 - app - INFO - Created new query with ID: b356e62a-605d-4fd4-8dc0-6f8a307c5bd7
+2025-06-30 11:49:52,389 - app - INFO - Received request for chat ID: b356e62a-605d-4fd4-8dc0-6f8a307c5bd7
+2025-06-30 11:49:55,116 - app - INFO - Received request for chat ID: b356e62a-605d-4fd4-8dc0-6f8a307c5bd7
+2025-06-30 11:49:55,117 - app - INFO - Processing files in extraction folder
+2025-06-30 11:50:29,582 - app - INFO - Updated chat title to: list the vision for the soluti...
+2025-06-30 11:51:11,054 - app - INFO - Starting application on port 8000
+2025-06-30 11:51:15,350 - app - INFO - Starting application on port 8000
+2025-06-30 11:51:21,392 - app - INFO - Starting application on port 8000
+2025-06-30 11:51:21,585 - app - INFO - Starting application on port 8000
+2025-06-30 11:51:28,578 - app - INFO - Received request to create new query
+2025-06-30 11:51:28,578 - app - INFO - Created new query with ID: a8cad3ed-5bb1-412d-8acb-89fdd6a0bb5d
+2025-06-30 11:51:28,586 - app - INFO - Received request for chat ID: a8cad3ed-5bb1-412d-8acb-89fdd6a0bb5d
+2025-06-30 11:51:50,903 - app - INFO - Received request for chat ID: a8cad3ed-5bb1-412d-8acb-89fdd6a0bb5d
+2025-06-30 11:51:50,904 - app - INFO - Processing files in extraction folder
+2025-06-30 11:52:08,443 - app - INFO - Updated chat title to: list the vision for the soluti...
+2025-06-30 11:54:44,765 - app - INFO - Starting application on port 8000
+2025-06-30 11:54:47,725 - app - INFO - Starting application on port 8000
+2025-06-30 11:54:47,919 - app - INFO - Starting application on port 8000
+2025-06-30 11:54:54,709 - app - INFO - Received request to create new query
+2025-06-30 11:54:54,710 - app - INFO - Created new query with ID: 399c185f-4b69-463e-a8ac-871d078431ab
+2025-06-30 11:54:54,720 - app - INFO - Received request for chat ID: 399c185f-4b69-463e-a8ac-871d078431ab
+2025-06-30 11:55:05,768 - app - INFO - Received request for chat ID: 399c185f-4b69-463e-a8ac-871d078431ab
+2025-06-30 11:55:05,769 - app - INFO - Processing files in extraction folder
+2025-06-30 11:55:41,346 - app - INFO - Updated chat title to: list the vision for solution
+2025-06-30 11:58:10,209 - app - INFO - Starting application on port 8000
+2025-06-30 11:58:13,507 - app - INFO - Starting application on port 8000
+2025-06-30 11:58:23,890 - app - INFO - Starting application on port 8000
+2025-06-30 12:01:22,730 - app - INFO - Received request to create new query
+2025-06-30 12:01:22,731 - app - INFO - Created new query with ID: a6352728-e01c-400d-a0bc-22b8194e22f8
+2025-06-30 12:01:22,739 - app - INFO - Received request for chat ID: a6352728-e01c-400d-a0bc-22b8194e22f8
+2025-06-30 12:01:29,493 - app - INFO - Received request for chat ID: a6352728-e01c-400d-a0bc-22b8194e22f8
+2025-06-30 12:01:29,494 - app - INFO - Processing files in extraction folder
+2025-06-30 12:02:14,274 - app - INFO - Updated chat title to: summarise it
+2025-06-30 12:03:51,804 - app - INFO - Received request for chat ID: a6352728-e01c-400d-a0bc-22b8194e22f8
+2025-06-30 12:03:51,808 - app - INFO - Processing files in extraction folder
+2025-06-30 12:05:26,427 - app - INFO - Received request for chat ID: a6352728-e01c-400d-a0bc-22b8194e22f8
+2025-06-30 12:05:26,429 - app - INFO - Processing files in extraction folder
+2025-06-30 12:08:47,957 - app - INFO - Received request for chat ID: a6352728-e01c-400d-a0bc-22b8194e22f8
+2025-06-30 12:08:47,962 - app - INFO - Processing files in extraction folder
+2025-06-30 12:39:17,249 - app - INFO - Starting application on port 8000
+2025-06-30 12:39:18,541 - app - INFO - Starting application on port 8000
+2025-06-30 12:39:21,246 - app - INFO - Starting application on port 8000
+2025-06-30 12:39:21,436 - app - INFO - Starting application on port 8000
+2025-06-30 12:40:15,218 - app - INFO - Successfully extracted ZIP file: New.zip
+2025-06-30 12:40:16,271 - app - INFO - Received request to create new query
+2025-06-30 12:40:16,271 - app - INFO - Created new query with ID: 44f8e92f-5be1-4654-a216-c3429ae6c6db
+2025-06-30 12:40:16,280 - app - INFO - Received request for chat ID: 44f8e92f-5be1-4654-a216-c3429ae6c6db
+2025-06-30 12:40:25,788 - app - INFO - Received request for chat ID: 44f8e92f-5be1-4654-a216-c3429ae6c6db
+2025-06-30 12:40:25,799 - app - INFO - Processing files in extraction folder
+2025-06-30 12:40:49,042 - app - INFO - Updated chat title to: what is the flight departure t...
+2025-06-30 12:41:04,920 - app - INFO - Received request for chat ID: 44f8e92f-5be1-4654-a216-c3429ae6c6db
+2025-06-30 12:41:04,923 - app - INFO - Processing files in extraction folder
+2025-06-30 12:41:56,538 - app - INFO - Successfully extracted ZIP file: Tender_Bulletin_01_13.02.2025.zip
+2025-06-30 12:41:57,551 - app - INFO - Received request to create new query
+2025-06-30 12:41:57,551 - app - INFO - Created new query with ID: 61e3788a-aa49-44f1-94dc-5bee0b476fd1
+2025-06-30 12:41:57,558 - app - INFO - Received request for chat ID: 61e3788a-aa49-44f1-94dc-5bee0b476fd1
+2025-06-30 12:42:08,326 - app - INFO - Received request for chat ID: 61e3788a-aa49-44f1-94dc-5bee0b476fd1
+2025-06-30 12:42:08,327 - app - INFO - Processing files in extraction folder
+2025-06-30 12:42:35,483 - app - INFO - Updated chat title to: list the civil scope of servic...
+2025-06-30 12:42:50,016 - app - INFO - Starting application on port 8000
+2025-06-30 12:42:50,224 - app - INFO - Starting application on port 8000
+2025-06-30 12:42:57,171 - app - INFO - Successfully extracted ZIP file: Tender_Bulletin_01_13.02.2025.zip
+2025-06-30 12:42:58,188 - app - INFO - Received request to create new query
+2025-06-30 12:42:58,188 - app - INFO - Created new query with ID: dc71ca28-c45e-41f7-93b5-4810efe66ee7
+2025-06-30 12:42:58,202 - app - INFO - Received request for chat ID: dc71ca28-c45e-41f7-93b5-4810efe66ee7
+2025-06-30 12:43:06,526 - app - INFO - Received request for chat ID: dc71ca28-c45e-41f7-93b5-4810efe66ee7
+2025-06-30 12:43:06,527 - app - INFO - Processing files in extraction folder
+2025-06-30 12:43:31,245 - app - INFO - Updated chat title to: list the civil scope of servic...
+2025-06-30 12:43:41,509 - app - INFO - Starting application on port 8000
+2025-06-30 12:45:06,663 - app - INFO - Successfully extracted ZIP file: Tender_Bulletin_01_13.02.2025.zip
+2025-06-30 12:45:07,680 - app - INFO - Received request to create new query
+2025-06-30 12:45:07,680 - app - INFO - Created new query with ID: 349f0d9f-d34c-42b5-a01c-29d00b680886
+2025-06-30 12:45:07,694 - app - INFO - Received request for chat ID: 349f0d9f-d34c-42b5-a01c-29d00b680886
+2025-06-30 12:45:14,912 - app - INFO - Received request for chat ID: 349f0d9f-d34c-42b5-a01c-29d00b680886
+2025-06-30 12:45:14,913 - app - INFO - Processing files in extraction folder
+2025-06-30 12:45:41,649 - app - INFO - Updated chat title to: list the civil scope of servic...
+2025-06-30 14:47:26,650 - app - INFO - Successfully extracted ZIP file: Tender_Bulletin_01_13.02.2025.zip
+2025-06-30 14:47:27,659 - app - INFO - Received request to create new query
+2025-06-30 14:47:27,660 - app - INFO - Created new query with ID: 7195659f-3302-462a-aa1d-7af116faebeb
+2025-06-30 14:47:27,669 - app - INFO - Received request for chat ID: 7195659f-3302-462a-aa1d-7af116faebeb
+2025-06-30 14:47:32,680 - app - INFO - Received request for chat ID: 7195659f-3302-462a-aa1d-7af116faebeb
+2025-06-30 14:47:32,681 - app - INFO - Processing files in extraction folder
+2025-06-30 14:48:19,583 - app - INFO - Updated chat title to: summarise it
+2025-06-30 14:48:54,236 - app - INFO - Received request to create new query
+2025-06-30 14:48:54,238 - app - INFO - Created new query with ID: 18a01fa3-b336-4219-b448-7a2dbbe7f4e8
+2025-06-30 14:48:54,292 - app - INFO - Received request for chat ID: 18a01fa3-b336-4219-b448-7a2dbbe7f4e8
+2025-06-30 14:49:11,888 - app - INFO - Successfully extracted ZIP file: New.zip
+2025-06-30 14:49:12,904 - app - INFO - Received request to create new query
+2025-06-30 14:49:12,904 - app - INFO - Created new query with ID: c73da247-2a1b-4917-a5af-17606ffd33cf
+2025-06-30 14:49:12,929 - app - INFO - Received request for chat ID: c73da247-2a1b-4917-a5af-17606ffd33cf
+2025-06-30 14:49:24,196 - app - INFO - Received request for chat ID: c73da247-2a1b-4917-a5af-17606ffd33cf
+2025-06-30 14:49:24,199 - app - INFO - Processing files in extraction folder
+2025-06-30 14:49:58,973 - app - INFO - Updated chat title to: summerise it\
+2025-06-30 14:53:06,004 - app - WARNING - Skipping large file: BNF-76.pdf (17835584 bytes)
+2025-06-30 14:53:06,006 - app - INFO - Successfully extracted ZIP file: BNF-76.pdf.zip
+2025-06-30 14:53:07,033 - app - INFO - Received request to create new query
+2025-06-30 14:53:07,033 - app - INFO - Created new query with ID: 3a917f72-0c21-484e-b2b7-07d5cc77197a
+2025-06-30 14:53:07,048 - app - INFO - Received request for chat ID: 3a917f72-0c21-484e-b2b7-07d5cc77197a
+2025-06-30 14:53:27,883 - app - INFO - Received request for chat ID: 3a917f72-0c21-484e-b2b7-07d5cc77197a
+2025-06-30 14:53:27,883 - app - INFO - Processing files in extraction folder
+2025-06-30 14:53:53,454 - app - INFO - Updated chat title to: which one is best? reason?
+2025-06-30 14:54:07,676 - app - WARNING - Skipping large file: BNF-76.pdf (17835584 bytes)
+2025-06-30 14:54:07,677 - app - INFO - Successfully extracted ZIP file: BNF-76.pdf.zip
+2025-06-30 14:54:08,699 - app - INFO - Received request to create new query
+2025-06-30 14:54:08,699 - app - INFO - Created new query with ID: 1f0cddfc-ae7c-457a-b4ea-d91ea3cc8aac
+2025-06-30 14:54:08,715 - app - INFO - Received request for chat ID: 1f0cddfc-ae7c-457a-b4ea-d91ea3cc8aac
+2025-06-30 14:54:27,100 - app - INFO - Starting application on port 8000
+2025-06-30 14:54:27,312 - app - INFO - Starting application on port 8000
+2025-06-30 14:54:34,235 - app - WARNING - Skipping large file: BNF-76.pdf (17835584 bytes)
+2025-06-30 14:54:34,236 - app - INFO - Successfully extracted ZIP file: BNF-76.pdf.zip
+2025-06-30 14:54:35,253 - app - INFO - Received request to create new query
+2025-06-30 14:54:35,253 - app - INFO - Created new query with ID: 33a2244d-4d77-48fd-9f78-6296ca31c9b9
+2025-06-30 14:54:35,267 - app - INFO - Received request for chat ID: 33a2244d-4d77-48fd-9f78-6296ca31c9b9
+2025-06-30 14:55:47,048 - app - WARNING - Skipping large file: BNF-76.pdf (17835584 bytes)
+2025-06-30 14:55:47,049 - app - WARNING - Skipping large file: BNF-78-1.pdf (18040940 bytes)
+2025-06-30 14:55:47,049 - app - INFO - Successfully extracted ZIP file: Archive_4.zip
+2025-06-30 14:55:48,071 - app - INFO - Received request to create new query
+2025-06-30 14:55:48,071 - app - INFO - Created new query with ID: 5b19faf2-857b-4df5-8f79-e66cbbdccb0e
+2025-06-30 14:55:48,088 - app - INFO - Received request for chat ID: 5b19faf2-857b-4df5-8f79-e66cbbdccb0e
+2025-06-30 14:56:06,718 - app - INFO - Received request to create new query
+2025-06-30 14:56:06,719 - app - INFO - Created new query with ID: 1d41a5a2-37a2-4c8b-8137-5e4a90b39410
+2025-06-30 14:56:06,733 - app - INFO - Received request for chat ID: 1d41a5a2-37a2-4c8b-8137-5e4a90b39410
+2025-06-30 14:56:25,824 - app - INFO - Received request to create new query
+2025-06-30 14:56:25,824 - app - INFO - Created new query with ID: 2ee2ee16-ec8a-46f2-8057-3286713e721c
+2025-06-30 14:56:25,840 - app - INFO - Received request for chat ID: 2ee2ee16-ec8a-46f2-8057-3286713e721c
+2025-06-30 14:56:43,829 - app - INFO - Received request for chat ID: 2ee2ee16-ec8a-46f2-8057-3286713e721c
+2025-06-30 14:56:43,830 - app - INFO - Processing files in extraction folder
+2025-06-30 14:56:43,831 - app - WARNING - File too large, skipping: /Users/ilhamsafeek/Documents/Projects/document-iq/extracted_files/BNF-78-1.pdf
+2025-06-30 14:56:43,831 - app - WARNING - File too large, skipping: /Users/ilhamsafeek/Documents/Projects/document-iq/extracted_files/BNF-76.pdf
+2025-06-30 14:57:12,405 - app - INFO - Updated chat title to: which one is better?reason?
+2025-06-30 14:57:26,098 - app - INFO - Received request to delete chat ID: 33a2244d-4d77-48fd-9f78-6296ca31c9b9
+2025-06-30 14:57:26,098 - app - INFO - Successfully deleted chat ID: 33a2244d-4d77-48fd-9f78-6296ca31c9b9
+2025-06-30 14:57:29,379 - app - INFO - Received request to delete chat ID: 5b19faf2-857b-4df5-8f79-e66cbbdccb0e
+2025-06-30 14:57:29,379 - app - INFO - Successfully deleted chat ID: 5b19faf2-857b-4df5-8f79-e66cbbdccb0e
+2025-06-30 14:57:32,047 - app - INFO - Received request to delete chat ID: 1d41a5a2-37a2-4c8b-8137-5e4a90b39410
+2025-06-30 14:57:32,048 - app - INFO - Successfully deleted chat ID: 1d41a5a2-37a2-4c8b-8137-5e4a90b39410
+2025-06-30 14:57:46,902 - app - WARNING - Skipping large file: BNF-76.pdf (17835584 bytes)
+2025-06-30 14:57:46,903 - app - WARNING - Skipping large file: BNF-78-1.pdf (18040940 bytes)
+2025-06-30 14:57:46,903 - app - INFO - Successfully extracted ZIP file: Archive_4.zip
+2025-06-30 14:57:47,924 - app - INFO - Received request to create new query
+2025-06-30 14:57:47,924 - app - INFO - Created new query with ID: a6797c37-045f-490e-a9fc-be3d8bbaf65f
+2025-06-30 14:57:47,939 - app - INFO - Received request for chat ID: a6797c37-045f-490e-a9fc-be3d8bbaf65f
+2025-06-30 14:57:58,957 - app - INFO - Starting application on port 8000
+2025-06-30 14:57:59,174 - app - INFO - Starting application on port 8000
+2025-06-30 14:58:05,983 - app - WARNING - Skipping large file: BNF-76.pdf (17835584 bytes)
+2025-06-30 14:58:05,983 - app - WARNING - Skipping large file: BNF-78-1.pdf (18040940 bytes)
+2025-06-30 14:58:05,983 - app - INFO - Successfully extracted ZIP file: Archive_4.zip
+2025-06-30 14:58:06,994 - app - INFO - Received request to create new query
+2025-06-30 14:58:06,994 - app - INFO - Created new query with ID: 880e44f0-6fb7-40eb-b2f7-c47c88da5a45
+2025-06-30 14:58:07,001 - app - INFO - Received request for chat ID: 880e44f0-6fb7-40eb-b2f7-c47c88da5a45
+2025-06-30 14:59:31,890 - app - INFO - Successfully extracted ZIP file: Tender_Bulletin_01_13.02.2025.zip
+2025-06-30 14:59:32,902 - app - INFO - Received request to create new query
+2025-06-30 14:59:32,903 - app - INFO - Created new query with ID: c83a4018-f5b9-4409-8438-739fef13e7c0
+2025-06-30 14:59:32,919 - app - INFO - Received request for chat ID: c83a4018-f5b9-4409-8438-739fef13e7c0
+2025-06-30 14:59:53,515 - app - INFO - Received request to create new query
+2025-06-30 14:59:53,515 - app - INFO - Created new query with ID: a0650e45-f8f8-44ab-a7a3-7c08a13b99d8
+2025-06-30 14:59:53,532 - app - INFO - Received request for chat ID: a0650e45-f8f8-44ab-a7a3-7c08a13b99d8
+2025-06-30 15:00:00,082 - app - INFO - Received request for chat ID: a0650e45-f8f8-44ab-a7a3-7c08a13b99d8
+2025-06-30 15:00:00,082 - app - INFO - Processing files in extraction folder
+2025-06-30 15:00:00,083 - app - WARNING - File too large, skipping: /Users/ilhamsafeek/Documents/Projects/document-iq/extracted_files/Archive_4_BNF-76.pdf
+2025-06-30 15:00:00,083 - app - WARNING - File too large, skipping: /Users/ilhamsafeek/Documents/Projects/document-iq/extracted_files/Archive_4_BNF-78-1.pdf
+2025-06-30 15:00:22,821 - app - INFO - Updated chat title to: which one is better?reason?
+2025-06-30 15:00:43,281 - app - INFO - Received request for chat ID: a0650e45-f8f8-44ab-a7a3-7c08a13b99d8
+2025-06-30 15:00:43,285 - app - INFO - Processing files in extraction folder
+2025-06-30 15:00:43,286 - app - WARNING - File too large, skipping: /Users/ilhamsafeek/Documents/Projects/document-iq/extracted_files/Archive_4_BNF-76.pdf
+2025-06-30 15:00:43,286 - app - WARNING - File too large, skipping: /Users/ilhamsafeek/Documents/Projects/document-iq/extracted_files/Archive_4_BNF-78-1.pdf
+2025-06-30 15:01:10,786 - app - INFO - Received request for chat ID: a0650e45-f8f8-44ab-a7a3-7c08a13b99d8
+2025-06-30 15:01:10,789 - app - INFO - Processing files in extraction folder
+2025-06-30 15:01:10,789 - app - WARNING - File too large, skipping: /Users/ilhamsafeek/Documents/Projects/document-iq/extracted_files/Archive_4_BNF-76.pdf
+2025-06-30 15:01:10,789 - app - WARNING - File too large, skipping: /Users/ilhamsafeek/Documents/Projects/document-iq/extracted_files/Archive_4_BNF-78-1.pdf
+2025-06-30 15:01:21,964 - app - INFO - Received request to delete chat ID: a0650e45-f8f8-44ab-a7a3-7c08a13b99d8
+2025-06-30 15:01:21,965 - app - INFO - Successfully deleted chat ID: a0650e45-f8f8-44ab-a7a3-7c08a13b99d8
+2025-06-30 15:01:24,043 - app - INFO - Received request to delete chat ID: c83a4018-f5b9-4409-8438-739fef13e7c0
+2025-06-30 15:01:24,043 - app - INFO - Successfully deleted chat ID: c83a4018-f5b9-4409-8438-739fef13e7c0
+2025-06-30 15:01:26,332 - app - INFO - Received request to delete chat ID: 880e44f0-6fb7-40eb-b2f7-c47c88da5a45
+2025-06-30 15:01:26,332 - app - INFO - Successfully deleted chat ID: 880e44f0-6fb7-40eb-b2f7-c47c88da5a45
+2025-06-30 15:01:27,150 - app - INFO - Received request to create new query
+2025-06-30 15:01:27,152 - app - INFO - Created new query with ID: bfca22e4-5f1c-4076-bc72-9d0f6315610d
+2025-06-30 15:01:27,219 - app - INFO - Received request for chat ID: bfca22e4-5f1c-4076-bc72-9d0f6315610d
+2025-06-30 15:01:33,552 - app - INFO - Received request to create new query
+2025-06-30 15:01:33,553 - app - INFO - Created new query with ID: dfa13396-3d45-4b0c-929c-bc65346bafc5
+2025-06-30 15:01:33,567 - app - INFO - Received request for chat ID: dfa13396-3d45-4b0c-929c-bc65346bafc5
+2025-06-30 15:01:36,773 - app - INFO - Received request for chat ID: dfa13396-3d45-4b0c-929c-bc65346bafc5
+2025-06-30 15:01:36,773 - app - INFO - Processing files in extraction folder
+2025-06-30 15:01:36,774 - app - WARNING - File too large, skipping: /Users/ilhamsafeek/Documents/Projects/document-iq/extracted_files/Archive_4_BNF-76.pdf
+2025-06-30 15:01:36,774 - app - WARNING - File too large, skipping: /Users/ilhamsafeek/Documents/Projects/document-iq/extracted_files/Archive_4_BNF-78-1.pdf
+2025-06-30 15:01:41,735 - app - INFO - Updated chat title to: summarise it
+2025-06-30 16:37:22,961 - app - INFO - Successfully extracted ZIP file: Tender_Bulletin_01_13.02.2025.zip
+2025-06-30 16:37:23,979 - app - INFO - Received request to create new query
+2025-06-30 16:37:23,980 - app - INFO - Created new query with ID: 9c044acc-a999-4635-8cce-2a4ac760b44b
+2025-06-30 16:37:24,001 - app - INFO - Received request for chat ID: 9c044acc-a999-4635-8cce-2a4ac760b44b
+2025-06-30 16:37:28,938 - app - INFO - Received request for chat ID: 9c044acc-a999-4635-8cce-2a4ac760b44b
+2025-06-30 16:37:28,938 - app - INFO - Processing files in extraction folder
+2025-06-30 16:38:10,418 - app - INFO - Updated chat title to: summarise it

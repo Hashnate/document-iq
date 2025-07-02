@@ -79,9 +79,11 @@
             </form>
         </div>
     </div>
-</div>
 
 <script>
+    // Global variable to track the current request
+    let currentRequestController = null;
+
     document.addEventListener('DOMContentLoaded', function() {
         // Initialize all components
         initChatForm();
@@ -96,6 +98,7 @@
         if (!chatForm) return;
 
         const textarea = chatForm.querySelector('textarea');
+        const sendButton = document.getElementById('send-button');
         
         // Auto-resize textarea
         textarea.addEventListener('input', function() {
@@ -118,11 +121,14 @@
             const question = textarea.value.trim();
             if (!question) return;
 
+            // Change send button to stop button
+            sendButton.innerHTML = '<i class="bi bi-stop-circle"></i>';
+            sendButton.classList.add('btn-stop-active');
+            sendButton.onclick = stopProcessing;
+
             // Disable form during processing
             textarea.disabled = true;
-            const submitButton = chatForm.querySelector('button[type="submit"]');
-            submitButton.disabled = true;
-            submitButton.innerHTML = '<i class="bi bi-arrow-clockwise spin"></i>';
+            sendButton.disabled = false;
 
             // Add user message
             addMessageToUI('user', question);
@@ -136,6 +142,10 @@
             );
 
             try {
+                // Create an AbortController for the request
+                const controller = new AbortController();
+                currentRequestController = controller;
+
                 // Send to server
                 const chatId = window.location.pathname.split('/').pop();
                 const response = await fetch(`/chat/${chatId}`, {
@@ -144,7 +154,8 @@
                         'Content-Type': 'application/json',
                         'X-Requested-With': 'XMLHttpRequest'
                     },
-                    body: JSON.stringify({ question: question })
+                    body: JSON.stringify({ question: question }),
+                    signal: controller.signal
                 });
 
                 if (!response.ok) throw new Error(await response.text());
@@ -189,21 +200,51 @@
                 }
 
             } catch (error) {
-                console.error('Error:', error);
-                updateMessageInUI(assistantMessageId, 'assistant', 
-                    'Error: Failed to process your request. Please try again.');
+                if (error.name !== 'AbortError') {
+                    console.error('Error:', error);
+                    updateMessageInUI(assistantMessageId, 'assistant', 
+                        'Error: Failed to process your request. Please try again.');
+                }
             } finally {
-                textarea.disabled = false;
-                textarea.value = '';
-                textarea.style.height = 'auto';
-                textarea.focus();
-                submitButton.disabled = false;
-                submitButton.innerHTML = '<i class="bi bi-send"></i>';
-                scrollToBottom();
+                resetForm();
             }
         });
-    }
 
+        function stopProcessing() {
+            if (currentRequestController) {
+                currentRequestController.abort();
+                currentRequestController = null;
+                
+                // Find and update the loading message
+                const loadingMessages = document.querySelectorAll('.loading-indicator');
+                if (loadingMessages.length > 0) {
+                    const lastLoadingMessage = loadingMessages[loadingMessages.length - 1];
+                    lastLoadingMessage.innerHTML = '<span>Processing stopped by user</span>';
+                }
+                
+                resetForm();
+            }
+        }
+
+        function resetForm() {
+            const sendButton = document.getElementById('send-button');
+            const textarea = document.querySelector('.chat-input');
+            
+            // Reset the button to send state
+            sendButton.innerHTML = '<i class="bi bi-send"></i>';
+            sendButton.classList.remove('btn-stop-active');
+            sendButton.onclick = null;
+            sendButton.disabled = false;
+            
+            // Reset other form elements
+            currentRequestController = null;
+            textarea.disabled = false;
+            textarea.value = '';
+            textarea.style.height = 'auto';
+            textarea.focus();
+            scrollToBottom();
+        }
+    }
     function initReferenceHandlers() {
         // Delegate reference clicks to the chat messages container
         document.getElementById('chat-messages').addEventListener('click', function(e) {
@@ -695,6 +736,31 @@
 
     .spin {
         animation: spin 1s linear infinite;
+    }
+
+    /* Add these new styles for the stop button and button container */
+    .chat-buttons {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+    }
+
+    .btn-stop {
+        height: 44px;
+        width: 44px;
+        border: none;
+        border-radius: 8px;
+        background-color: #f44336;
+        color: white;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background-color 0.2s;
+    }
+
+    .btn-stop:hover {
+        background-color: #d32f2f;
     }
 </style>
 {% endblock %}

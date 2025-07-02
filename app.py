@@ -15,6 +15,13 @@ import logging
 from logging.handlers import RotatingFileHandler
 import threading
 import re
+import hashlib
+from pdfminer.high_level import extract_text as pdfminer_extract
+import pdfplumber
+import markdown
+from bs4 import BeautifulSoup
+import csv
+import xml.etree.ElementTree as ET
 
 # Load environment variables
 load_dotenv()
@@ -37,36 +44,41 @@ progress_data = {
 }
 progress_lock = threading.Lock()
 
-# Enhanced Configuration with RunPod defaults
+# Enhanced Configuration with document processing improvements
 class Config:
     SECRET_KEY = os.getenv('SECRET_KEY', 'dev-secret-key')
     UPLOAD_FOLDER = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'uploads')
     EXTRACT_FOLDER = os.path.join(os.getcwd(), 'extracted_files')
-    ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'zip'}
+    CACHE_FOLDER = os.path.join(os.getcwd(), 'file_cache')
+    ALLOWED_EXTENSIONS = {'txt', 'pdf', 'docx', 'md', 'csv', 'json', 'xml', 'html'}
     MAX_CONTENT_LENGTH = 500 * 1024 * 1024  # 500MB
     OLLAMA_URL = os.getenv('OLLAMA_URL', 'http://127.0.0.1:11434/api/generate')
-    OLLAMA_MODEL = os.getenv('OLLAMA_MODEL', 'gemma3:12b')
-    OLLAMA_TIMEOUT = 600  # Increased to 10 minutes
-    MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB per file in ZIP
+    OLLAMA_MODEL = os.getenv('OLLAMA_MODEL', 'llama3:70b-instruct-q4_K_M')
+    OLLAMA_TIMEOUT = 600  # 10 minutes
+    MAX_FILE_SIZE = 100 * 1024 * 1024  # 100MB per file
     MAX_RETRIES = 3
     LOG_FILE = os.path.join(os.getcwd(), 'app.log')
     LOG_LEVEL = logging.INFO
-    SERVER_NAME = os.getenv('RUNPOD_ENDPOINT_URL', '0.0.0.0:8000')
-    PREFERRED_URL_SCHEME = 'https'
-    MAX_CONTEXT_LENGTH = 5000  # Characters per file
+    MAX_CONTEXT_LENGTH = 1000000  # Characters per file
     STREAM_TIMEOUT = 500  # Seconds
+    CACHE_EXPIRATION_SECONDS = 3600  # 1 hour
+    CHUNK_SIZE = 15000  # For text chunking
+    CHUNK_OVERLAP = 500  # Overlap between chunks
+    PDF_EXTRACTION_METHOD = 'pdfminer'  # Options: 'pdfminer', 'pdfplumber', 'pypdf2'
 
 # Initialize Flask app
 app = Flask(__name__)
 app.config.from_object(Config)
 
-# Ensure upload folder exists
+# Ensure directories exist
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+os.makedirs(app.config['EXTRACT_FOLDER'], exist_ok=True)
+os.makedirs(app.config['CACHE_FOLDER'], exist_ok=True)
 
-# Configure logging with rotation
+# Configure logging
 handler = RotatingFileHandler(
     app.config['LOG_FILE'],
-    maxBytes=10 * 1024 * 1024,  # 10MB
+    maxBytes=10 * 1024 * 1024,
     backupCount=3
 )
 handler.setLevel(app.config['LOG_LEVEL'])
@@ -75,23 +87,8 @@ handler.setFormatter(formatter)
 app.logger.addHandler(handler)
 logging.getLogger().setLevel(app.config['LOG_LEVEL'])
 
-
 # In-memory storage for conversations
 conversations = {}
-
-# Ensure directories exist with proper permissions
-def ensure_directories():
-    """Create required directories with proper permissions"""
-    dirs = [app.config['UPLOAD_FOLDER'], app.config['EXTRACT_FOLDER']]
-    for dir_path in dirs:
-        try:
-            os.makedirs(dir_path, exist_ok=True)
-            os.chmod(dir_path, 0o777)  # Ensure write permissions
-        except Exception as e:
-            app.logger.error(f"Failed to create directory {dir_path}: {str(e)}")
-            raise
-
-ensure_directories()
 
 def allowed_file(filename):
     """Check if the file has an allowed extension"""
@@ -102,7 +99,12 @@ def extract_zip(zip_path, extract_to):
     """Enhanced ZIP extraction with better error handling"""
     try:
         with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-            file_infos = [f for f in zip_ref.infolist() if not f.is_dir() and '__MACOSX' not in f.filename]
+            file_infos = [
+                f for f in zip_ref.infolist() 
+                if not f.is_dir() 
+                and '__MACOSX' not in f.filename
+                and allowed_file(f.filename)
+            ]
             total_files = len(file_infos)
             
             for i, file_info in enumerate(file_infos):
@@ -110,21 +112,17 @@ def extract_zip(zip_path, extract_to):
                     file_path = file_info.filename
                     target_path = os.path.join(extract_to, file_path)
                     
-                    # Skip files larger than MAX_FILE_SIZE
                     if file_info.file_size > app.config['MAX_FILE_SIZE']:
-                        app.logger.warning(f"Skipping large file: {file_path} ({file_info.file_size} bytes)")
+                        app.logger.warning(f"Skipping large file: {file_path}")
                         continue
                     
-                    # Ensure target directory exists
                     os.makedirs(os.path.dirname(target_path), exist_ok=True)
                     
-                    # Extract file
                     with zip_ref.open(file_info) as source, open(target_path, 'wb') as target:
                         shutil.copyfileobj(source, target)
                     
-                    # Update progress every 10 files
                     if i % 10 == 0:
-                        progress = 30 + int((i / total_files) * 60)  # 30-90% range
+                        progress = 30 + int((i / total_files) * 60)
                         update_progress(progress, 100, f"Extracting {os.path.basename(file_path)}...")
                         
                 except Exception as e:
@@ -137,92 +135,161 @@ def extract_zip(zip_path, extract_to):
     except Exception as e:
         raise ValueError(f"ZIP extraction failed: {str(e)}")
 
-def read_file(file_path):
-    """Improved file reading with better encoding handling and size limits"""
-    text = ""
-    file_ext = os.path.splitext(file_path)[1].lower()
-    
+def get_file_hash(file_path):
+    """Generate a hash for file caching"""
+    hasher = hashlib.md5()
+    with open(file_path, 'rb') as f:
+        for chunk in iter(lambda: f.read(4096), b''):
+            hasher.update(chunk)
+    return hasher.hexdigest()
+
+def read_pdf(file_path):
+    """Improved PDF reading with multiple extraction methods"""
     try:
-        if '__MACOSX' in file_path or file_path.endswith('._.DS_Store'):
-            return None
-            
-        # Check file size
-        if os.path.getsize(file_path) > app.config['MAX_FILE_SIZE']:
-            app.logger.warning(f"File too large, skipping: {file_path}")
-            return None
-            
-        # PDF files
-        if file_ext == '.pdf':
+        if app.config['PDF_EXTRACTION_METHOD'] == 'pdfminer':
+            text = pdfminer_extract(file_path)
+        elif app.config['PDF_EXTRACTION_METHOD'] == 'pdfplumber':
+            text = ""
+            with pdfplumber.open(file_path) as pdf:
+                for page in pdf.pages:
+                    text += page.extract_text() + "\n"
+        else:  # PyPDF2 fallback
             with open(file_path, 'rb') as file:
                 reader = PyPDF2.PdfReader(file)
                 text = "\n".join(page.extract_text() for page in reader.pages if page.extract_text())
+        return text
+    except Exception as e:
+        app.logger.error(f"PDF extraction failed for {file_path}: {str(e)}")
+        return None
+
+def read_docx(file_path):
+    """Enhanced DOCX reading with style information"""
+    try:
+        doc = docx.Document(file_path)
+        text = []
+        for para in doc.paragraphs:
+            if para.style.name.startswith('Heading'):
+                text.append(f"\n\n{para.text.upper()}\n")
+            else:
+                text.append(para.text)
+        return "\n".join(text)
+    except Exception as e:
+        app.logger.error(f"DOCX extraction failed for {file_path}: {str(e)}")
+        return None
+
+def read_markdown(file_path):
+    """Read markdown with HTML conversion for better structure"""
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            md_text = f.read()
+            html = markdown.markdown(md_text)
+            soup = BeautifulSoup(html, 'html.parser')
+            return soup.get_text()
+    except Exception as e:
+        app.logger.error(f"Markdown extraction failed for {file_path}: {str(e)}")
+        return None
+
+def read_csv(file_path):
+    """Read CSV with header detection"""
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            reader = csv.reader(f)
+            return "\n".join([", ".join(row) for row in reader])
+    except Exception as e:
+        app.logger.error(f"CSV extraction failed for {file_path}: {str(e)}")
+        return None
+
+def read_xml(file_path):
+    """Read XML with tag preservation"""
+    try:
+        tree = ET.parse(file_path)
+        root = tree.getroot()
+        return ET.tostring(root, encoding='utf-8', method='text').decode('utf-8')
+    except Exception as e:
+        app.logger.error(f"XML extraction failed for {file_path}: {str(e)}")
+        return None
+
+def read_html(file_path):
+    """Read HTML content"""
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            soup = BeautifulSoup(f.read(), 'html.parser')
+            return soup.get_text()
+    except Exception as e:
+        app.logger.error(f"HTML extraction failed for {file_path}: {str(e)}")
+        return None
+
+def read_file(file_path):
+    """Improved file reading with caching and better format support"""
+    # Check cache first
+    file_hash = get_file_hash(file_path)
+    cache_path = os.path.join(app.config['CACHE_FOLDER'], f"{file_hash}.txt")
+    
+    if os.path.exists(cache_path):
+        with open(cache_path, 'r', encoding='utf-8') as f:
+            return f.read()
+    
+    # Skip system files
+    if '__MACOSX' in file_path or file_path.endswith('._.DS_Store'):
+        return None
         
-        # Word documents
+    if os.path.getsize(file_path) > app.config['MAX_FILE_SIZE']:
+        app.logger.warning(f"File too large, skipping: {file_path}")
+        return None
+        
+    file_ext = os.path.splitext(file_path)[1].lower()
+    text = None
+    
+    try:
+        if file_ext == '.pdf':
+            text = read_pdf(file_path)
         elif file_ext == '.docx':
-            doc = docx.Document(file_path)
-            text = "\n".join(para.text for para in doc.paragraphs if para.text.strip())
-        
-        # Text files with encoding fallback
-        elif file_ext in ('.txt', '.md', '.csv', '.json', '.xml'):
+            text = read_docx(file_path)
+        elif file_ext in ('.md', '.markdown'):
+            text = read_markdown(file_path)
+        elif file_ext == '.csv':
+            text = read_csv(file_path)
+        elif file_ext == '.json':
+            with open(file_path, 'r', encoding='utf-8') as f:
+                text = json.dumps(json.load(f), indent=2)
+        elif file_ext == '.xml':
+            text = read_xml(file_path)
+        elif file_ext == '.html':
+            text = read_html(file_path)
+        elif file_ext == '.txt':
             encodings = ['utf-8', 'iso-8859-1', 'windows-1252']
             for encoding in encodings:
                 try:
-                    with open(file_path, 'r', encoding=encoding) as file:
-                        text = file.read(app.config['MAX_CONTEXT_LENGTH'])
+                    with open(file_path, 'r', encoding=encoding) as f:
+                        text = f.read(app.config['MAX_CONTEXT_LENGTH'])
                     break
                 except UnicodeDecodeError:
                     continue
-        
+    
+        # Cache the result
+        if text:
+            with open(cache_path, 'w', encoding='utf-8') as f:
+                f.write(text)
+                
     except Exception as e:
         app.logger.error(f"Error reading {file_path}: {str(e)}")
         return None
     
-    return text if text.strip() else None
+    return text if text and text.strip() else None
 
-def get_answer_stream(text, question):
-    """Stream response from Ollama API with timeout handling"""
-    prompt = (
-        f"Context: {text[:1500000]}\n\n"
-        f"Question: {question}\n"
-        "Provide a detailed, well-structured answer with the following formatting:\n"
-        "1. Use markdown formatting (**bold**, *italics*, bullet points, tables when appropriate)\n"
-        "2. For references, use this exact format: [^filename||page||highlight]\n"
-        "   - filename: source document name with extension\n"
-        "   - page: page number (if applicable)\n"
-        "   - highlight: key phrase from source (if applicable)\n"
-        "3. Place each reference marker immediately after the relevant claim or statement\n\n"
-        "Answer:"
-    )
+def chunk_text(text, chunk_size=None, overlap=None):
+    """Split text into manageable chunks with overlap"""
+    chunk_size = chunk_size or app.config['CHUNK_SIZE']
+    overlap = overlap or app.config['CHUNK_OVERLAP']
+    chunks = []
+    start = 0
     
-    try:
-        response = requests.post(
-            app.config['OLLAMA_URL'],
-            json={
-                "model": app.config['OLLAMA_MODEL'],
-                "prompt": prompt,
-                "stream": True,
-                "options": {
-                    "temperature": 0.3,
-                    "num_ctx": 8000,  # Reduced context window
-                    "num_predict": 500,  # Limit response length
-                    "format": "markdown"
-                }
-            },
-            stream=True,
-            timeout=app.config['OLLAMA_TIMEOUT']
-        )
-        response.raise_for_status()
+    while start < len(text):
+        end = start + chunk_size
+        chunks.append(text[start:end])
+        start = end - overlap
         
-        for line in response.iter_lines():
-            if line:
-                chunk = json.loads(line)
-                if 'response' in chunk:
-                    yield chunk['response']
-                    
-    except requests.exceptions.Timeout:
-        yield "Error: The request timed out. Please try again with a simpler query."
-    except requests.exceptions.RequestException as e:
-        yield f"Error: Failed to get streaming response. {str(e)}"
+    return chunks
 
 def clean_directory(directory):
     """Safely clean all files in directory"""
@@ -246,6 +313,54 @@ def update_progress(current, total, message="", redirect_url=None):
             progress_data['redirect_url'] = redirect_url
         if current >= total:
             progress_data['error'] = None
+
+def get_answer_stream(text, question):
+    """Enhanced streaming with better chunk handling"""
+    chunks = chunk_text(text)
+    
+    prompt = (
+        "You are an AI assistant analyzing documents. Use only the provided context.\n\n"
+        f"Question: {question}\n\n"
+        "Context:\n"
+        f"{chunks[0][:500000]}\n\n"  # Only send first chunk initially
+        "Instructions:\n"
+        "1. Answer using only the provided context\n"
+        "2. Use direct quotes with \"quotes\" or > blockquotes\n"
+        "3. Cite sources as [^filename||page||highlight]\n"
+        "4. If unsure, say 'Not found in context'\n"
+        "5. Use markdown formatting (**bold**, *italics*, bullet points, tables when appropriate)\n\n"
+        "Answer:"
+    )
+
+    try:
+        response = requests.post(
+            app.config['OLLAMA_URL'],
+            json={
+                "model": app.config['OLLAMA_MODEL'],
+                "prompt": prompt,
+                "stream": True,
+                "options": {
+                    "temperature": 0.3,
+                    "num_ctx": 8000,
+                    "num_predict": 1000,
+                    "format": "markdown"
+                }
+            },
+            stream=True,
+            timeout=app.config['OLLAMA_TIMEOUT']
+        )
+        response.raise_for_status()
+
+        for line in response.iter_lines():
+            if line:
+                chunk = json.loads(line)
+                if 'response' in chunk:
+                    yield chunk['response']
+
+    except requests.exceptions.Timeout:
+        yield "Error: The request timed out. Please try again with a simpler query."
+    except requests.exceptions.RequestException as e:
+        yield f"Error: Failed to get streaming response. {str(e)}"
 
 @app.template_filter('datetimeformat')
 def datetimeformat(value, format='%b %d, %H:%M'):
@@ -306,24 +421,44 @@ def chat(chat_id):
                     'timestamp': datetime.now().isoformat()
                 })
 
-                # Prepare file context with size limits
-                file_contents = []
-                app.logger.info('Processing files in extraction folder')
-                for root, _, files in os.walk(app.config['EXTRACT_FOLDER']):
-                    for file in files:
-                        file_path = os.path.join(root, file)
-                        try:
-                            text = read_file(file_path)
-                            if text:
-                                file_contents.append({
-                                    'filename': file,
-                                    'path': os.path.relpath(file_path, app.config['EXTRACT_FOLDER']),
-                                    'text': text
-                                })
-                                app.logger.debug(f'Processed file: {file}')
-                        except Exception as e:
-                            app.logger.error(f"Error processing {file_path}: {str(e)}")
-                            continue
+                # Check if we have cached file contents and if they're still valid
+                use_cached = False
+                if 'file_contents' in conversations[chat_id]:
+                    last_updated = conversations[chat_id].get('file_contents_updated')
+                    if last_updated:
+                        cache_age = (datetime.now() - datetime.fromisoformat(last_updated)).total_seconds()
+                        if cache_age < app.config['CACHE_EXPIRATION_SECONDS']:
+                            use_cached = True
+                            app.logger.info('Using valid cached file contents')
+
+                if not use_cached:
+                    # Process files only if not already cached or cache expired
+                    file_contents = []
+                    app.logger.info('Processing files in extraction folder (first time or cache expired)')
+                    for root, _, files in os.walk(app.config['EXTRACT_FOLDER']):
+                        for file in files:
+                            file_path = os.path.join(root, file)
+                            try:
+                                text = read_file(file_path)
+                                if text:
+                                    file_contents.append({
+                                        'filename': file,
+                                        'path': os.path.relpath(file_path, app.config['EXTRACT_FOLDER']),
+                                        'text': text
+                                    })
+                                    app.logger.debug(f'Processed file: {file}')
+                            except Exception as e:
+                                app.logger.error(f"Error processing {file_path}: {str(e)}")
+                                continue
+                    
+                    # Cache the file contents for future queries
+                    conversations[chat_id]['file_contents'] = file_contents
+                    conversations[chat_id]['file_contents_updated'] = datetime.now().isoformat()
+                    app.logger.info(f'Cached file contents for chat {chat_id}')
+                else:
+                    # Use cached file contents
+                    file_contents = conversations[chat_id]['file_contents']
+                    app.logger.info('Using cached file contents for faster response')
 
                 combined_context = "\n\n".join(
                     f"[FILE: {file['path']}]\n{file['text'][:app.config['MAX_CONTEXT_LENGTH']]}"
@@ -386,6 +521,11 @@ def delete_chat(chat_id):
     app.logger.info(f'Received request to delete chat ID: {chat_id}')
     try:
         if chat_id in conversations:
+            # Clear any cached file contents
+            if 'file_contents' in conversations[chat_id]:
+                del conversations[chat_id]['file_contents']
+            if 'file_contents_updated' in conversations[chat_id]:
+                del conversations[chat_id]['file_contents_updated']
             del conversations[chat_id]
             app.logger.info(f'Successfully deleted chat ID: {chat_id}')
             return jsonify({'success': True}), 200
@@ -401,7 +541,13 @@ def index():
         try:
             clean_directory(app.config['UPLOAD_FOLDER'])
             clean_directory(app.config['EXTRACT_FOLDER'])
-            app.logger.debug('Cleaned upload and extract directories')
+            # Clear all cached file contents in conversations
+            for chat_id in conversations:
+                if 'file_contents' in conversations[chat_id]:
+                    del conversations[chat_id]['file_contents']
+                if 'file_contents_updated' in conversations[chat_id]:
+                    del conversations[chat_id]['file_contents_updated']
+            app.logger.debug('Cleaned upload and extract directories and cleared file caches')
         except Exception as e:
             app.logger.error(f'Cleanup error: {str(e)}')
             flash('Error cleaning previous files', 'error')
@@ -430,10 +576,10 @@ def index():
                 file.save(save_path)
                 saved_files.append(filename)
                 
-                # Extract ZIP to extracted_files folder
+                # Extract ZIP to extracted_files folder (only text files)
                 try:
                     extract_zip(save_path, extract_folder)
-                    app.logger.info(f'Successfully extracted ZIP file: {filename}')
+                    app.logger.info(f'Successfully extracted text files from ZIP: {filename}')
                 except Exception as e:
                     app.logger.error(f'Failed to extract ZIP file {filename}: {str(e)}')
                     return jsonify({
@@ -441,7 +587,12 @@ def index():
                         'files': saved_files
                     }), 400
             else:
-                # For non-ZIP files, save directly to extracted_files folder
+                # For non-ZIP files, only allow text files
+                if not allowed_file(filename):
+                    app.logger.warning(f'Skipping non-text file upload: {filename}')
+                    continue
+                    
+                # Save directly to extracted_files folder
                 path_parts = filename.split('/')
                 
                 if len(path_parts) > 1:
@@ -455,8 +606,11 @@ def index():
                 file.save(save_path)
                 saved_files.append(filename)
         
+        if not saved_files:
+            return jsonify({'error': 'No valid text files were uploaded'}), 400
+        
         return jsonify({
-            'message': 'Files uploaded successfully',
+            'message': 'Text files uploaded successfully',
             'files': saved_files
         })
     
@@ -499,7 +653,7 @@ def get_file_structure():
 
 @app.route('/get_file_content')
 def get_file_content():
-    """Return file content using the full relative path"""
+    """Enhanced file content endpoint with chunking support"""
     rel_path = request.args.get('path')
     page_num = request.args.get('page', '')
     highlight = request.args.get('highlight', '')
@@ -513,35 +667,17 @@ def get_file_content():
         return jsonify({'error': 'File not found'}), 404
     
     try:
-        file_ext = os.path.splitext(full_path)[1].lower()
-        content = ""
-        
-        if file_ext == '.pdf':
-            with open(full_path, 'rb') as file:
-                reader = PyPDF2.PdfReader(file)
-                
-                # If specific page requested
-                if page_num and page_num.isdigit():
-                    page_idx = int(page_num) - 1
-                    if 0 <= page_idx < len(reader.pages):
-                        content = reader.pages[page_idx].extract_text() or ""
-                    else:
-                        content = f"Page {page_num} not found in document\n\n"
-                        content += "\n".join(page.extract_text() for page in reader.pages if page.extract_text())
-                else:
-                    content = "\n".join(page.extract_text() for page in reader.pages if page.extract_text())
-        
-        elif file_ext == '.docx':
-            doc = docx.Document(full_path)
-            content = "\n".join(para.text for para in doc.paragraphs if para.text.strip())
-        
-        elif file_ext in ('.txt', '.md', '.csv', '.json', '.xml'):
-            with open(full_path, 'r', encoding='utf-8', errors='ignore') as file:
-                content = file.read()
+        content = read_file(full_path)
+        if not content:
+            return jsonify({'error': 'Could not read file content'}), 400
+            
+        # Chunk the content for large files
+        chunks = chunk_text(content)
         
         return jsonify({
             'file': os.path.basename(full_path),
-            'content': content,
+            'content': chunks[0],  # First chunk
+            'total_chunks': len(chunks),
             'path': rel_path
         })
     
@@ -647,7 +783,6 @@ def after_request(response):
 
 if __name__ == '__main__':
     try:
-        # check_environment()
         app.logger.info('Starting application on port 8000')
         app.run(
             host='0.0.0.0',
