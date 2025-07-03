@@ -3,8 +3,8 @@
 {% block content %}
 <div class="app-container">
     <div class="sidebar">
-        <button class="btn-new-chat" onclick="location.href='{{ url_for('new_chat') }}'">
-            <i class="bi bi-plus-lg"></i> New Query
+        <button class="btn-new-chat" onclick="location.href='{{ url_for('index') }}'">
+            <i class="bi bi-plus-lg"></i> New Upload
         </button>
         <div class="chat-history">
             {% for id, chat in chats.items() %}
@@ -21,7 +21,7 @@
         </div>
     </div>
 
-    <div class="chat-container">
+    <div class="chat-container" id="chat-container">
         <div class="chat-messages" id="chat-messages">
             {% for message in conversation.messages %}
             <div class="message {% if message.role == 'assistant' %}message-assistant{% else %}message-user{% endif %}">
@@ -42,30 +42,70 @@
                     </div>
                     {% if message.role == 'assistant' and message.sources %}
                     <div class="message-sources">
-                        <div class="supported-files-title">Sources:</div>
-                        {% for source in message.sources %}
-                        <div class="message-source" onclick="showFilePreview('{{ source }}')">
-                            <i class="bi bi-file-text message-source-icon"></i>
-                            <span>{{ source }}</span>
+                        <div class="sources-header">
+                            <span class="supported-files-title">Sources:</span>
+                            {% if message.sources|length > 2 %}
+                            <button class="btn-toggle-sources" onclick="toggleSources(this)">
+                                Show more
+                            </button>
+                            {% endif %}
                         </div>
-                        {% endfor %}
+                        <div class="sources-list" style="{% if message.sources|length > 2 %}display: none;{% endif %}">
+                            {% for source in message.sources %}
+                            <div class="message-source" onclick="showFilePreview('{{ source }}')">
+                                <i class="bi bi-file-text message-source-icon"></i>
+                                <span>{{ source }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
                     </div>
                     {% endif %}
                 </div>
             </div>
             {% endfor %}
+            
+            <!-- Empty State Placeholder -->
+            <div id="empty-state-placeholder" class="empty-state {% if conversation.messages %}hidden{% endif %}">
+                <div class="empty-state-content">
+                    <i class="bi bi-folder2-open"></i>
+                    <h4>Documents Ready</h4>
+                    <p>Your files have been uploaded successfully.</p>
+                    <div class="uploaded-files-preview">
+                        {% for file in uploaded_files|slice(3) %}
+                        <div class="file-preview-item">
+                            <i class="bi bi-file-text"></i>
+                            <span>{{ file }}</span>
+                        </div>
+                        {% endfor %}
+                        {% if uploaded_files|length > 3 %}
+                        <div class="file-preview-more">
+                            +{{ uploaded_files|length - 3 }} more files
+                        </div>
+                        {% endif %}
+                    </div>
+                    <p class="prompt-text">Ask your first question to begin analyzing these documents.</p>
+                </div>
+            </div>
         </div>
 
-        <!-- File preview container -->
-        <div id="file-preview-container" class="file-preview-container">
-            <div class="file-preview-header">
-                <h6>Document Preview</h6>
-                <button id="close-preview" class="btn-close" onclick="closeFilePreview()">
-                    <i class="bi bi-x-lg"></i>
-                </button>
+        <!-- Preview Modal Bottom Sheet -->
+        <div id="preview-modal" class="preview-modal">
+            <div class="preview-modal-header">
+                <h6 id="preview-title">Document Preview</h6>
+                <div class="preview-actions">
+                    <button class="btn-preview-action" onclick="togglePreviewModal()">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
             </div>
-            <div id="file-preview-content" class="file-preview-content"></div>
-            <div id="file-preview-meta" class="file-preview-meta"></div>
+            <div class="preview-resize-handle"></div>
+            <div id="preview-content" class="preview-content">
+                <div class="preview-placeholder">
+                    <i class="bi bi-file-earmark-text"></i>
+                    <p>Select a reference to view document content</p>
+                </div>
+            </div>
+            <div id="preview-meta" class="preview-meta"></div>
         </div>
 
         <div class="chat-input-container">
@@ -79,18 +119,27 @@
             </form>
         </div>
     </div>
+</div>
 
 <script>
     // Global variable to track the current request
     let currentRequestController = null;
+    let isPreviewModalOpen = false;
+    let previewModalHeight = 300; // Default height in pixels
 
     document.addEventListener('DOMContentLoaded', function() {
         // Initialize all components
         initChatForm();
         initReferenceHandlers();
-        initFilePreview();
+        initResizablePreview();
         initChatHistory();
         scrollToBottom();
+        
+        // Focus the input field for better UX
+        const chatInput = document.querySelector('.chat-input');
+        if (chatInput) {
+            chatInput.focus();
+        }
     });
 
     function initChatForm() {
@@ -121,6 +170,12 @@
             const question = textarea.value.trim();
             if (!question) return;
 
+            // Hide empty state placeholder
+            const placeholder = document.getElementById('empty-state-placeholder');
+            if (placeholder) {
+                placeholder.classList.add('hidden');
+            }
+
             // Change send button to stop button
             sendButton.innerHTML = '<i class="bi bi-stop-circle"></i>';
             sendButton.classList.add('btn-stop-active');
@@ -131,14 +186,13 @@
             sendButton.disabled = false;
 
             // Add user message
-            addMessageToUI('user', question);
+            const userMessageId = addMessageToUI('user', question);
 
-            // Add loading indicator for assistant
+            // Add dynamic status container for processing updates
             const assistantMessageId = addMessageToUI('assistant', 
-                '<div class="loading-indicator">' +
-                '<div class="loading-spinner"></div>' +
-                '<span>Processing your request...</span>' +
-                '</div>'
+                `<div class="dynamic-status-container">
+                    <div class="status-message" id="status-message">🔍 Starting processing...</div>
+                </div>`
             );
 
             try {
@@ -179,10 +233,19 @@
                         
                         try {
                             const data = JSON.parse(line);
-                            if (data.status === 'stream_chunk') {
+                            
+                            if (data.status === 'status_update') {
+                                updateProcessingStatus(data.message, data.progress, data.error);
+                            }
+                            else if (data.status === 'stream_chunk') {
+                                // Replace the status container with the actual answer
+                                if (document.getElementById('dynamic-status-container')) {
+                                    document.getElementById('dynamic-status-container').remove();
+                                }
                                 fullAnswer += data.content;
                                 updateMessageInUI(assistantMessageId, 'assistant', fullAnswer);
-                            } else if (data.status === 'stream_end') {
+                            }
+                            else if (data.status === 'stream_end') {
                                 // Finalize the message with sources if available
                                 updateMessageInUI(
                                     assistantMessageId, 
@@ -190,6 +253,13 @@
                                     fullAnswer, 
                                     data.sources || []
                                 );
+                            }
+                            else if (data.status === 'title_update') {
+                                // Update chat title in sidebar
+                                const chatItem = document.querySelector(`.chat-item-wrapper[data-chat-id="${data.chat_id}"] .chat-item-title`);
+                                if (chatItem) {
+                                    chatItem.textContent = data.title;
+                                }
                             }
                         } catch (e) {
                             console.error('Error parsing chunk:', e);
@@ -202,6 +272,7 @@
             } catch (error) {
                 if (error.name !== 'AbortError') {
                     console.error('Error:', error);
+                    updateProcessingStatus(`❌ Error: ${error.message}`, 100, true);
                     updateMessageInUI(assistantMessageId, 'assistant', 
                         'Error: Failed to process your request. Please try again.');
                 }
@@ -215,12 +286,8 @@
                 currentRequestController.abort();
                 currentRequestController = null;
                 
-                // Find and update the loading message
-                const loadingMessages = document.querySelectorAll('.loading-indicator');
-                if (loadingMessages.length > 0) {
-                    const lastLoadingMessage = loadingMessages[loadingMessages.length - 1];
-                    lastLoadingMessage.innerHTML = '<span>Processing stopped by user</span>';
-                }
+                // Update the status message
+                updateProcessingStatus('🛑 Processing stopped by user', 100, true);
                 
                 resetForm();
             }
@@ -245,8 +312,246 @@
             scrollToBottom();
         }
     }
+
+    function initResizablePreview() {
+        const resizeHandle = document.querySelector('.preview-resize-handle');
+        const modal = document.getElementById('preview-modal');
+        const chatContainer = document.getElementById('chat-container');
+        
+        resizeHandle.addEventListener('mousedown', function(e) {
+            e.preventDefault();
+            document.addEventListener('mousemove', resize);
+            document.addEventListener('mouseup', stopResize);
+        });
+
+        function resize(e) {
+            const newHeight = window.innerHeight - e.clientY;
+            if (newHeight > 150 && newHeight < window.innerHeight - 100) {
+                previewModalHeight = newHeight;
+                modal.style.height = `${newHeight}px`;
+                chatContainer.style.paddingBottom = `${newHeight}px`;
+            }
+        }
+
+        function stopResize() {
+            document.removeEventListener('mousemove', resize);
+            document.removeEventListener('mouseup', stopResize);
+        }
+    }
+
+    function togglePreviewModal() {
+        const modal = document.getElementById('preview-modal');
+        const chatContainer = document.getElementById('chat-container');
+        isPreviewModalOpen = !isPreviewModalOpen;
+        
+        if (isPreviewModalOpen) {
+            modal.style.display = 'flex';
+            modal.style.height = `${previewModalHeight}px`;
+            chatContainer.style.paddingBottom = `${previewModalHeight}px`;
+            document.body.classList.add('preview-modal-open');
+        } else {
+            modal.style.display = 'none';
+            chatContainer.style.paddingBottom = '0';
+            document.body.classList.remove('preview-modal-open');
+        }
+    }
+
+    async function showFilePreview(filename, page = '', highlight = '') {
+        const previewContent = document.getElementById('preview-content');
+        const previewMeta = document.getElementById('preview-meta');
+        const previewTitle = document.getElementById('preview-title');
+        
+        // Show loading state
+        previewContent.innerHTML = `
+            <div class="preview-loading">
+                <div class="loading-spinner"></div>
+                <span>Loading document...</span>
+            </div>
+        `;
+        
+        // Show the modal if not already open
+        if (!isPreviewModalOpen) {
+            togglePreviewModal();
+        }
+        
+        try {
+            const fileExt = filename.split('.').pop().toLowerCase();
+            const shortName = filename.split('/').pop().split('\\').pop();
+            
+            // Update title immediately
+            previewTitle.textContent = `Preview: ${shortName}`;
+            
+            // Encode the filename for URL
+            const encodedFilename = encodeURIComponent(filename);
+            const url = `/get_file_content?path=${encodedFilename}&page=${page}&highlight=${encodeURIComponent(highlight)}`;
+            
+            // Handle different file types
+            if (['pdf'].includes(fileExt)) {
+                // PDF files - use iframe
+                previewContent.innerHTML = `
+                    <div class="pdf-preview-container">
+                        <iframe 
+                            src="${url}" 
+                            class="pdf-preview-frame"
+                            title="PDF Preview: ${shortName}"
+                        ></iframe>
+                    </div>
+                `;
+            } 
+            else if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExt)) {
+                // Image files - direct display
+                previewContent.innerHTML = `
+                    <div class="image-preview-container">
+                        <img 
+                            src="${url}" 
+                            alt="${shortName}" 
+                            class="image-preview"
+                            onerror="this.onerror=null;this.parentElement.innerHTML='<div class=\'preview-error\'><i class=\'bi bi-exclamation-triangle\'></i><p>Error loading image</p></div>'"
+                        >
+                    </div>
+                `;
+            }
+            else if (['txt', 'md', 'csv', 'json', 'xml', 'html', 'log'].includes(fileExt)) {
+                // Text-based files - fetch and display
+                const response = await fetch(url);
+                
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.error || 'Failed to load file');
+                }
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                let content = data.content || 'No content available';
+                
+                // Apply highlighting if specified
+                if (highlight) {
+                    try {
+                        const escapedHighlight = highlight.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                        const highlightRegex = new RegExp(`(${escapedHighlight})`, 'gi');
+                        content = content.replace(highlightRegex, '<mark>$1</mark>');
+                    } catch (e) {
+                        console.warn('Failed to apply highlight:', e);
+                    }
+                }
+                
+                // Format the content
+                let formattedContent = content
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/\n/g, '<br>')
+                    .replace(/\t/g, '&nbsp;&nbsp;&nbsp;&nbsp;');
+                
+                // Add syntax highlighting for JSON
+                if (fileExt === 'json') {
+                    try {
+                        const jsonObj = JSON.parse(content);
+                        formattedContent = syntaxHighlight(jsonObj);
+                    } catch (e) {
+                        // Fall back to plain text if not valid JSON
+                    }
+                }
+                
+                previewContent.innerHTML = `
+                    <div class="preview-document ${fileExt}">
+                        <pre>${formattedContent}</pre>
+                    </div>
+                `;
+            }
+            else {
+                throw new Error('Unsupported file type');
+            }
+            
+            // Update metadata section
+            previewMeta.innerHTML = `
+                <div class="preview-meta-item">
+                    <i class="bi bi-file-earmark"></i>
+                    <span>${shortName}</span>
+                </div>
+                ${page ? `<div class="preview-meta-item">
+                    <i class="bi bi-file-text"></i>
+                    <span>Page ${page}</span>
+                </div>` : ''}
+                ${highlight ? `<div class="preview-meta-item">
+                    <i class="bi bi-search"></i>
+                    <span>"${highlight}"</span>
+                </div>` : ''}
+                <div class="preview-meta-item">
+                    <i class="bi bi-download"></i>
+                    <a href="${url}&download=true" download="${shortName}">Download</a>
+                </div>
+            `;
+            
+        } catch (error) {
+            console.error('Error loading preview:', error);
+            previewContent.innerHTML = `
+                <div class="preview-error">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <p>${error.message || 'Error loading document'}</p>
+                </div>
+            `;
+        }
+    }
+
+    // Helper function for JSON syntax highlighting
+    function syntaxHighlight(json) {
+        if (typeof json != 'string') {
+            json = JSON.stringify(json, null, 2);
+        }
+        json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        return json.replace(
+            /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, 
+            function(match) {
+                let cls = 'number';
+                if (/^"/.test(match)) {
+                    if (/:$/.test(match)) {
+                        cls = 'key';
+                    } else {
+                        cls = 'string';
+                    }
+                } else if (/true|false/.test(match)) {
+                    cls = 'boolean';
+                } else if (/null/.test(match)) {
+                    cls = 'null';
+                }
+                return '<span class="' + cls + '">' + match + '</span>';
+            }
+        );
+    }
+    
+    function updateProcessingStatus(message, progress, isError = false) {
+        const statusEl = document.getElementById('status-message');
+        
+        if (statusEl) {
+            statusEl.textContent = message;
+            if (isError) {
+                statusEl.style.color = '#dc3545';
+                statusEl.classList.add('error');
+            } else {
+                statusEl.style.color = '';
+                statusEl.classList.remove('error');
+            }
+        }
+    }
+
+    function toggleSources(button) {
+        const sourcesList = button.closest('.message-sources').querySelector('.sources-list');
+        const isHidden = sourcesList.style.display === 'none';
+        
+        if (isHidden) {
+            sourcesList.style.display = 'block';
+            button.textContent = 'Hide';
+        } else {
+            sourcesList.style.display = 'none';
+            button.textContent = 'Show more';
+        }
+    }
+
     function initReferenceHandlers() {
-        // Delegate reference clicks to the chat messages container
         document.getElementById('chat-messages').addEventListener('click', function(e) {
             const refLink = e.target.closest('.reference-link');
             if (refLink) {
@@ -259,27 +564,7 @@
         });
     }
 
-    function initFilePreview() {
-        // Close preview when clicking outside
-        document.addEventListener('click', function(e) {
-            const previewContainer = document.getElementById('file-preview-container');
-            if (previewContainer.style.display === 'block' && 
-                !previewContainer.contains(e.target) &&
-                !e.target.closest('.reference-link')) {
-                closeFilePreview();
-            }
-        });
-
-        // Close with ESC key
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                closeFilePreview();
-            }
-        });
-    }
-
     function initChatHistory() {
-        // Delete chat functionality
         document.querySelectorAll('.btn-delete-chat').forEach(button => {
             button.addEventListener('click', function(e) {
                 e.preventDefault();
@@ -326,7 +611,7 @@
     }
 
     function addMessageToUI(role, content) {
-        const messageId = 'msg-' + Date.now();
+        const messageId = 'msg-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
         const chatMessages = document.getElementById('chat-messages');
 
         const messageDiv = document.createElement('div');
@@ -356,15 +641,21 @@
         let sourcesHTML = '';
 
         if (sources && sources.length > 0) {
+            const showToggle = sources.length > 2;
             sourcesHTML = `
                 <div class="message-sources">
-                    <div class="supported-files-title">Sources:</div>
-                    ${sources.map(source => `
-                        <div class="message-source" onclick="showFilePreview('${escapeHtml(source)}')">
-                            <i class="bi bi-file-text message-source-icon"></i>
-                            <span>${escapeHtml(source.split('/').pop().split('\\').pop())}</span>
-                        </div>
-                    `).join('')}
+                    <div class="sources-header">
+                        <span class="supported-files-title">Sources:</span>
+                        ${showToggle ? '<button class="btn-toggle-sources" onclick="toggleSources(this)">Show more</button>' : ''}
+                    </div>
+                    <div class="sources-list" style="${showToggle ? 'display: none;' : ''}">
+                        ${sources.map(source => `
+                            <div class="message-source" onclick="showFilePreview('${escapeHtml(source)}')">
+                                <i class="bi bi-file-text message-source-icon"></i>
+                                <span>${escapeHtml(source.split('/').pop().split('\\').pop())}</span>
+                            </div>
+                        `).join('')}
+                    </div>
                 </div>
             `;
         }
@@ -383,7 +674,6 @@
         let documentCounter = 0;
         const documentMap = new Map();
         
-        // Process markdown formatting
         let processed = content
             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
             .replace(/\*(.*?)\*/g, '<em>$1</em>')
@@ -394,7 +684,6 @@
             .replace(/^\s*\d+\.\s+(.*$)/gm, '<li>$1</li>')
             .replace(/\n/g, '<br>');
 
-        // Process references with document-based numbering
         processed = processed.replace(
             /\[\^([^\|\]]+)(?:\|\|([^\|\]]+))?(?:\|\|([^\|\]]+))?\]/g, 
             function(match, filename, page, highlight) {
@@ -427,51 +716,9 @@
 
     function scrollToBottom() {
         const chatMessages = document.getElementById('chat-messages');
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-    }
-
-    async function showFilePreview(filename, page = '', highlight = '') {
-        const previewContainer = document.getElementById('file-preview-container');
-        const previewContent = document.getElementById('file-preview-content');
-        const previewMeta = document.getElementById('file-preview-meta');
-
-        previewContainer.style.display = 'block';
-        previewContent.innerHTML = `
-            <div class="loading-indicator">
-                <div class="loading-spinner"></div>
-                <span>Loading file content...</span>
-            </div>
-        `;
-
-        try {
-            const response = await fetch(`/get_file_content?path=${encodeURIComponent(filename)}&page=${page}&highlight=${encodeURIComponent(highlight)}`);
-            const data = await response.json();
-
-            if (data.error) throw new Error(data.error);
-
-            let content = data.content || 'No content found';
-            if (highlight) {
-                const highlightRegex = new RegExp(`(${highlight.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')})`, 'gi');
-                content = content.replace(highlightRegex, '<mark>$1</mark>');
-            }
-
-            previewContent.innerHTML = `<pre>${escapeHtml(content)}</pre>`;
-            previewMeta.innerHTML = `Showing: <strong>${escapeHtml(filename.split('/').pop().split('\\').pop())}</strong>${page ? `, page ${page}` : ''}`;
-
-            // Scroll to highlight if found
-            const mark = previewContent.querySelector('mark');
-            if (mark) {
-                mark.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                previewContent.scrollTop = Math.max(0, mark.offsetTop - 100);
-            }
-        } catch (error) {
-            previewContent.innerHTML = `<div class="error-message">Error loading file: ${error.message}</div>`;
-            console.error('Error loading file:', error);
+        if (chatMessages) {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
         }
-    }
-
-    function closeFilePreview() {
-        document.getElementById('file-preview-container').style.display = 'none';
     }
 </script>
 <style>
@@ -484,15 +731,10 @@
         border-radius: 8px;
     }
 
-    /* .message-user {
+    .message-user {
         background-color: #f0f7ff;
         border: 1px solid #d0e3ff;
-    } */
-
-    /* .message-assistant {
-        background-color: #f9f9f9;
-        border: 1px solid #e5e5e5;
-    } */
+    }
 
     .message-avatar {
         flex-shrink: 0;
@@ -516,34 +758,104 @@
         word-wrap: break-word;
     }
 
-    .message-text pre {
-        background-color: #f5f5f5;
-        padding: 0.75rem;
-        border-radius: 4px;
-        overflow-x: auto;
+    /* Empty state placeholder */
+    .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: calc(100% - 100px);
+        text-align: center;
+        padding: 2rem;
+        color: #6c757d;
     }
 
-    .message-text code {
-        font-family: 'Courier New', monospace;
-        background-color: #f5f5f5;
-        padding: 0.2em 0.4em;
-        border-radius: 3px;
-        font-size: 0.9em;
+    .empty-state.hidden {
+        display: none;
     }
 
-    .message-text table {
-        border-collapse: collapse;
+    .empty-state i.bi {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        color: #adb5bd;
+    }
+
+    .empty-state h4 {
+        margin-bottom: 0.5rem;
+        color: #495057;
+    }
+
+    .uploaded-files-preview {
+        max-width: 400px;
         width: 100%;
-        margin: 1rem 0;
+        margin: 1rem auto;
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 1rem;
     }
 
-    .message-text th, .message-text td {
-        border: 1px solid #ddd;
-        padding: 8px;
+    .file-preview-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem;
+        text-align: left;
+        border-bottom: 1px solid #e9ecef;
     }
 
-    .message-text th {
-        background-color: #f2f2f2;
+    .file-preview-item:last-child {
+        border-bottom: none;
+    }
+
+    .file-preview-more {
+        padding: 0.5rem;
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+
+    .prompt-text {
+        margin-top: 1rem;
+        font-style: italic;
+        color: #6c757d;
+    }
+
+    /* Status message styling */
+    .status-message {
+        margin-bottom: 0.5rem;
+        font-size: 0.95rem;
+        min-height: 1.5em;
+        position: relative;
+        padding-left: 1.5rem;
+    }
+
+    .status-message::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 0.8rem;
+        height: 0.8rem;
+        border-radius: 50%;
+        background-color: var(--primary-color);
+        animation: pulse 1.5s infinite ease-in-out;
+    }
+
+    .status-message.error::before {
+        background-color: #dc3545;
+        animation: pulse-error 0.75s infinite ease-in-out;
+    }
+
+    @keyframes pulse {
+        0% { transform: translateY(-50%) scale(1); opacity: 1; }
+        50% { transform: translateY(-50%) scale(1.2); opacity: 0.7; }
+        100% { transform: translateY(-50%) scale(1); opacity: 1; }
+    }
+
+    @keyframes pulse-error {
+        0% { transform: translateY(-50%) scale(1); opacity: 1; }
+        50% { transform: translateY(-50%) scale(1.3); opacity: 0.5; }
+        100% { transform: translateY(-50%) scale(1); opacity: 1; }
     }
 
     /* Reference styling */
@@ -556,110 +868,50 @@
         border-radius: 2px;
         cursor: pointer;
         vertical-align: super;
+        transition: all 0.2s ease;
     }
 
     .reference-link:hover {
         background-color: var(--primary-color);
         color: white;
+        transform: translateY(-1px);
     }
 
-    /* File preview styling */
-    .file-preview-container {
-        display: none;
-        position: fixed;
-        right: 20px;
-        bottom: 80px;
-        width: 400px;
-        max-height: 60vh;
-        background: white;
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        z-index: 1000;
-        border: 1px solid #e5e7eb;
-        overflow: hidden;
-    }
-
-    .file-preview-header {
-        padding: 12px 16px;
-        background: #f9fafb;
-        border-bottom: 1px solid #e5e7eb;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .file-preview-header h6 {
-        margin: 0;
-        font-size: 1rem;
-    }
-
-    .file-preview-header .btn-close {
-        background: none;
-        border: none;
-        cursor: pointer;
-        color: #6b7280;
-    }
-
-    .file-preview-content {
-        padding: 16px;
-        overflow-y: auto;
-        max-height: calc(60vh - 100px);
-    }
-
-    .file-preview-content pre {
-        white-space: pre-wrap;
-        font-family: 'Courier New', monospace;
-        font-size: 0.9rem;
-        line-height: 1.5;
-        margin: 0;
-    }
-
-    .file-preview-content mark {
-        background-color: #ffeb3b;
-        padding: 0 2px;
-    }
-
-    .file-preview-meta {
-        padding: 8px 16px;
-        font-size: 0.8rem;
-        color: #6b7280;
-        background: #f9fafb;
-        border-top: 1px solid #e5e7eb;
-    }
-
-    /* Loading indicator */
-    .loading-indicator {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        color: #6b7280;
-        font-size: 0.875rem;
-    }
-
-    .loading-spinner {
-        width: 16px;
-        height: 16px;
-        border: 2px solid rgba(16, 163, 127, 0.2);
-        border-top-color: var(--primary-color);
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-        from { transform: rotate(0deg); }
-        to { transform: rotate(360deg); }
-    }
-
-    /* Sources list */
+    /* Sources section styling */
     .message-sources {
         margin-top: 1rem;
         font-size: 0.875rem;
-        color: #6b7280;
+    }
+
+    .sources-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
     }
 
     .supported-files-title {
         font-weight: 500;
-        margin-bottom: 0.5rem;
+    }
+
+    .btn-toggle-sources {
+        background: none;
+        border: none;
+        color: var(--primary-color);
+        cursor: pointer;
+        font-size: 0.8rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+    }
+
+    .btn-toggle-sources:hover {
+        background-color: rgba(16, 163, 127, 0.1);
+    }
+
+    .sources-list {
+        max-height: 200px;
+        overflow-y: auto;
+        transition: max-height 0.3s ease;
     }
 
     .message-source {
@@ -678,6 +930,189 @@
 
     .message-source-icon {
         color: #9ca3af;
+    }
+
+    /* Preview Modal Styles */
+    .preview-modal {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: white;
+        border-top: 1px solid #e5e7eb;
+        box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
+        z-index: 1000;
+        display: none;
+        height: 300px;
+        flex-direction: column;
+        transition: height 0.2s ease;
+    }
+
+    .preview-modal-open {
+        --preview-modal-height: 300px;
+    }
+
+    .preview-modal-header {
+        padding: 12px 16px;
+        background: #f9fafb;
+        border-bottom: 1px solid #e5e7eb;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .preview-modal-header h6 {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 500;
+        color: #333;
+    }
+
+    .preview-actions {
+        display: flex;
+        gap: 8px;
+    }
+
+    .btn-preview-action {
+        background: none;
+        border: none;
+        color: #6b7280;
+        cursor: pointer;
+        padding: 4px;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .btn-preview-action:hover {
+        background-color: rgba(0, 0, 0, 0.05);
+    }
+
+    .preview-resize-handle {
+        height: 8px;
+        cursor: ns-resize;
+        background-color: #f9fafb;
+        border-top: 1px solid #e5e7eb;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .preview-resize-handle:hover {
+        background-color: #e5e7eb;
+    }
+
+    .preview-content {
+        flex-grow: 1;
+        overflow-y: auto;
+        padding: 0;
+        background: white;
+    }
+
+    .preview-content .preview-document {
+        padding: 16px;
+    }
+
+    .preview-document pre {
+        white-space: pre-wrap;
+        font-family: 'Courier New', monospace;
+        font-size: 0.9rem;
+        line-height: 1.5;
+        margin: 0;
+        color: #333;
+        background-color: #f8fafc;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        overflow-x: auto;
+    }
+
+    .preview-document mark {
+        background-color: #fef08a;
+        padding: 0 0.2em;
+        border-radius: 0.25em;
+    }
+
+    .preview-meta {
+        padding: 8px 16px;
+        font-size: 0.8rem;
+        color: #6b7280;
+        background: #f9fafb;
+        border-top: 1px solid #e5e7eb;
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .preview-meta-item {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .preview-meta-item a {
+        color: #3b82f6;
+        text-decoration: none;
+    }
+
+    .preview-meta-item a:hover {
+        text-decoration: underline;
+    }
+
+    .preview-placeholder {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: #9ca3af;
+    }
+
+    .preview-placeholder i {
+        font-size: 2rem;
+        margin-bottom: 8px;
+    }
+
+    .preview-placeholder p {
+        margin: 0;
+        font-size: 0.9rem;
+    }
+
+    .preview-loading {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        gap: 8px;
+        color: #6b7280;
+    }
+
+    .loading-spinner {
+        width: 24px;
+        height: 24px;
+        border: 3px solid rgba(0, 0, 0, 0.1);
+        border-radius: 50%;
+        border-top-color: var(--primary-color);
+        animation: spin 1s linear infinite;
+    }
+
+    .preview-error {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        gap: 8px;
+        color: #dc3545;
+    }
+
+    .preview-error i {
+        font-size: 2rem;
+    }
+
+    /* Adjust chat container when preview is open */
+    .chat-container {
+        padding-bottom: 0;
+        transition: padding-bottom 0.2s ease;
     }
 
     /* Chat input */
@@ -734,33 +1169,57 @@
         cursor: not-allowed;
     }
 
+    .btn-stop-active {
+        background-color: #f44336 !important;
+    }
+
+    .btn-stop-active:hover {
+        background-color: #d32f2f !important;
+    }
+
     .spin {
         animation: spin 1s linear infinite;
     }
 
-    /* Add these new styles for the stop button and button container */
-    .chat-buttons {
-        display: flex;
-        gap: 0.5rem;
-        align-items: center;
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
     }
 
-    .btn-stop {
-        height: 44px;
-        width: 44px;
+    /* PDF Preview Styles */
+    .pdf-preview-container {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+    }
+
+    .pdf-preview-frame {
+        width: 100%;
+        height: 100%;
         border: none;
-        border-radius: 8px;
-        background-color: #f44336;
-        color: white;
-        cursor: pointer;
+    }
+
+    /* Image Preview Styles */
+    .image-preview-container {
+        width: 100%;
+        height: 100%;
         display: flex;
         align-items: center;
         justify-content: center;
-        transition: background-color 0.2s;
+        overflow: auto;
     }
 
-    .btn-stop:hover {
-        background-color: #d32f2f;
+    .image-preview {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
     }
+
+    /* Syntax highlighting for JSON */
+    .preview-document.json .key { color: #d946ef; }
+    .preview-document.json .string { color: #65a30d; }
+    .preview-document.json .number { color: #2563eb; }
+    .preview-document.json .boolean { color: #9333ea; }
+    .preview-document.json .null { color: #64748b; }
 </style>
 {% endblock %}

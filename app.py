@@ -22,6 +22,7 @@ import markdown
 from bs4 import BeautifulSoup
 import csv
 import xml.etree.ElementTree as ET
+from flask import send_file
 
 # Load environment variables
 load_dotenv()
@@ -319,18 +320,42 @@ def get_answer_stream(text, question):
     chunks = chunk_text(text)
     
     prompt = (
-        "You are an AI assistant analyzing documents. Use only the provided context.\n\n"
-        f"Question: {question}\n\n"
-        "Context:\n"
-        f"{chunks[0][:500000]}\n\n"  # Only send first chunk initially
-        "Instructions:\n"
-        "1. Answer using only the provided context\n"
-        "2. Use direct quotes with \"quotes\" or > blockquotes\n"
-        "3. Cite sources as [^filename||page||highlight]\n"
-        "4. If unsure, say 'Not found in context'\n"
-        "5. Use markdown formatting (**bold**, *italics*, bullet points, tables when appropriate)\n\n"
-        "Answer:"
-    )
+    "You are an AI assistant analyzing legal documents. Use only the provided context.\n\n"
+    f"Question: {question}\n\n"
+    "Context:\n"
+    f"{chunks[0][:500000]}\n\n"  # Only send first chunk initially
+    "STRICT INSTRUCTIONS:\n"
+    "1. **Find and output the exact section** that answers the question, including:\n"
+    "   - Full section number/title (e.g., '4.2 Confidentiality')\n"
+    "   - The complete text of the section without any modifications\n"
+    "   - Any subsections if relevant\n"
+    "2. **Preserve all original formatting**, including:\n"
+    "   - Line breaks\n"
+    "   - Bullet points/numbering\n"
+    "   - Legal terminology\n"
+    "   - Capitalization\n"
+    "3. Use exactly one of these response formats:\n"
+    "   ```\n"
+    "    [SECTION NUMBER] [SECTION TITLE]\n"
+    "   [EXACT TEXT VERBATIM]\n"
+    "   ```\n"
+    "   OR\n"
+    "   > [EXACT QUOTE FROM TEXT]\n"
+    "4. Every response that includes a section or quote must end with a citation in the format: [^filename||page||section-heading]\n"
+    "   - This citation is mandatory. Do not omit it under any circumstance.\n"
+    "5. If no matching section is found, respond ONLY with: 'Not found in context'\n"
+    "6. **Never**:\n"
+    "   - Paraphrase or summarize\n"
+    "   - Add interpretation\n"
+    "   - Combine text from different sections\n"
+    "   - Modify legal terms or definitions\n\n"
+    "7. Format the answer for readability:\n"
+    "   - Make the section number and title appear in **bold** (e.g., **§ 4.2 Confidentiality**)\n"
+    "   - Ensure subsections are properly indented and aligned under their main section\n"
+    "   - Use *italics* for emphasis where used in the original text\n"
+    "   - Use double quotes or > blockquotes when quoting portions within the section\n"
+    "Answer:"
+)
 
     try:
         response = requests.post(
@@ -371,21 +396,45 @@ def datetimeformat(value, format='%b %d, %H:%M'):
 
 @app.route('/new_chat', methods=['GET', 'POST'])
 def new_chat():
-    """Create a new query session"""
+    """Create a new query session with initial message"""
     app.logger.info('Received request to create new query')
     try:
         chat_id = str(uuid.uuid4())
+        
+        # Get uploaded files information
+        uploaded_files = []
+        for root, _, files in os.walk(app.config['UPLOAD_FOLDER']):
+            for file in files:
+                if not file.startswith('.') and not file == '__MACOSX':
+                    uploaded_files.append(file)
+        
+        # Create initial message based on uploaded files
+        initial_message = "Files uploaded successfully. 'Type your search query' in the Query bar below."
+        if uploaded_files:
+            file_list = "\n".join(f"- {file}" for file in uploaded_files[:5])  # Show first 5 files
+            if len(uploaded_files) > 5:
+                file_list += f"\n- ...and {len(uploaded_files) - 5} more files"
+            initial_message = f"{file_list}\n\nUploaded. 'Type your search query' in the Query bar below."
+        
         conversations[chat_id] = {
             'created_at': datetime.now().isoformat(),
             'title': 'New Query',
-            'messages': []
+            'messages': [
+                {
+                    'role': 'assistant',
+                    'content': initial_message,
+                    'timestamp': datetime.now().isoformat()
+                }
+            ]
         }
+        
         app.logger.info(f'Created new query with ID: {chat_id}')
         return redirect(url_for('chat', chat_id=chat_id))
     except Exception as e:
         app.logger.error(f'Error creating new query: {str(e)}', exc_info=True)
         flash('Error creating new query session', 'error')
         return redirect(url_for('index'))
+
 
 @app.route('/chat/<chat_id>', methods=['GET', 'POST'])
 def chat(chat_id):
@@ -421,7 +470,14 @@ def chat(chat_id):
                     'timestamp': datetime.now().isoformat()
                 })
 
-                # Check if we have cached file contents and if they're still valid
+                # Initial status update
+                yield json.dumps({
+                    'status': 'status_update',
+                    'message': '🔍 Preparing to process files...',
+                    'progress': 0
+                }) + "\n"
+
+                # Check if we have cached file contents
                 use_cached = False
                 if 'file_contents' in conversations[chat_id]:
                     last_updated = conversations[chat_id].get('file_contents_updated')
@@ -429,44 +485,75 @@ def chat(chat_id):
                         cache_age = (datetime.now() - datetime.fromisoformat(last_updated)).total_seconds()
                         if cache_age < app.config['CACHE_EXPIRATION_SECONDS']:
                             use_cached = True
-                            app.logger.info('Using valid cached file contents')
+                            file_contents = conversations[chat_id]['file_contents']
+                            yield json.dumps({
+                                'status': 'status_update',
+                                'message': f'⚡ Using cached content from {len(file_contents)} files',
+                                'progress': 30
+                            }) + "\n"
 
                 if not use_cached:
-                    # Process files only if not already cached or cache expired
-                    file_contents = []
-                    app.logger.info('Processing files in extraction folder (first time or cache expired)')
+                    # Count all files first
+                    all_files = []
                     for root, _, files in os.walk(app.config['EXTRACT_FOLDER']):
                         for file in files:
                             file_path = os.path.join(root, file)
-                            try:
-                                text = read_file(file_path)
-                                if text:
-                                    file_contents.append({
-                                        'filename': file,
-                                        'path': os.path.relpath(file_path, app.config['EXTRACT_FOLDER']),
-                                        'text': text
-                                    })
-                                    app.logger.debug(f'Processed file: {file}')
-                            except Exception as e:
-                                app.logger.error(f"Error processing {file_path}: {str(e)}")
-                                continue
+                            if not file.startswith('.') and not file == '__MACOSX':
+                                all_files.append(file_path)
                     
-                    # Cache the file contents for future queries
+                    total_files = len(all_files)
+                    processed_files = 0
+                    file_contents = []
+
+                    yield json.dumps({
+                        'status': 'status_update',
+                        'message': f'📂 Found {total_files} files to process...',
+                        'progress': 5
+                    }) + "\n"
+
+                    # Process each file
+                    for i, file_path in enumerate(all_files):
+                        try:
+                            text = read_file(file_path)
+                            if text:
+                                file_contents.append({
+                                    'filename': os.path.basename(file_path),
+                                    'path': os.path.relpath(file_path, app.config['EXTRACT_FOLDER']),
+                                    'text': text
+                                })
+                            
+                            processed_files += 1
+                            progress = 5 + int((i / total_files) * 25)
+                            
+                            # Update every 5 files or when done
+                            if i % 5 == 0 or i == total_files - 1:
+                                yield json.dumps({
+                                    'status': 'status_update',
+                                    'message': f'📄 Processing {os.path.basename(file_path)} ({processed_files}/{total_files})',
+                                    'progress': progress
+                                }) + "\n"
+                                
+                        except Exception as e:
+                            app.logger.error(f"Error processing {file_path}: {str(e)}")
+                            continue
+
+                    # Cache the results
                     conversations[chat_id]['file_contents'] = file_contents
                     conversations[chat_id]['file_contents_updated'] = datetime.now().isoformat()
-                    app.logger.info(f'Cached file contents for chat {chat_id}')
-                else:
-                    # Use cached file contents
-                    file_contents = conversations[chat_id]['file_contents']
-                    app.logger.info('Using cached file contents for faster response')
 
+                # Combine context
                 combined_context = "\n\n".join(
                     f"[FILE: {file['path']}]\n{file['text'][:app.config['MAX_CONTEXT_LENGTH']]}"
                     for file in file_contents
                 ) if file_contents else "No files available for context"
-                app.logger.debug(f'Combined context length: {len(combined_context)}')
 
-                # Stream model response with timeout handling
+                yield json.dumps({
+                    'status': 'status_update',
+                    'message': '🧠 Analyzing content...',
+                    'progress': 60
+                }) + "\n"
+
+                # Stream AI response
                 full_answer = ""
                 start_time = time.time()
                 yield json.dumps({'status': 'stream_start'}) + "\n"
@@ -477,15 +564,33 @@ def chat(chat_id):
                         
                     yield json.dumps({'status': 'stream_chunk', 'content': chunk}) + "\n"
                     full_answer += chunk
+                    
+                    # Update progress during streaming
+                    current_progress = 60 + int((len(full_answer) / 10000) * 30)  # Estimate based on answer length
+                    if current_progress > 90:
+                        current_progress = 90
+                    
+                    if int(time.time() - start_time) % 2 == 0:  # Update every 2 seconds
+                        yield json.dumps({
+                            'status': 'status_update',
+                            'message': '✍️ Generating response...',
+                            'progress': current_progress
+                        }) + "\n"
 
-                # Finalize response
+                # Final updates
+                yield json.dumps({
+                    'status': 'status_update',
+                    'message': '✅ Processing complete',
+                    'progress': 100
+                }) + "\n"
+
                 yield json.dumps({
                     'status': 'stream_end',
                     'sources': [f['path'] for f in file_contents],
                     'conversation_id': chat_id
                 }) + "\n"
 
-                # Save assistant reply after stream
+                # Save assistant reply
                 conversations[chat_id]['messages'].append({
                     'role': 'assistant',
                     'content': full_answer,
@@ -493,27 +598,42 @@ def chat(chat_id):
                     'timestamp': datetime.now().isoformat()
                 })
 
+                # Update chat title if first response
                 if len(conversations[chat_id]['messages']) == 2:
                     new_title = question[:30] + ("..." if len(question) > 30 else "")
                     conversations[chat_id]['title'] = new_title
-                    app.logger.info(f'Updated chat title to: {new_title}')
+                    yield json.dumps({
+                        'status': 'title_update',
+                        'title': new_title,
+                        'chat_id': chat_id
+                    }) + "\n"
 
             except TimeoutError:
-                error_msg = "Error: Response generation timed out. Please try again with a simpler query."
-                app.logger.warning(error_msg)
+                error_msg = "⏱️ Error: Response generation timed out"
+                yield json.dumps({
+                    'status': 'status_update',
+                    'message': error_msg,
+                    'progress': 100,
+                    'error': True
+                }) + "\n"
                 yield json.dumps({'status': 'error', 'message': error_msg}) + "\n"
             except Exception as e:
-                app.logger.error(f"Streaming error: {str(e)}", exc_info=True)
+                error_msg = f"❌ Error: {str(e)}"
+                yield json.dumps({
+                    'status': 'status_update',
+                    'message': error_msg,
+                    'progress': 100,
+                    'error': True
+                }) + "\n"
                 yield json.dumps({'status': 'error', 'message': str(e)}) + "\n"
 
         return Response(stream_with_context(generate_response()), mimetype='application/x-ndjson')
 
-    # GET request: render chat interface
-    app.logger.debug(f'Rendering chat interface for chat ID: {chat_id}')
+    # GET request remains the same
     return render_template('chat.html',
-                           chat_id=chat_id,
-                           conversation=conversations[chat_id],
-                           chats=conversations)
+                         chat_id=chat_id,
+                         conversation=conversations[chat_id],
+                         chats=conversations)
 
 @app.route('/delete_chat/<chat_id>', methods=['POST'])
 def delete_chat(chat_id):
@@ -541,6 +661,7 @@ def index():
         try:
             clean_directory(app.config['UPLOAD_FOLDER'])
             clean_directory(app.config['EXTRACT_FOLDER'])
+            clean_directory(app.config['CACHE_FOLDER'])
             # Clear all cached file contents in conversations
             for chat_id in conversations:
                 if 'file_contents' in conversations[chat_id]:
@@ -653,7 +774,7 @@ def get_file_structure():
 
 @app.route('/get_file_content')
 def get_file_content():
-    """Enhanced file content endpoint with chunking support"""
+    """Enhanced file content endpoint with PDF and image support"""
     rel_path = request.args.get('path')
     page_num = request.args.get('page', '')
     highlight = request.args.get('highlight', '')
@@ -661,28 +782,58 @@ def get_file_content():
     if not rel_path:
         return jsonify({'error': 'File path required'}), 400
     
-    full_path = os.path.join(app.config['EXTRACT_FOLDER'], rel_path)
-    
-    if not os.path.exists(full_path):
-        return jsonify({'error': 'File not found'}), 404
-    
     try:
+        # Security check - prevent directory traversal
+        if '..' in rel_path or rel_path.startswith('/'):
+            return jsonify({'error': 'Invalid file path'}), 400
+        
+        # Normalize path (handle different OS path separators)
+        rel_path = rel_path.replace('\\', '/')  # Convert Windows paths to Unix-style
+        full_path = os.path.join(app.config['EXTRACT_FOLDER'], *rel_path.split('/'))
+        full_path = os.path.normpath(full_path)  # Normalize path
+        
+        # Verify the path is within the extract folder
+        if not full_path.startswith(os.path.abspath(app.config['EXTRACT_FOLDER'])):
+            return jsonify({'error': 'Access denied'}), 403
+        
+        if not os.path.exists(full_path):
+            app.logger.error(f"File not found: {full_path} (resolved from {rel_path})")
+            return jsonify({'error': 'File not found'}), 404
+        
+        file_ext = os.path.splitext(full_path)[1].lower()[1:]  # Remove the dot
+        
+        # Handle PDF files
+        if file_ext == 'pdf':
+            return send_file(
+                full_path,
+                mimetype='application/pdf',
+                as_attachment=False
+            )
+        
+        # Handle image files
+        if file_ext in ['jpg', 'jpeg', 'png', 'gif']:
+            mimetype = f'image/{file_ext}' if file_ext != 'jpg' else 'image/jpeg'
+            return send_file(
+                full_path,
+                mimetype=mimetype,
+                as_attachment=False
+            )
+        
+        # Handle text files
         content = read_file(full_path)
         if not content:
             return jsonify({'error': 'Could not read file content'}), 400
             
-        # Chunk the content for large files
-        chunks = chunk_text(content)
-        
         return jsonify({
             'file': os.path.basename(full_path),
-            'content': chunks[0],  # First chunk
-            'total_chunks': len(chunks),
+            'content': content,
             'path': rel_path
         })
     
     except Exception as e:
+        app.logger.error(f"Error serving file {rel_path}: {str(e)}")
         return jsonify({'error': str(e)}), 500
+
 
 @app.route('/progress_stream')
 def progress_stream():
@@ -777,7 +928,7 @@ def process_references(text):
 @app.after_request
 def after_request(response):
     """Add headers to prevent timeouts"""
-    response.headers["X-Cloudflare-Time"] = "600"
+    response.headers["X-Cloudflare-Time"] = "900"
     response.headers["Connection"] = "keep-alive"
     return response
 
