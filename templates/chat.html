@@ -35,9 +35,9 @@
                 <div class="message-content">
                     <div class="message-text">
                         {% if message.role == 'assistant' %}
-                            {{ message.content|process_references|safe }}
+                        {{ message.content|process_references|safe }}
                         {% else %}
-                            {{ message.content|replace('\n', '<br>')|safe }}
+                        {{ message.content|replace('\n', '<br>')|safe }}
                         {% endif %}
                     </div>
                     {% if message.role == 'assistant' and message.sources %}
@@ -52,7 +52,7 @@
                         </div>
                         <div class="sources-list" style="{% if message.sources|length > 2 %}display: none;{% endif %}">
                             {% for source in message.sources %}
-                            <div class="message-source" onclick="showFilePreview('{{ source }}')">
+                            <div class="message-source" data-source="{{ source }}">
                                 <i class="bi bi-file-text message-source-icon"></i>
                                 <span>{{ source }}</span>
                             </div>
@@ -63,7 +63,7 @@
                 </div>
             </div>
             {% endfor %}
-            
+
             <!-- Empty State Placeholder -->
             <div id="empty-state-placeholder" class="empty-state {% if conversation.messages %}hidden{% endif %}">
                 <div class="empty-state-content">
@@ -122,19 +122,24 @@
 </div>
 
 <script>
-    // Global variable to track the current request
+    // Global variables
     let currentRequestController = null;
     let isPreviewModalOpen = false;
     let previewModalHeight = 300; // Default height in pixels
 
-    document.addEventListener('DOMContentLoaded', function() {
+    // DOM elements
+    const previewContent = document.getElementById('preview-content');
+    const previewTitle = document.getElementById('preview-title');
+    const previewMeta = document.getElementById('preview-meta');
+
+    document.addEventListener('DOMContentLoaded', function () {
         // Initialize all components
         initChatForm();
         initReferenceHandlers();
-        initResizablePreview();
+        initPreviewModal();
         initChatHistory();
         scrollToBottom();
-        
+
         // Focus the input field for better UX
         const chatInput = document.querySelector('.chat-input');
         if (chatInput) {
@@ -148,16 +153,16 @@
 
         const textarea = chatForm.querySelector('textarea');
         const sendButton = document.getElementById('send-button');
-        
+
         // Auto-resize textarea
-        textarea.addEventListener('input', function() {
+        textarea.addEventListener('input', function () {
             this.style.height = 'auto';
             this.style.height = Math.min(this.scrollHeight, 150) + 'px';
         });
         textarea.style.height = 'auto';
 
         // Handle Enter key submission
-        textarea.addEventListener('keydown', function(e) {
+        textarea.addEventListener('keydown', function (e) {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
                 chatForm.dispatchEvent(new Event('submit'));
@@ -165,7 +170,7 @@
         });
 
         // Form submission handler
-        chatForm.addEventListener('submit', async function(e) {
+        chatForm.addEventListener('submit', async function (e) {
             e.preventDefault();
             const question = textarea.value.trim();
             if (!question) return;
@@ -189,7 +194,7 @@
             const userMessageId = addMessageToUI('user', question);
 
             // Add dynamic status container for processing updates
-            const assistantMessageId = addMessageToUI('assistant', 
+            const assistantMessageId = addMessageToUI('assistant',
                 `<div class="dynamic-status-container">
                     <div class="status-message" id="status-message">🔍 Starting processing...</div>
                 </div>`
@@ -225,15 +230,15 @@
 
                     buffer += decoder.decode(value, { stream: true });
                     const lines = buffer.split('\n');
-                    
+
                     // Process all complete lines (leave incomplete line in buffer)
                     for (let i = 0; i < lines.length - 1; i++) {
                         const line = lines[i].trim();
                         if (!line) continue;
-                        
+
                         try {
                             const data = JSON.parse(line);
-                            
+
                             if (data.status === 'status_update') {
                                 updateProcessingStatus(data.message, data.progress, data.error);
                             }
@@ -248,9 +253,9 @@
                             else if (data.status === 'stream_end') {
                                 // Finalize the message with sources if available
                                 updateMessageInUI(
-                                    assistantMessageId, 
-                                    'assistant', 
-                                    fullAnswer, 
+                                    assistantMessageId,
+                                    'assistant',
+                                    fullAnswer,
                                     data.sources || []
                                 );
                             }
@@ -265,7 +270,7 @@
                             console.error('Error parsing chunk:', e);
                         }
                     }
-                    
+
                     buffer = lines[lines.length - 1]; // Keep incomplete line in buffer
                 }
 
@@ -273,7 +278,7 @@
                 if (error.name !== 'AbortError') {
                     console.error('Error:', error);
                     updateProcessingStatus(`❌ Error: ${error.message}`, 100, true);
-                    updateMessageInUI(assistantMessageId, 'assistant', 
+                    updateMessageInUI(assistantMessageId, 'assistant',
                         'Error: Failed to process your request. Please try again.');
                 }
             } finally {
@@ -285,10 +290,10 @@
             if (currentRequestController) {
                 currentRequestController.abort();
                 currentRequestController = null;
-                
+
                 // Update the status message
                 updateProcessingStatus('🛑 Processing stopped by user', 100, true);
-                
+
                 resetForm();
             }
         }
@@ -296,13 +301,13 @@
         function resetForm() {
             const sendButton = document.getElementById('send-button');
             const textarea = document.querySelector('.chat-input');
-            
+
             // Reset the button to send state
             sendButton.innerHTML = '<i class="bi bi-send"></i>';
             sendButton.classList.remove('btn-stop-active');
             sendButton.onclick = null;
             sendButton.disabled = false;
-            
+
             // Reset other form elements
             currentRequestController = null;
             textarea.disabled = false;
@@ -313,12 +318,29 @@
         }
     }
 
-    function initResizablePreview() {
-        const resizeHandle = document.querySelector('.preview-resize-handle');
+    function initPreviewModal() {
         const modal = document.getElementById('preview-modal');
+        const resizeHandle = document.querySelector('.preview-resize-handle');
         const chatContainer = document.getElementById('chat-container');
-        
-        resizeHandle.addEventListener('mousedown', function(e) {
+
+        // Toggle modal visibility
+        window.togglePreviewModal = function () {
+            isPreviewModalOpen = !isPreviewModalOpen;
+
+            if (isPreviewModalOpen) {
+                modal.style.display = 'flex';
+                modal.style.height = `${previewModalHeight}px`;
+                chatContainer.style.paddingBottom = `${previewModalHeight}px`;
+                document.body.classList.add('preview-modal-open');
+            } else {
+                modal.style.display = 'none';
+                chatContainer.style.paddingBottom = '0';
+                document.body.classList.remove('preview-modal-open');
+            }
+        };
+
+        // Make modal resizable
+        resizeHandle.addEventListener('mousedown', function (e) {
             e.preventDefault();
             document.addEventListener('mousemove', resize);
             document.addEventListener('mouseup', stopResize);
@@ -339,173 +361,297 @@
         }
     }
 
-    function togglePreviewModal() {
-        const modal = document.getElementById('preview-modal');
-        const chatContainer = document.getElementById('chat-container');
-        isPreviewModalOpen = !isPreviewModalOpen;
-        
-        if (isPreviewModalOpen) {
-            modal.style.display = 'flex';
-            modal.style.height = `${previewModalHeight}px`;
-            chatContainer.style.paddingBottom = `${previewModalHeight}px`;
-            document.body.classList.add('preview-modal-open');
-        } else {
-            modal.style.display = 'none';
-            chatContainer.style.paddingBottom = '0';
-            document.body.classList.remove('preview-modal-open');
-        }
+    // Global variables for preview
+    let lastPreviewRequest = null;
+async function showFilePreview(filename, page = '', highlight = '') {
+    // Debug logging
+    console.log('Attempting to preview file:', { filename, page, highlight });
+    
+    // Validate filename
+    if (!filename || typeof filename !== 'string') {
+        handlePreviewError('Invalid filename provided');
+        return;
     }
 
-    async function showFilePreview(filename, page = '', highlight = '') {
-        const previewContent = document.getElementById('preview-content');
-        const previewMeta = document.getElementById('preview-meta');
-        const previewTitle = document.getElementById('preview-title');
+    // Clean the filename path
+    filename = filename.replace(/\\/g, '/').trim();
+    
+    // Remove any anchor tags or query parameters from the filename
+    filename = filename.split('#')[0].split('?')[0];
+    
+    const shortName = filename.split('/').pop();
+    
+    // Show loading state
+    previewContent.innerHTML = `
+        <div class="preview-loading">
+            <div class="loading-spinner"></div>
+            <span>Loading document...</span>
+            <div class="loading-file-name">${escapeHtml(shortName)}</div>
+            <div class="loading-file-path">${escapeHtml(filename)}</div>
+        </div>
+    `;
+
+    // Show the modal if not already open
+    if (!isPreviewModalOpen) {
+        togglePreviewModal();
+    }
+
+    try {
+        // Update title immediately
+        previewTitle.textContent = `Preview: ${shortName}`;
+
+        // Encode the filename for URL (encode each path segment separately)
+        const encodedPath = filename.split('/').map(encodeURIComponent).join('/');
+        let url = `/get_file_content?path=${encodedPath}`;
         
-        // Show loading state
-        previewContent.innerHTML = `
-            <div class="preview-loading">
-                <div class="loading-spinner"></div>
-                <span>Loading document...</span>
-            </div>
-        `;
-        
-        // Show the modal if not already open
-        if (!isPreviewModalOpen) {
-            togglePreviewModal();
+        if (page) url += `&page=${encodeURIComponent(page)}`;
+        if (highlight) url += `&highlight=${encodeURIComponent(highlight)}`;
+
+        console.log('Request URL:', url);
+
+        // First check if file exists
+        const checkResponse = await fetch(url, { method: 'HEAD' });
+        if (!checkResponse.ok) {
+            const errorData = await checkResponse.json().catch(() => null);
+            throw new Error(errorData?.error || 'File not found on server');
         }
-        
-        try {
-            const fileExt = filename.split('.').pop().toLowerCase();
-            const shortName = filename.split('/').pop().split('\\').pop();
+
+        // Then get the content
+        const response = await fetch(url);
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            throw new Error(errorData?.error || 'Failed to load file');
+        }
+
+        // Check content type
+        const contentType = response.headers.get('content-type') || '';
+        console.log('Content-Type:', contentType);
+
+        if (contentType.includes('application/pdf')) {
+            // Handle PDF response
+            const blob = await response.blob();
+            const objectUrl = URL.createObjectURL(blob);
+            renderPdfPreview(objectUrl, shortName);
+        }
+        else if (contentType.startsWith('image/')) {
+            // Handle image response
+            const blob = await response.blob();
+            const objectUrl = URL.createObjectURL(blob);
+            renderImagePreview(objectUrl, shortName);
+        }
+        else if (contentType.includes('application/json')) {
+            // Handle JSON response
+            const data = await response.json();
+            if (data.error) throw new Error(data.error);
             
-            // Update title immediately
-            previewTitle.textContent = `Preview: ${shortName}`;
+            let content = data.content || 'No content available';
             
-            // Encode the filename for URL
-            const encodedFilename = encodeURIComponent(filename);
-            const url = `/get_file_content?path=${encodedFilename}&page=${page}&highlight=${encodeURIComponent(highlight)}`;
-            
-            // Handle different file types
-            if (['pdf'].includes(fileExt)) {
-                // PDF files - use iframe
-                previewContent.innerHTML = `
-                    <div class="pdf-preview-container">
-                        <iframe 
-                            src="${url}" 
-                            class="pdf-preview-frame"
-                            title="PDF Preview: ${shortName}"
-                        ></iframe>
-                    </div>
-                `;
-            } 
-            else if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExt)) {
-                // Image files - direct display
-                previewContent.innerHTML = `
-                    <div class="image-preview-container">
-                        <img 
-                            src="${url}" 
-                            alt="${shortName}" 
-                            class="image-preview"
-                            onerror="this.onerror=null;this.parentElement.innerHTML='<div class=\'preview-error\'><i class=\'bi bi-exclamation-triangle\'></i><p>Error loading image</p></div>'"
-                        >
-                    </div>
-                `;
+            // Apply highlighting if specified
+            if (highlight) {
+                try {
+                    const escapedHighlight = highlight.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                    const highlightRegex = new RegExp(`(${escapedHighlight})`, 'gi');
+                    content = content.replace(highlightRegex, '<mark>$1</mark>');
+                } catch (e) {
+                    console.warn('Failed to apply highlight:', e);
+                }
             }
-            else if (['txt', 'md', 'csv', 'json', 'xml', 'html', 'log'].includes(fileExt)) {
-                // Text-based files - fetch and display
-                const response = await fetch(url);
-                
-                if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({}));
-                    throw new Error(errorData.error || 'Failed to load file');
+
+            // Format the content
+            let formattedContent = escapeHtml(content)
+                .replace(/\n/g, '<br>')
+                .replace(/\t/g, '&nbsp;&nbsp;&nbsp;&nbsp;');
+
+            // Check if content is JSON
+            if (filename.toLowerCase().endsWith('.json')) {
+                try {
+                    const jsonObj = JSON.parse(content);
+                    formattedContent = syntaxHighlight(jsonObj);
+                } catch (e) {
+                    console.warn('Failed to parse as JSON:', e);
                 }
-                
-                const data = await response.json();
-                
-                if (data.error) {
-                    throw new Error(data.error);
-                }
-                
-                let content = data.content || 'No content available';
-                
-                // Apply highlighting if specified
-                if (highlight) {
-                    try {
-                        const escapedHighlight = highlight.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                        const highlightRegex = new RegExp(`(${escapedHighlight})`, 'gi');
-                        content = content.replace(highlightRegex, '<mark>$1</mark>');
-                    } catch (e) {
-                        console.warn('Failed to apply highlight:', e);
-                    }
-                }
-                
-                // Format the content
-                let formattedContent = content
-                    .replace(/</g, '&lt;')
-                    .replace(/>/g, '&gt;')
-                    .replace(/\n/g, '<br>')
-                    .replace(/\t/g, '&nbsp;&nbsp;&nbsp;&nbsp;');
-                
-                // Add syntax highlighting for JSON
-                if (fileExt === 'json') {
-                    try {
-                        const jsonObj = JSON.parse(content);
-                        formattedContent = syntaxHighlight(jsonObj);
-                    } catch (e) {
-                        // Fall back to plain text if not valid JSON
-                    }
-                }
-                
-                previewContent.innerHTML = `
-                    <div class="preview-document ${fileExt}">
-                        <pre>${formattedContent}</pre>
-                    </div>
-                `;
             }
-            else {
-                throw new Error('Unsupported file type');
-            }
-            
-            // Update metadata section
-            previewMeta.innerHTML = `
-                <div class="preview-meta-item">
-                    <i class="bi bi-file-earmark"></i>
-                    <span>${shortName}</span>
-                </div>
-                ${page ? `<div class="preview-meta-item">
-                    <i class="bi bi-file-text"></i>
-                    <span>Page ${page}</span>
-                </div>` : ''}
-                ${highlight ? `<div class="preview-meta-item">
-                    <i class="bi bi-search"></i>
-                    <span>"${highlight}"</span>
-                </div>` : ''}
-                <div class="preview-meta-item">
-                    <i class="bi bi-download"></i>
-                    <a href="${url}&download=true" download="${shortName}">Download</a>
-                </div>
-            `;
-            
-        } catch (error) {
-            console.error('Error loading preview:', error);
+
             previewContent.innerHTML = `
-                <div class="preview-error">
-                    <i class="bi bi-exclamation-triangle"></i>
-                    <p>${error.message || 'Error loading document'}</p>
+                <div class="preview-document">
+                    <pre>${formattedContent}</pre>
                 </div>
             `;
         }
+        else {
+            // Fallback for other content types
+            const text = await response.text();
+            previewContent.innerHTML = `
+                <div class="preview-document">
+                    <pre>${escapeHtml(text)}</pre>
+                </div>
+            `;
+        }
+
+        // Update metadata section
+        updatePreviewMeta(shortName, page, highlight, url);
+
+    } catch (error) {
+        console.error('Error loading preview:', error);
+        
+        // More detailed error messages
+        let errorMessage = error.message;
+        if (error.message.includes('not found')) {
+            errorMessage = `File not found: ${shortName}`;
+            
+            // Suggest checking the file exists in the extracted files
+            errorMessage += `<br><small>Please verify the file exists in the extracted documents.</small>`;
+        }
+        
+        handlePreviewError(errorMessage);
+    }
+}
+
+// Debug function to list all available files
+async function debugListFiles() {
+    try {
+        const response = await fetch('/get_file_structure');
+        const data = await response.json();
+        console.log('Available files:', data);
+        return data;
+    } catch (error) {
+        console.error('Error listing files:', error);
+        return null;
+    }
+}
+
+// Debug function to check file existence
+async function debugCheckFile(path) {
+    try {
+        const encodedPath = encodeURIComponent(path);
+        const response = await fetch(`/get_file_content?path=${encodedPath}`, { method: 'HEAD' });
+        console.log('File check result:', {
+            path,
+            exists: response.ok,
+            status: response.status
+        });
+        return response.ok;
+    } catch (error) {
+        console.error('Error checking file:', error);
+        return false;
+    }
+}
+
+
+    // Helper functions for different preview types
+    function renderPdfPreview(url, title) {
+        previewContent.innerHTML = `
+        <div class="pdf-preview-container">
+            <iframe 
+                src="${url}" 
+                class="pdf-preview-frame"
+                title="PDF Preview: ${escapeHtml(title)}"
+                onload="handleIframeLoad(this)"
+                onerror="handleIframeError(this)"
+            ></iframe>
+        </div>
+    `;
     }
 
-    // Helper function for JSON syntax highlighting
+    function renderImagePreview(url, altText) {
+        previewContent.innerHTML = `
+        <div class="image-preview-container">
+            <img 
+                src="${url}" 
+                alt="${escapeHtml(altText)}" 
+                class="image-preview"
+                onload="handleImageLoad(this)"
+                onerror="handleImageError(this)"
+            >
+            <div class="image-loading" style="display: none;">
+                <div class="loading-spinner"></div>
+            </div>
+        </div>
+    `;
+    }
+
+    function updatePreviewMeta(filename, page, highlight, url) {
+        previewMeta.innerHTML = `
+        <div class="preview-meta-item">
+            <i class="bi bi-file-earmark"></i>
+            <span>${escapeHtml(filename)}</span>
+        </div>
+        ${page ? `<div class="preview-meta-item">
+            <i class="bi bi-file-text"></i>
+            <span>Page ${escapeHtml(page)}</span>
+        </div>` : ''}
+        ${highlight ? `<div class="preview-meta-item">
+            <i class="bi bi-search"></i>
+            <span>"${escapeHtml(highlight)}"</span>
+        </div>` : ''}
+        <div class="preview-meta-item">
+            <i class="bi bi-download"></i>
+            <a href="${url}&download=true" download="${escapeHtml(filename)}">Download</a>
+        </div>
+    `;
+    }
+
+    // Error handling functions
+    function handlePreviewError(message) {
+        previewContent.innerHTML = `
+        <div class="preview-error">
+            <i class="bi bi-exclamation-triangle"></i>
+            <p>${escapeHtml(message)}</p>
+            <button class="btn-retry" onclick="retryPreview()">
+                <i class="bi bi-arrow-clockwise"></i> Try Again
+            </button>
+        </div>
+    `;
+    }
+
+    function handleIframeLoad(iframe) {
+        console.log('Iframe loaded successfully');
+    }
+
+    function handleIframeError(iframe) {
+        handlePreviewError('Failed to load document preview');
+    }
+
+    function handleImageLoad(img) {
+        img.parentElement.querySelector('.image-loading').style.display = 'none';
+    }
+
+    function handleImageError(img) {
+        img.parentElement.querySelector('.image-loading').style.display = 'none';
+        handlePreviewError('Failed to load image');
+    }
+
+    function retryPreview() {
+        // Get the last clicked element to retry
+        const lastClicked = document.querySelector('.last-clicked-source');
+        if (lastClicked) {
+            const source = lastClicked.dataset.source ||
+                lastClicked.closest('.message-source')?.dataset.source;
+            if (source) {
+                showFilePreview(source);
+            }
+        }
+    }
+
+    // Utility functions
+    function escapeHtml(unsafe) {
+        if (!unsafe) return '';
+        return unsafe
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
     function syntaxHighlight(json) {
         if (typeof json != 'string') {
             json = JSON.stringify(json, null, 2);
         }
-        json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        json = escapeHtml(json);
         return json.replace(
-            /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, 
-            function(match) {
+            /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
+            function (match) {
                 let cls = 'number';
                 if (/^"/.test(match)) {
                     if (/:$/.test(match)) {
@@ -522,40 +668,40 @@
             }
         );
     }
-    
-    function updateProcessingStatus(message, progress, isError = false) {
-        const statusEl = document.getElementById('status-message');
-        
-        if (statusEl) {
-            statusEl.textContent = message;
-            if (isError) {
-                statusEl.style.color = '#dc3545';
-                statusEl.classList.add('error');
-            } else {
-                statusEl.style.color = '';
-                statusEl.classList.remove('error');
-            }
-        }
-    }
 
-    function toggleSources(button) {
-        const sourcesList = button.closest('.message-sources').querySelector('.sources-list');
-        const isHidden = sourcesList.style.display === 'none';
-        
-        if (isHidden) {
-            sourcesList.style.display = 'block';
-            button.textContent = 'Hide';
-        } else {
-            sourcesList.style.display = 'none';
-            button.textContent = 'Show more';
-        }
-    }
-
+    // Initialize reference handlers
     function initReferenceHandlers() {
-        document.getElementById('chat-messages').addEventListener('click', function(e) {
+        document.addEventListener('click', function (e) {
+            // Handle message source clicks
+            const sourceElement = e.target.closest('.message-source');
+            if (sourceElement) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                // Mark as last clicked
+                document.querySelectorAll('.last-clicked-source').forEach(el => {
+                    el.classList.remove('last-clicked-source');
+                });
+                sourceElement.classList.add('last-clicked-source');
+
+                const sourceText = sourceElement.dataset.source ||
+                    sourceElement.querySelector('span').textContent;
+                showFilePreview(sourceText);
+                return;
+            }
+
+            // Handle reference link clicks
             const refLink = e.target.closest('.reference-link');
             if (refLink) {
                 e.preventDefault();
+                e.stopPropagation();
+
+                // Mark as last clicked
+                document.querySelectorAll('.last-clicked-source').forEach(el => {
+                    el.classList.remove('last-clicked-source');
+                });
+                refLink.classList.add('last-clicked-source');
+
                 const filename = refLink.dataset.filename;
                 const page = refLink.dataset.page || '';
                 const highlight = refLink.dataset.highlight || '';
@@ -564,9 +710,34 @@
         });
     }
 
+    function initReferenceHandlers() {
+        // Handle clicks on message sources
+        document.addEventListener('click', function (e) {
+            // Handle message source clicks
+            if (e.target.closest('.message-source')) {
+                const sourceElement = e.target.closest('.message-source');
+                const sourceText = sourceElement.dataset.source || sourceElement.querySelector('span').textContent;
+                showFilePreview(sourceText);
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            // Handle reference link clicks
+            if (e.target.closest('.reference-link')) {
+                const refLink = e.target.closest('.reference-link');
+                const filename = refLink.dataset.filename;
+                const page = refLink.dataset.page || '';
+                const highlight = refLink.dataset.highlight || '';
+                showFilePreview(filename, page, highlight);
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        });
+    }
+
     function initChatHistory() {
         document.querySelectorAll('.btn-delete-chat').forEach(button => {
-            button.addEventListener('click', function(e) {
+            button.addEventListener('click', function (e) {
                 e.preventDefault();
                 e.stopPropagation();
 
@@ -585,29 +756,42 @@
                             'X-Requested-With': 'XMLHttpRequest'
                         }
                     })
-                    .then(response => {
-                        if (!response.ok) {
-                            return response.json().then(err => { throw err; });
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        if (data.success) {
-                            chatItem.style.opacity = '0';
-                            setTimeout(() => chatItem.remove(), 300);
-                        } else {
-                            throw new Error(data.error || 'Failed to delete chat');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Delete error:', error);
-                        alert(error.message || 'Error deleting chat');
-                        this.innerHTML = originalHTML;
-                        this.disabled = false;
-                    });
+                        .then(response => {
+                            if (!response.ok) {
+                                return response.json().then(err => { throw err; });
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            if (data.success) {
+                                chatItem.style.opacity = '0';
+                                setTimeout(() => chatItem.remove(), 300);
+                            } else {
+                                throw new Error(data.error || 'Failed to delete chat');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Delete error:', error);
+                            alert(error.message || 'Error deleting chat');
+                            this.innerHTML = originalHTML;
+                            this.disabled = false;
+                        });
                 }
             });
         });
+    }
+
+    function toggleSources(button) {
+        const sourcesList = button.closest('.message-sources').querySelector('.sources-list');
+        const isHidden = sourcesList.style.display === 'none';
+
+        if (isHidden) {
+            sourcesList.style.display = 'block';
+            button.textContent = 'Hide';
+        } else {
+            sourcesList.style.display = 'none';
+            button.textContent = 'Show more';
+        }
     }
 
     function addMessageToUI(role, content) {
@@ -650,7 +834,7 @@
                     </div>
                     <div class="sources-list" style="${showToggle ? 'display: none;' : ''}">
                         ${sources.map(source => `
-                            <div class="message-source" onclick="showFilePreview('${escapeHtml(source)}')">
+                            <div class="message-source" data-source="${escapeHtml(source)}">
                                 <i class="bi bi-file-text message-source-icon"></i>
                                 <span>${escapeHtml(source.split('/').pop().split('\\').pop())}</span>
                             </div>
@@ -673,7 +857,7 @@
     function processContentWithReferences(content) {
         let documentCounter = 0;
         const documentMap = new Map();
-        
+
         let processed = content
             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
             .replace(/\*(.*?)\*/g, '<em>$1</em>')
@@ -685,13 +869,13 @@
             .replace(/\n/g, '<br>');
 
         processed = processed.replace(
-            /\[\^([^\|\]]+)(?:\|\|([^\|\]]+))?(?:\|\|([^\|\]]+))?\]/g, 
-            function(match, filename, page, highlight) {
+            /\[\^([^\|\]]+)(?:\|\|([^\|\]]+))?(?:\|\|([^\|\]]+))?\]/g,
+            function (match, filename, page, highlight) {
                 if (!documentMap.has(filename)) {
                     documentCounter++;
                     documentMap.set(filename, documentCounter);
                 }
-                
+
                 const docNumber = documentMap.get(filename);
                 return `<sup class="reference-link" 
                           data-filename="${escapeHtml(filename)}"
@@ -702,6 +886,21 @@
         );
 
         return processed;
+    }
+
+    function updateProcessingStatus(message, progress, isError = false) {
+        const statusEl = document.getElementById('status-message');
+
+        if (statusEl) {
+            statusEl.textContent = message;
+            if (isError) {
+                statusEl.style.color = '#dc3545';
+                statusEl.classList.add('error');
+            } else {
+                statusEl.style.color = '';
+                statusEl.classList.remove('error');
+            }
+        }
     }
 
     function escapeHtml(unsafe) {
@@ -720,7 +919,34 @@
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
     }
+
+    // Helper function for JSON syntax highlighting
+    function syntaxHighlight(json) {
+        if (typeof json != 'string') {
+            json = JSON.stringify(json, null, 2);
+        }
+        json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        return json.replace(
+            /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
+            function (match) {
+                let cls = 'number';
+                if (/^"/.test(match)) {
+                    if (/:$/.test(match)) {
+                        cls = 'key';
+                    } else {
+                        cls = 'string';
+                    }
+                } else if (/true|false/.test(match)) {
+                    cls = 'boolean';
+                } else if (/null/.test(match)) {
+                    cls = 'null';
+                }
+                return '<span class="' + cls + '">' + match + '</span>';
+            }
+        );
+    }
 </script>
+
 <style>
     /* Message styling */
     .message {
@@ -734,6 +960,11 @@
     .message-user {
         background-color: #f0f7ff;
         border: 1px solid #d0e3ff;
+    }
+
+    .message-assistant {
+        background-color: white;
+        border: 1px solid #e5e7eb;
     }
 
     .message-avatar {
@@ -847,34 +1078,48 @@
     }
 
     @keyframes pulse {
-        0% { transform: translateY(-50%) scale(1); opacity: 1; }
-        50% { transform: translateY(-50%) scale(1.2); opacity: 0.7; }
-        100% { transform: translateY(-50%) scale(1); opacity: 1; }
+        0% {
+            transform: translateY(-50%) scale(1);
+            opacity: 1;
+        }
+
+        50% {
+            transform: translateY(-50%) scale(1.2);
+            opacity: 0.7;
+        }
+
+        100% {
+            transform: translateY(-50%) scale(1);
+            opacity: 1;
+        }
     }
 
     @keyframes pulse-error {
-        0% { transform: translateY(-50%) scale(1); opacity: 1; }
-        50% { transform: translateY(-50%) scale(1.3); opacity: 0.5; }
-        100% { transform: translateY(-50%) scale(1); opacity: 1; }
+        0% {
+            transform: translateY(-50%) scale(1);
+            opacity: 1;
+        }
+
+        50% {
+            transform: translateY(-50%) scale(1.3);
+            opacity: 0.5;
+        }
+
+        100% {
+            transform: translateY(-50%) scale(1);
+            opacity: 1;
+        }
     }
 
     /* Reference styling */
     .reference-link {
-        color: #666;
-        background-color: rgba(0, 0, 0, 0.05);
-        text-decoration: none;
-        font-size: 0.85em;
-        padding: 0 0.2em;
-        border-radius: 2px;
         cursor: pointer;
-        vertical-align: super;
-        transition: all 0.2s ease;
+        color: var(--primary-color);
+        text-decoration: underline;
     }
 
     .reference-link:hover {
-        background-color: var(--primary-color);
-        color: white;
-        transform: translateY(-1px);
+        color: #0d9488;
     }
 
     /* Sources section styling */
@@ -1182,8 +1427,13 @@
     }
 
     @keyframes spin {
-        from { transform: rotate(0deg); }
-        to { transform: rotate(360deg); }
+        from {
+            transform: rotate(0deg);
+        }
+
+        to {
+            transform: rotate(360deg);
+        }
     }
 
     /* PDF Preview Styles */
@@ -1216,10 +1466,107 @@
     }
 
     /* Syntax highlighting for JSON */
-    .preview-document.json .key { color: #d946ef; }
-    .preview-document.json .string { color: #65a30d; }
-    .preview-document.json .number { color: #2563eb; }
-    .preview-document.json .boolean { color: #9333ea; }
-    .preview-document.json .null { color: #64748b; }
+    .preview-document.json .key {
+        color: #d946ef;
+    }
+
+    .preview-document.json .string {
+        color: #65a30d;
+    }
+
+    .preview-document.json .number {
+        color: #2563eb;
+    }
+
+    .preview-document.json .boolean {
+        color: #9333ea;
+    }
+
+    .preview-document.json .null {
+        color: #64748b;
+    }
+
+
+    .last-clicked-source {
+    background-color: rgba(16, 163, 127, 0.1);
+    border-left: 3px solid var(--primary-color);
+}
+
+.loading-file-name {
+    font-size: 0.8rem;
+    margin-top: 0.5rem;
+    color: #6b7280;
+    font-style: italic;
+}
+
+.office-preview-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.office-preview-frame {
+    flex-grow: 1;
+    border: none;
+}
+
+.office-preview-footer {
+    padding: 0.5rem;
+    background: #f8f9fa;
+    border-top: 1px solid #e5e7eb;
+    text-align: center;
+}
+
+.btn-retry {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    margin-top: 1rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-retry:hover {
+    background-color: #0d9488;
+}
+
+.btn-retry i {
+    animation: spin 1s linear infinite;
+}
+
+
+.loading-file-path {
+    font-size: 0.7rem;
+    margin-top: 0.3rem;
+    color: #9ca3af;
+    word-break: break-all;
+    font-family: monospace;
+}
+
+.debug-tools {
+    position: fixed;
+    bottom: 10px;
+    right: 10px;
+    z-index: 9999;
+    background: rgba(0,0,0,0.7);
+    color: white;
+    padding: 10px;
+    border-radius: 5px;
+    font-size: 12px;
+}
+
+.debug-btn {
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    margin: 2px;
+    border-radius: 3px;
+    cursor: pointer;
+}
 </style>
 {% endblock %}

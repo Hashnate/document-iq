@@ -54,16 +54,16 @@ class Config:
     ALLOWED_EXTENSIONS = {'txt', 'pdf', 'docx', 'md', 'csv', 'json', 'xml', 'html'}
     MAX_CONTENT_LENGTH = 500 * 1024 * 1024  # 500MB
     OLLAMA_URL = os.getenv('OLLAMA_URL', 'http://127.0.0.1:11434/api/generate')
-    OLLAMA_MODEL = os.getenv('OLLAMA_MODEL', 'llama3:70b-instruct-q4_K_M')
+    OLLAMA_MODEL = os.getenv('OLLAMA_MODEL', 'phi4')
     OLLAMA_TIMEOUT = 600  # 10 minutes
     MAX_FILE_SIZE = 100 * 1024 * 1024  # 100MB per file
     MAX_RETRIES = 3
     LOG_FILE = os.path.join(os.getcwd(), 'app.log')
     LOG_LEVEL = logging.INFO
-    MAX_CONTEXT_LENGTH = 1000000  # Characters per file
+    MAX_CONTEXT_LENGTH = 500000  # Characters per file
     STREAM_TIMEOUT = 500  # Seconds
     CACHE_EXPIRATION_SECONDS = 3600  # 1 hour
-    CHUNK_SIZE = 15000  # For text chunking
+    CHUNK_SIZE = 30000  # For text chunking
     CHUNK_OVERLAP = 500  # Overlap between chunks
     PDF_EXTRACTION_METHOD = 'pdfminer'  # Options: 'pdfminer', 'pdfplumber', 'pypdf2'
 
@@ -145,7 +145,7 @@ def get_file_hash(file_path):
     return hasher.hexdigest()
 
 def read_pdf(file_path):
-    """Improved PDF reading with multiple extraction methods"""
+    """Improved PDF reading with multiple extraction methods and structure preservation"""
     try:
         if app.config['PDF_EXTRACTION_METHOD'] == 'pdfminer':
             text = pdfminer_extract(file_path)
@@ -153,45 +153,65 @@ def read_pdf(file_path):
             text = ""
             with pdfplumber.open(file_path) as pdf:
                 for page in pdf.pages:
-                    text += page.extract_text() + "\n"
+                    # Extract text with layout preservation
+                    page_text = page.extract_text(
+                        layout=True,
+                        x_tolerance=1,
+                        y_tolerance=1,
+                        keep_blank_chars=True
+                    )
+                    if page_text:
+                        text += f"=== PAGE {page.page_number} ===\n{page_text}\n\n"
         else:  # PyPDF2 fallback
             with open(file_path, 'rb') as file:
                 reader = PyPDF2.PdfReader(file)
-                text = "\n".join(page.extract_text() for page in reader.pages if page.extract_text())
+                text = ""
+                for i, page in enumerate(reader.pages):
+                    page_text = page.extract_text()
+                    if page_text:
+                        text += f"=== PAGE {i+1} ===\n{page_text}\n\n"
         return text
     except Exception as e:
         app.logger.error(f"PDF extraction failed for {file_path}: {str(e)}")
         return None
 
 def read_docx(file_path):
-    """Enhanced DOCX reading with style information"""
+    """Enhanced DOCX reading with style information and structure preservation"""
     try:
         doc = docx.Document(file_path)
         text = []
         for para in doc.paragraphs:
+            # Preserve heading structure
             if para.style.name.startswith('Heading'):
-                text.append(f"\n\n{para.text.upper()}\n")
+                level = int(para.style.name.split(' ')[1]) if ' ' in para.style.name else 1
+                text.append(f"\n{'#' * level} {para.text}\n")
             else:
                 text.append(para.text)
+            
+            # Preserve tables
+            if para.tables:
+                for table in para.tables:
+                    for row in table.rows:
+                        row_text = "| " + " | ".join(cell.text for cell in row.cells) + " |"
+                        text.append(row_text)
+                    text.append("")  # Add empty line after table
+                    
         return "\n".join(text)
     except Exception as e:
         app.logger.error(f"DOCX extraction failed for {file_path}: {str(e)}")
         return None
 
 def read_markdown(file_path):
-    """Read markdown with HTML conversion for better structure"""
+    """Read markdown with original structure preservation"""
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
-            md_text = f.read()
-            html = markdown.markdown(md_text)
-            soup = BeautifulSoup(html, 'html.parser')
-            return soup.get_text()
+            return f.read()
     except Exception as e:
         app.logger.error(f"Markdown extraction failed for {file_path}: {str(e)}")
         return None
 
 def read_csv(file_path):
-    """Read CSV with header detection"""
+    """Read CSV with header detection and structure preservation"""
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
             reader = csv.reader(f)
@@ -201,35 +221,65 @@ def read_csv(file_path):
         return None
 
 def read_xml(file_path):
-    """Read XML with tag preservation"""
+    """Read XML with tag preservation and structure"""
     try:
         tree = ET.parse(file_path)
         root = tree.getroot()
-        return ET.tostring(root, encoding='utf-8', method='text').decode('utf-8')
+        
+        def xml_to_text(element, indent=0):
+            text = []
+            # Add opening tag with attributes
+            attrs = " ".join(f'{k}="{v}"' for k, v in element.attrib.items())
+            tag_text = f"{' ' * indent}<{element.tag}"
+            if attrs:
+                tag_text += f" {attrs}"
+            tag_text += ">"
+            text.append(tag_text)
+            
+            # Handle text content
+            if element.text and element.text.strip():
+                text.append(f"{' ' * (indent+2)}{element.text.strip()}")
+            
+            # Recursively process children
+            for child in element:
+                text.append(xml_to_text(child, indent+2))
+            
+            # Add closing tag
+            text.append(f"{' ' * indent}</{element.tag}>")
+            return "\n".join(text)
+        
+        return xml_to_text(root)
     except Exception as e:
         app.logger.error(f"XML extraction failed for {file_path}: {str(e)}")
         return None
 
 def read_html(file_path):
-    """Read HTML content"""
+    """Read HTML content with structure preservation"""
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
             soup = BeautifulSoup(f.read(), 'html.parser')
-            return soup.get_text()
+            
+            # Preserve basic structure
+            for elem in soup.find_all(['div', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6']):
+                if elem.name.startswith('h'):
+                    level = int(elem.name[1])
+                    elem.insert_before(f"\n{'#' * level} ")
+                    elem.insert_after("\n")
+                elif elem.name == 'p':
+                    elem.insert_before("\n")
+                    elem.insert_after("\n")
+                elif elem.name == 'div':
+                    elem.insert_before("\n---\n")
+                    elem.insert_after("\n---\n")
+            
+            # Get text with preserved structure
+            return soup.get_text('\n')
     except Exception as e:
         app.logger.error(f"HTML extraction failed for {file_path}: {str(e)}")
         return None
 
 def read_file(file_path):
-    """Improved file reading with caching and better format support"""
-    # Check cache first
-    file_hash = get_file_hash(file_path)
-    cache_path = os.path.join(app.config['CACHE_FOLDER'], f"{file_hash}.txt")
-    
-    if os.path.exists(cache_path):
-        with open(cache_path, 'r', encoding='utf-8') as f:
-            return f.read()
-    
+    """Improved file reading with caching and original structure preservation"""
     # Skip system files
     if '__MACOSX' in file_path or file_path.endswith('._.DS_Store'):
         return None
@@ -238,6 +288,25 @@ def read_file(file_path):
         app.logger.warning(f"File too large, skipping: {file_path}")
         return None
         
+    # Check cache first
+    file_hash = get_file_hash(file_path)
+    cache_path = os.path.join(app.config['CACHE_FOLDER'], f"{file_hash}.txt")
+    
+    if os.path.exists(cache_path):
+        with open(cache_path, 'r', encoding='utf-8') as f:
+            # Read just the content part (after metadata)
+            content_started = False
+            content_lines = []
+            for line in f:
+                if line.strip() == "=== CONTENT BEGIN ===":
+                    content_started = True
+                    continue
+                if line.strip() == "=== CONTENT END ===":
+                    break
+                if content_started:
+                    content_lines.append(line)
+            return "".join(content_lines)
+    
     file_ext = os.path.splitext(file_path)[1].lower()
     text = None
     
@@ -262,36 +331,78 @@ def read_file(file_path):
             for encoding in encodings:
                 try:
                     with open(file_path, 'r', encoding=encoding) as f:
-                        text = f.read(app.config['MAX_CONTEXT_LENGTH'])
+                        text = f.read()  # ✅ Read FULL content (no truncation)
                     break
                 except UnicodeDecodeError:
                     continue
     
-        # Cache the result
+        # Cache the result with structured format
         if text:
+            # Create structured cache content with original structure
+            cache_content = (
+                f"=== FILE METADATA ===\n"
+                f"Path: {file_path}\n"
+                f"Size: {os.path.getsize(file_path)} bytes\n"
+                f"Last Modified: {datetime.fromtimestamp(os.path.getmtime(file_path)).isoformat()}\n"
+                f"Hash: {file_hash}\n"
+                f"Type: {file_ext[1:] if file_ext else 'unknown'}\n"
+                f"Extraction Method: {app.config['PDF_EXTRACTION_METHOD'] if file_ext == '.pdf' else 'standard'}\n"
+                f"=== CONTENT BEGIN ===\n\n"
+                f"{text}\n\n"  # ✅ Now stores FULL content
+                f"=== CONTENT END ===\n"
+                f"Processed at: {datetime.now().isoformat()}\n"
+            )
+            
             with open(cache_path, 'w', encoding='utf-8') as f:
-                f.write(text)
+                f.write(cache_content)
                 
+            return text
     except Exception as e:
         app.logger.error(f"Error reading {file_path}: {str(e)}")
         return None
     
     return text if text and text.strip() else None
 
+
 def chunk_text(text, chunk_size=None, overlap=None):
-    """Split text into manageable chunks with overlap"""
+    """Intelligent chunking that preserves document structure"""
     chunk_size = chunk_size or app.config['CHUNK_SIZE']
     overlap = overlap or app.config['CHUNK_OVERLAP']
-    chunks = []
-    start = 0
     
-    while start < len(text):
-        end = start + chunk_size
-        chunks.append(text[start:end])
-        start = end - overlap
-        
+    # Split by major document sections first
+    sections = re.split(r'(\[\w+_SECTION:.+?\])', text)
+    sections = [s for s in sections if s.strip()]
+    
+    chunks = []
+    current_chunk = ""
+    
+    for section in sections:
+        # If section is a marker, always keep it with its content
+        if re.match(r'\[\w+_SECTION:.+?\]', section):
+            if current_chunk and len(current_chunk) + len(section) > chunk_size:
+                chunks.append(current_chunk)
+                current_chunk = current_chunk[-overlap:] + "\n" + section
+            else:
+                current_chunk += "\n" + section
+        else:
+            # Regular content - split by paragraphs if possible
+            paragraphs = re.split(r'(\n\n+)', section)
+            for para in paragraphs:
+                if len(current_chunk) + len(para) > chunk_size:
+                    if current_chunk:
+                        chunks.append(current_chunk)
+                        current_chunk = current_chunk[-overlap:] + para
+                    else:
+                        # Handle very large paragraphs
+                        chunks.append(para[:chunk_size])
+                        current_chunk = para[chunk_size-overlap:chunk_size]
+                else:
+                    current_chunk += para
+    
+    if current_chunk:
+        chunks.append(current_chunk)
+    
     return chunks
-
 def clean_directory(directory):
     """Safely clean all files in directory"""
     for filename in os.listdir(directory):
@@ -316,76 +427,69 @@ def update_progress(current, total, message="", redirect_url=None):
             progress_data['error'] = None
 
 def get_answer_stream(text, question):
-    """Enhanced streaming with better chunk handling"""
+    """Process all chunks with context accumulation"""
     chunks = chunk_text(text)
+    context_window = []
+    max_context_size = app.config['MAX_CONTEXT_LENGTH'] // 2  # Half for context
     
-    prompt = (
-    "You are an AI assistant analyzing legal documents. Use only the provided context.\n\n"
-    f"Question: {question}\n\n"
-    "Context:\n"
-    f"{chunks[0][:500000]}\n\n"  # Only send first chunk initially
-    "STRICT INSTRUCTIONS:\n"
-    "1. **Find and output the exact section** that answers the question, including:\n"
-    "   - Full section number/title (e.g., '4.2 Confidentiality')\n"
-    "   - The complete text of the section without any modifications\n"
-    "   - Any subsections if relevant\n"
-    "2. **Preserve all original formatting**, including:\n"
-    "   - Line breaks\n"
-    "   - Bullet points/numbering\n"
-    "   - Legal terminology\n"
-    "   - Capitalization\n"
-    "3. Use exactly one of these response formats:\n"
-    "   ```\n"
-    "    [SECTION NUMBER] [SECTION TITLE]\n"
-    "   [EXACT TEXT VERBATIM]\n"
-    "   ```\n"
-    "   OR\n"
-    "   > [EXACT QUOTE FROM TEXT]\n"
-    "4. Every response that includes a section or quote must end with a citation in the format: [^filename||page||section-heading]\n"
-    "   - This citation is mandatory. Do not omit it under any circumstance.\n"
-    "5. If no matching section is found, respond ONLY with: 'Not found in context'\n"
-    "6. **Never**:\n"
-    "   - Paraphrase or summarize\n"
-    "   - Add interpretation\n"
-    "   - Combine text from different sections\n"
-    "   - Modify legal terms or definitions\n\n"
-    "7. Format the answer for readability:\n"
-    "   - Make the section number and title appear in **bold** (e.g., **§ 4.2 Confidentiality**)\n"
-    "   - Ensure subsections are properly indented and aligned under their main section\n"
-    "   - Use *italics* for emphasis where used in the original text\n"
-    "   - Use double quotes or > blockquotes when quoting portions within the section\n"
-    "Answer:"
-)
+    for chunk in chunks:
+        # Maintain a sliding context window
+        context_window.append(chunk)
+        context_window = context_window[-3:]  # Keep last 3 chunks
+        
+        # Build context ensuring we don't exceed limits
+        context = "\n\n".join(context_window)[-max_context_size:]
+        
+        prompt = build_prompt(context, question, is_final=chunk == chunks[-1])
+        
+        try:
+            response = requests.post(
+                app.config['OLLAMA_URL'],
+                json={
+                    "model": app.config['OLLAMA_MODEL'],
+                    "prompt": prompt,
+                    "stream": True
+                },
+                stream=True
+            )
+            
+            for line in response.iter_lines():
+                if line:
+                    data = json.loads(line)
+                    if 'response' in data:
+                        yield data['response']
+                        
+                        # Early termination if we get a complete answer
+                        if "[ANSWER_COMPLETE]" in data['response']:
+                            return
+                            
+        except Exception as e:
+            yield f"Error processing chunk: {str(e)}"
+            break
 
-    try:
-        response = requests.post(
-            app.config['OLLAMA_URL'],
-            json={
-                "model": app.config['OLLAMA_MODEL'],
-                "prompt": prompt,
-                "stream": True,
-                "options": {
-                    "temperature": 0.3,
-                    "num_ctx": 8000,
-                    "num_predict": 1000,
-                    "format": "markdown"
-                }
-            },
-            stream=True,
-            timeout=app.config['OLLAMA_TIMEOUT']
-        )
-        response.raise_for_status()
-
-        for line in response.iter_lines():
-            if line:
-                chunk = json.loads(line)
-                if 'response' in chunk:
-                    yield chunk['response']
-
-    except requests.exceptions.Timeout:
-        yield "Error: The request timed out. Please try again with a simpler query."
-    except requests.exceptions.RequestException as e:
-        yield f"Error: Failed to get streaming response. {str(e)}"
+def build_prompt(context, question, is_final=False):
+    """Construct a prompt that considers multi-chunk context"""
+    return (
+        "Document Context (may be partial):\n"
+        f"{context}\n\n"
+        "Question:\n"
+        f"{question}\n\n"
+        "Instructions:\n"
+        "1. Answer based on the current context\n"
+        "3. Mark complete answers with [ANSWER_COMPLETE]\n"
+        "4. Preserve original document structure in responses\n"
+        "5. Every response that includes a section or quote must end with a citation in the format: [^filename||page||section-heading]\n"
+        "   - filename must be the exact relative path from the extracted_files directory\n"
+        "   - Use forward slashes (/) for path separators\n"
+        "6. If no matching section is found, respond ONLY with: 'Not found in context'\n"
+        "7. **Never**:\n"
+        "   - Paraphrase or summarize\n"
+        "   - Add interpretation\n"
+        "   - Combine text from different sections\n"
+        "   - Modify legal terms or definitions\n\n"
+        f"{'8. This is the final context section' if is_final else ''}\n\n"
+        "Response:"
+    )
 
 @app.template_filter('datetimeformat')
 def datetimeformat(value, format='%b %d, %H:%M'):
@@ -774,7 +878,7 @@ def get_file_structure():
 
 @app.route('/get_file_content')
 def get_file_content():
-    """Enhanced file content endpoint with PDF and image support"""
+    """Enhanced file content endpoint with robust path handling"""
     rel_path = request.args.get('path')
     page_num = request.args.get('page', '')
     highlight = request.args.get('highlight', '')
@@ -788,52 +892,88 @@ def get_file_content():
             return jsonify({'error': 'Invalid file path'}), 400
         
         # Normalize path (handle different OS path separators)
-        rel_path = rel_path.replace('\\', '/')  # Convert Windows paths to Unix-style
-        full_path = os.path.join(app.config['EXTRACT_FOLDER'], *rel_path.split('/'))
-        full_path = os.path.normpath(full_path)  # Normalize path
+        rel_path = rel_path.replace('\\', '/').strip('/')  # Convert to Unix-style and remove leading/trailing slashes
+        
+        # Build the full path safely
+        try:
+            full_path = os.path.join(app.config['EXTRACT_FOLDER'], *rel_path.split('/'))
+            full_path = os.path.normpath(full_path)
+        except Exception as e:
+            app.logger.error(f"Path joining failed: {rel_path} - {str(e)}")
+            return jsonify({'error': 'Invalid file path'}), 400
         
         # Verify the path is within the extract folder
         if not full_path.startswith(os.path.abspath(app.config['EXTRACT_FOLDER'])):
+            app.logger.error(f"Security violation attempt: {full_path}")
             return jsonify({'error': 'Access denied'}), 403
         
+        # Case-insensitive file search if needed
         if not os.path.exists(full_path):
-            app.logger.error(f"File not found: {full_path} (resolved from {rel_path})")
-            return jsonify({'error': 'File not found'}), 404
-        
-        file_ext = os.path.splitext(full_path)[1].lower()[1:]  # Remove the dot
-        
-        # Handle PDF files
-        if file_ext == 'pdf':
-            return send_file(
-                full_path,
-                mimetype='application/pdf',
-                as_attachment=False
-            )
-        
-        # Handle image files
-        if file_ext in ['jpg', 'jpeg', 'png', 'gif']:
-            mimetype = f'image/{file_ext}' if file_ext != 'jpg' else 'image/jpeg'
-            return send_file(
-                full_path,
-                mimetype=mimetype,
-                as_attachment=False
-            )
-        
-        # Handle text files
-        content = read_file(full_path)
-        if not content:
-            return jsonify({'error': 'Could not read file content'}), 400
+            dirname, filename = os.path.split(full_path)
+            if os.path.exists(dirname):
+                for f in os.listdir(dirname):
+                    if f.lower() == filename.lower():
+                        full_path = os.path.join(dirname, f)
+                        break
             
-        return jsonify({
-            'file': os.path.basename(full_path),
-            'content': content,
-            'path': rel_path
-        })
+            if not os.path.exists(full_path):
+                app.logger.error(f"File not found: {full_path} (resolved from {rel_path})")
+                app.logger.error(f"Extract folder contents: {os.listdir(app.config['EXTRACT_FOLDER'])}")
+                return jsonify({'error': 'File not found'}), 404
+        
+        # Get file stats for debugging
+        file_stats = os.stat(full_path)
+        app.logger.info(f"Serving file: {full_path} (Size: {file_stats.st_size} bytes)")
+        
+        # Determine content type
+        file_ext = os.path.splitext(full_path)[1].lower()
+        mime_types = {
+            '.pdf': 'application/pdf',
+            '.jpg': 'image/jpeg',
+            '.jpeg': 'image/jpeg',
+            '.png': 'image/png',
+            '.gif': 'image/gif',
+            '.webp': 'image/webp',
+            '.bmp': 'image/bmp',
+            '.svg': 'image/svg+xml',
+            '.txt': 'text/plain',
+            '.md': 'text/markdown',
+            '.csv': 'text/csv',
+            '.json': 'application/json',
+            '.xml': 'application/xml',
+            '.html': 'text/html'
+        }
+        
+        content_type = mime_types.get(file_ext, 'application/octet-stream')
+        
+        # Handle different response types
+        if content_type.startswith('image/') or file_ext == '.pdf':
+            return send_file(
+                full_path,
+                mimetype=content_type,
+                as_attachment=False,
+                last_modified=datetime.fromtimestamp(file_stats.st_mtime),
+                etag=str(file_stats.st_mtime)
+            )
+        else:
+            # For text files, read and return content
+            content = read_file(full_path)
+            if not content:
+                return jsonify({'error': 'Could not read file content'}), 400
+                
+            return jsonify({
+                'file': os.path.basename(full_path),
+                'content': content,
+                'path': rel_path,
+                'size': file_stats.st_size,
+                'last_modified': datetime.fromtimestamp(file_stats.st_mtime).isoformat()
+            })
     
     except Exception as e:
-        app.logger.error(f"Error serving file {rel_path}: {str(e)}")
+        app.logger.error(f"Error serving file {rel_path}: {str(e)}", exc_info=True)
         return jsonify({'error': str(e)}), 500
-
+        
+           
 
 @app.route('/progress_stream')
 def progress_stream():
@@ -888,6 +1028,10 @@ def process_references(text):
         page = match.group(2) or ''
         highlight = match.group(3) or ''
         
+        # Clean and normalize the filename path
+        filename = filename.split(']')[0]  # Remove any trailing content
+        filename = filename.replace('\\', '/')  # Normalize to forward slashes
+        
         ref_id = reference_counter
         reference_counter += 1
         
@@ -899,8 +1043,13 @@ def process_references(text):
             'highlight': highlight
         })
         
-        # Return the reference link
-        return f'<sup class="reference-link" data-ref="{ref_id}">[{ref_id}]</sup>'
+        # Return the reference link with proper data attributes
+        return (f'<sup class="reference-link" '
+                f'data-ref="{ref_id}" '
+                f'data-filename="{filename}" '
+                f'data-page="{page}" '
+                f'data-highlight="{highlight}">'
+                f'[{ref_id}]</sup>')
     
     # Process all references in the text
     processed_text = re.sub(
@@ -913,7 +1062,7 @@ def process_references(text):
     if references:
         references_section = '<div class="references-section"><h4>References</h4><ol>'
         for ref in sorted(references, key=lambda x: x['id']):
-            ref_text = ref['filename']
+            ref_text = ref['filename'].split('/')[-1]  # Show only filename
             if ref['page']:
                 ref_text += f", page {ref['page']}"
             if ref['highlight']:
@@ -924,6 +1073,7 @@ def process_references(text):
         processed_text += references_section
     
     return processed_text
+
 
 @app.after_request
 def after_request(response):

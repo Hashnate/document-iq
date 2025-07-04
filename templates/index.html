@@ -5,14 +5,12 @@
     <div class="upload-card">
          <i class="bi bi-cloud-arrow-up upload-icon"></i>
         <h2 class="upload-title">Upload Your Documents</h2>
-        <p class="upload-description">
-            Drag & drop a ZIP file here or click to browse<br>
-            <!-- Maximum file size: 500MB -->
-        </p>
+        
         <div class="file-upload-area">
            <i class="bi bi-file-earmark-zip" style="font-size: 2rem;"></i>
                     <h5 id="upload-instruction">Drag & drop files here</h5>
-                    <p class="text-muted" id="file-name">or click to browse (ZIP files only)</p>
+                    <p class="text-muted" id="file-name">or click to browse <br><b>Single File (Zip or Regular files)
+<br>Multiple Files including Folders (Zip Files Only)</b></p>
         </div>
 
          <div class="supported-files mt-4">
@@ -27,6 +25,11 @@
                 <span class="badge">XML</span>
             </div>
         </div>
+        <br>
+        <p class="upload-description">
+            Note: Unprotect password protected Files/Documents prior to Upload
+            <!-- Maximum file size: 500MB -->
+        </p>
         
         <div class="progress-container">
             <div class="progress-bar">
@@ -190,7 +193,7 @@
                         if (percent < 100) {
                             progressText.textContent = `Uploading... (${formatFileSize(e.loaded)} of ${formatFileSize(e.total)})`;
                         } else {
-                            progressText.textContent = 'Processing...';
+                            progressText.textContent = 'Processing your documents.. This may take a while.';
                         }
                     }
                 };
