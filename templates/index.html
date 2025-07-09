@@ -1,21 +1,19 @@
 {% extends "base.html" %}
 
 {% block content %}
-   <div class="upload-container">
+<div class="upload-container">
     <div class="upload-card">
-         <i class="bi bi-cloud-arrow-up upload-icon"></i>
+        <i class="bi bi-cloud-arrow-up upload-icon"></i>
         <h2 class="upload-title">Upload Your Documents</h2>
-        <p class="upload-description">
-            Drag & drop a ZIP file here or click to browse<br>
-            <!-- Maximum file size: 500MB -->
-        </p>
+
         <div class="file-upload-area">
-           <i class="bi bi-file-earmark-zip" style="font-size: 2rem;"></i>
-                    <h5 id="upload-instruction">Drag & drop files here</h5>
-                    <p class="text-muted" id="file-name">or click to browse (ZIP files only)</p>
+            <i class="bi bi-file-earmark-zip" style="font-size: 2rem;"></i>
+            <h5 id="upload-instruction">Drag & drop files here</h5>
+            <p class="text-muted" id="file-name">or click to browse <br><b>Single File (Zip or Regular files)
+                    <br>Multiple Files including Folders (Zip Files Only)</b></p>
         </div>
 
-         <div class="supported-files mt-4">
+        <div class="supported-files mt-4">
             <div class="supported-files-title">Supported File Types Inside ZIP:</div>
             <div class="supported-files-badges">
                 <span class="badge">PDF</span>
@@ -27,7 +25,11 @@
                 <span class="badge">XML</span>
             </div>
         </div>
-        
+        <br>
+        <p class="upload-description">
+            Note: Unprotect password protected Files/Documents prior to Upload
+        </p>
+
         <div class="progress-container">
             <div class="progress-bar">
                 <div class="progress"></div>
@@ -37,204 +39,446 @@
                 <span class="progress-percent">0%</span>
             </div>
         </div>
-        
+
         <div class="file-list"></div>
-        
-        <!-- <p class="success-message"></p> -->
         <p class="error-message"></p>
+
+        <!-- Subscription Modal (will be populated dynamically) -->
+        <div id="subscriptionModal" class="modal" style="display: none;"></div>
     </div>
-     </div>
-    
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const uploadArea = document.querySelector('.file-upload-area');
-            const fileInput = document.createElement('input');
-            fileInput.type = 'file';
-            fileInput.multiple = true;
-            fileInput.webkitdirectory = true;
-            fileInput.style.display = 'none';
-            
-            document.body.appendChild(fileInput);
-            
-            const progressContainer = document.querySelector('.progress-container');
-            const progressBar = document.querySelector('.progress');
-            const progressText = document.querySelector('.progress-text');
-            const progressPercent = document.querySelector('.progress-percent');
-            const fileList = document.querySelector('.file-list');
-            // const successMessage = document.querySelector('.success-message');
-            const errorMessage = document.querySelector('.error-message');
-            
-            // Handle drag and drop
-            uploadArea.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                uploadArea.classList.add('active');
+</div>
+
+<style>
+    /* Modal styles */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-content {
+        background-color: #fff;
+        margin: 15% auto;
+        padding: 20px;
+        border-radius: 8px;
+        width: 400px;
+        max-width: 90%;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        position: relative;
+    }
+
+
+    .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 20px;
+    }
+
+    .modal-actions .btn {
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        border: none;
+    }
+
+    .btn-primary {
+        background-color: var(--primary-color);
+        color: white;
+    }
+
+    /* .btn-secondary {
+        background-color: #f1f1f1;
+    } */
+
+    .btn-trial {
+        background-color: #2196F3;
+        color: white;
+    }
+
+    .file-upload-area {
+        min-height: 150px;
+        border: 2px dashed #ccc;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        padding: 20px;
+    }
+
+    .file-upload-area.active {
+        border-color: #4CAF50;
+        background-color: #f8f9fa;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const uploadArea = document.querySelector('.file-upload-area');
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.multiple = true;
+        fileInput.webkitdirectory = true;
+        fileInput.style.display = 'none';
+
+        document.body.appendChild(fileInput);
+
+        const progressContainer = document.querySelector('.progress-container');
+        const progressBar = document.querySelector('.progress');
+        const progressText = document.querySelector('.progress-text');
+        const progressPercent = document.querySelector('.progress-percent');
+        const fileList = document.querySelector('.file-list');
+        const errorMessage = document.querySelector('.error-message');
+        const modal = document.getElementById('subscriptionModal');
+
+        // Check subscription status with more detailed response
+        async function checkSubscriptionStatus() {
+            try {
+                const response = await fetch('/check_subscription', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
+                    },
+                    credentials: 'include'
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to check subscription status');
+                }
+
+                const data = await response.json();
+
+                return {
+                    ...data,
+                    allow_uploads: data.has_subscription || data.has_active_trial
+                };
+            } catch (error) {
+                console.error('Error checking subscription:', error);
+                return {
+                    has_subscription: false,
+                    has_active_trial: false,
+                    has_trial_available: false,
+                    trial_days_remaining: 0,
+                    allow_uploads: false
+                };
+            }
+        }
+        // Show appropriate subscription modal based on user status
+        async function showSubscriptionModal() {
+            const status = await checkSubscriptionStatus();
+
+            // Create modal content
+            const modalContent = document.createElement('div');
+            modalContent.className = 'modal-content';
+
+            // Close button
+            const closeSpan = document.createElement('span');
+            closeSpan.className = 'close-modal';
+            closeSpan.innerHTML = '&times;';
+            closeSpan.addEventListener('click', () => modal.style.display = 'none');
+
+            // Title and message
+            const title = document.createElement('h3');
+            const message = document.createElement('p');
+
+            if (status.has_active_trial) {
+                title.textContent = 'Trial Active';
+                message.textContent = `You have ${status.trial_days_remaining} days remaining in your free trial.`;
+                // Allow uploads for active trials
+                modal.style.display = 'none';
+                return true;
+            } else if (status.has_trial_available) {
+                title.textContent = 'Start Your Free Trial';
+                message.textContent = 'You can start a free trial to upload files.';
+            } else {
+                title.textContent = 'Upgrade Required';
+                message.textContent = 'You need a subscription to upload files.';
+            }
+
+            // Buttons
+            const modalActions = document.createElement('div');
+            modalActions.className = 'modal-actions';
+
+            if (status.has_trial_available && !status.has_active_trial) {
+                const trialButton = document.createElement('button');
+                trialButton.className = 'btn btn-trial';
+                trialButton.textContent = 'Start Free Trial';
+                trialButton.addEventListener('click', () => {
+                    window.location.href = '/pricing';
+                });
+                modalActions.appendChild(trialButton);
+            }
+
+            const upgradeButton = document.createElement('button');
+            upgradeButton.className = 'btn btn-primary';
+            upgradeButton.textContent = 'Upgrade Now';
+            upgradeButton.addEventListener('click', () => {
+                window.location.href = '/pricing';
             });
-            
-            uploadArea.addEventListener('dragleave', () => {
-                uploadArea.classList.remove('active');
-            });
-            
-            uploadArea.addEventListener('drop', (e) => {
-                e.preventDefault();
-                uploadArea.classList.remove('active');
-                
-                if (e.dataTransfer.items) {
-                    const items = e.dataTransfer.items;
-                    const files = [];
-                    
-                    for (let i = 0; i < items.length; i++) {
-                        if (items[i].kind === 'file') {
-                            const entry = items[i].webkitGetAsEntry();
-                            if (entry) {
-                                scanFiles(entry, files);
-                            }
-                        }
+
+            const cancelButton = document.createElement('button');
+            cancelButton.className = 'btn btn-secondary';
+            cancelButton.textContent = 'Cancel';
+            cancelButton.addEventListener('click', () => modal.style.display = 'none');
+
+            modalActions.appendChild(upgradeButton);
+            modalActions.appendChild(cancelButton);
+
+            // Build modal
+            modalContent.appendChild(closeSpan);
+            modalContent.appendChild(title);
+            modalContent.appendChild(message);
+            modalContent.appendChild(modalActions);
+
+            // Clear previous modal content
+            modal.innerHTML = '';
+            modal.appendChild(modalContent);
+            modal.style.display = 'block';
+
+            return false;
+        }
+
+        // Handle drag and drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('active');
+        });
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('active');
+        });
+
+        uploadArea.addEventListener('drop', async (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('active');
+
+            // ✅ Step 1: Capture all entries immediately before any await
+            const items = [...e.dataTransfer.items];
+            const entryCopies = [];
+
+            for (let i = 0; i < items.length; i++) {
+                if (items[i].kind === 'file') {
+                    const entry = items[i].webkitGetAsEntry?.();
+                    if (entry) {
+                        entryCopies.push(entry); // save the entry for use *after* the await
                     }
-                    
-                    // Wait for all files to be scanned
-                    setTimeout(() => {
-                        if (files.length > 0) {
-                            uploadFiles(files);
-                        }
-                    }, 100);
-                }
-            });
-            
-            // Handle click to select files
-            uploadArea.addEventListener('click', () => {
-                fileInput.click();
-            });
-            
-            fileInput.addEventListener('change', (e) => {
-                if (fileInput.files.length > 0) {
-                    const files = Array.from(fileInput.files);
-                    uploadFiles(files);
-                }
-            });
-            
-            // Recursively scan directory for files
-            function scanFiles(entry, files, path = '') {
-                if (entry.isFile) {
-                    entry.file(file => {
-                        file.filepath = path + file.name; // save relative path
-                        files.push(file);
-                    });
-                } else if (entry.isDirectory) {
-                    const dirReader = entry.createReader();
-                    dirReader.readEntries(entries => {
-                        for (let i = 0; i < entries.length; i++) {
-                            scanFiles(entries[i], files, path + entry.name + '/');
-                        }
-                    });
                 }
             }
-            
-            // Upload files to server
-            function uploadFiles(files) {
-                if (files.length === 0) return;
-                
-                // Clear previous results
-                fileList.innerHTML = '';
-                // successMessage.style.display = 'none';
-                errorMessage.style.display = 'none';
-                
-                // Calculate total size
-                const totalSize = files.reduce((sum, file) => sum + file.size, 0);
-                
-                // Show files to be uploaded
-                files.forEach(file => {
-                    const fileItem = document.createElement('div');
-                    fileItem.className = 'file-item';
-                    
-                    const fileIcon = document.createElement('div');
-                    fileIcon.className = 'file-icon';
-                    fileIcon.innerHTML = '📄';
-                    
-                    const fileName = document.createElement('div');
-                    fileName.className = 'file-name';
-                    fileName.textContent = file.filepath || file.name;
-                    
-                    const fileSize = document.createElement('div');
-                    fileSize.className = 'file-size';
-                    fileSize.textContent = formatFileSize(file.size);
-                    
-                    fileItem.appendChild(fileIcon);
-                    fileItem.appendChild(fileName);
-                    fileItem.appendChild(fileSize);
-                    fileList.appendChild(fileItem);
-                });
-                
-                // Show progress bar
-                progressContainer.style.display = 'block';
-                progressBar.style.width = '0%';
-                progressPercent.textContent = '0%';
-                progressText.textContent = `Preparing to upload ${files.length} files (${formatFileSize(totalSize)})`;
-                
-                // Prepare form data
-                const formData = new FormData();
-                files.forEach(file => {
-                    formData.append('files', file, file.filepath || file.name);
-                });
-                
-                // Upload with progress
-                const xhr = new XMLHttpRequest();
-                xhr.open('POST', '/', true);
-                
-                xhr.upload.onprogress = function(e) {
-                    if (e.lengthComputable) {
-                        const percent = Math.round((e.loaded / e.total) * 100);
-                        progressBar.style.width = percent + '%';
-                        progressPercent.textContent = percent + '%';
-                        
-                        // Update text based on progress
-                        if (percent < 100) {
-                            progressText.textContent = `Uploading... (${formatFileSize(e.loaded)} of ${formatFileSize(e.total)})`;
-                        } else {
-                            progressText.textContent = 'Processing your documents.. This may take a while.';
-                        }
-                    }
-                };
-                
-                xhr.onload = function() {
-                    progressPercent.textContent = '100%';
-                    progressBar.style.width = '100%';
-                    progressText.textContent = 'Upload complete!';
-                    
-                    if (xhr.status === 200) {
-                        const response = JSON.parse(xhr.responseText);
-                        // successMessage.textContent = `Successfully uploaded ${response.files.length} files!`;
-                        // successMessage.style.display = 'block';
-                        setTimeout(() => {
-                        window.location.href = '/new_chat';
-                    }, 1000);
-                    } else {
-                        try {
-                            const response = JSON.parse(xhr.responseText);
-                            errorMessage.textContent = response.error || 'Error uploading files. Please try again.';
-                        } catch {
-                            errorMessage.textContent = 'Error uploading files. Please try again.';
-                        }
-                        errorMessage.style.display = 'block';
-                    }
-                };
-                
-                xhr.onerror = function() {
-                    progressText.textContent = 'Upload failed';
-                    errorMessage.textContent = 'Network error. Please check your connection.';
-                    errorMessage.style.display = 'block';
-                };
-                
-                xhr.send(formData);
+
+            // ✅ Step 2: Now do the async call
+            const status = await checkSubscriptionStatus();
+            if (!status.allow_uploads) {
+                await showSubscriptionModal();
+                return;
             }
-            
-            // Format file size
-            function formatFileSize(bytes) {
-                if (bytes === 0) return '0 Bytes';
-                const k = 1024;
-                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-                const i = Math.floor(Math.log(bytes) / Math.log(k));
-                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+
+            // ✅ Step 3: Use the saved entries
+            const files = [];
+            const entryPromises = entryCopies.map((entry) => scanFiles(entry));
+            const fileGroups = await Promise.all(entryPromises);
+            fileGroups.forEach(group => files.push(...group));
+
+            if (files.length > 0) {
+                uploadFiles(files);
+            } else {
+                showError("No valid files found in drop.");
             }
         });
-    </script>
+        // Handle click to select files
+        uploadArea.addEventListener('click', async () => {
+            console.log('upload area clicked');
+            fileInput.click(); // Bypass subscription check for testing
+            const status = await checkSubscriptionStatus();
+            if (!status.allow_uploads) {
+                await showSubscriptionModal();
+                return;
+            }
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (fileInput.files.length > 0) {
+                const files = Array.from(fileInput.files);
+                uploadFiles(files);
+            }
+        });
+
+        // Recursively scan directory for files
+        function scanFiles(entry, path = '') {
+            return new Promise((resolve) => {
+                const files = [];
+
+                if (entry.isFile) {
+                    entry.file((file) => {
+                        file.filepath = path + file.name;
+                        resolve([file]);
+                    }, () => resolve([]));
+                } else if (entry.isDirectory) {
+                    const dirReader = entry.createReader();
+                    dirReader.readEntries(async (entries) => {
+                        const nestedPromises = entries.map(sub => scanFiles(sub, path + entry.name + '/'));
+                        const nestedResults = await Promise.all(nestedPromises);
+                        resolve(nestedResults.flat());
+                    }, () => resolve([]));
+                } else {
+                    resolve([]);
+                }
+            });
+        }
+        // Upload files to server
+        function uploadFiles(files) {
+            if (files.length === 0) return;
+
+            // Clear previous results
+            fileList.innerHTML = '';
+            errorMessage.style.display = 'none';
+
+            // Calculate total size
+            const totalSize = files.reduce((sum, file) => sum + file.size, 0);
+
+            // Show files to be uploaded
+            files.forEach(file => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+
+                const fileIcon = document.createElement('div');
+                fileIcon.className = 'file-icon';
+                fileIcon.innerHTML = '📄';
+
+                const fileName = document.createElement('div');
+                fileName.className = 'file-name';
+                fileName.textContent = file.filepath || file.name;
+
+                const fileSize = document.createElement('div');
+                fileSize.className = 'file-size';
+                fileSize.textContent = formatFileSize(file.size);
+
+                fileItem.appendChild(fileIcon);
+                fileItem.appendChild(fileName);
+                fileItem.appendChild(fileSize);
+                fileList.appendChild(fileItem);
+            });
+
+            // Show progress bar
+            progressContainer.style.display = 'block';
+            progressBar.style.width = '0%';
+            progressPercent.textContent = '0%';
+            progressText.textContent = `Preparing to upload ${files.length} files (${formatFileSize(totalSize)})`;
+
+            // Prepare form data
+            const formData = new FormData();
+            formData.append('csrf_token', document.querySelector('meta[name="csrf-token"]').content);
+            files.forEach(file => {
+                formData.append('files', file, file.filepath || file.name);
+            });
+
+            // Upload with progress
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', '/', true);
+
+            xhr.upload.onprogress = function (e) {
+                if (e.lengthComputable) {
+                    const percent = Math.round((e.loaded / e.total) * 100);
+                    progressBar.style.width = percent + '%';
+                    progressPercent.textContent = percent + '%';
+
+                    if (percent < 100) {
+                        progressText.textContent = `Uploading... (${formatFileSize(e.loaded)} of ${formatFileSize(e.total)})`;
+                    } else {
+                        progressText.textContent = 'Processing your documents.. This may take a while.';
+                    }
+                }
+            };
+
+            xhr.onload = function () {
+                progressPercent.textContent = '100%';
+                progressBar.style.width = '100%';
+                progressText.textContent = 'Upload complete!';
+
+                if (xhr.status === 200) {
+                    const response = JSON.parse(xhr.responseText);
+                    window.location.href = '/new_chat';
+                } else {
+                    try {
+                        const response = JSON.parse(xhr.responseText);
+                        errorMessage.textContent = response.error || 'Error uploading files. Please try again.';
+                    } catch {
+                        errorMessage.textContent = 'Error uploading files. Please try again.';
+                    }
+                    errorMessage.style.display = 'block';
+                }
+            };
+            xhr.onerror = function () {
+                progressText.textContent = 'Upload failed';
+                errorMessage.textContent = 'Network error. Please check your connection.';
+                errorMessage.style.display = 'block';
+            };
+
+            xhr.send(formData);
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('active');
+
+            const items = e.dataTransfer.items;
+            const files = [];
+            const entryPromises = [];
+
+            if (items) {
+                for (let i = 0; i < items.length; i++) {
+                    if (items[i].kind === 'file') {
+                        const entry = items[i].webkitGetAsEntry?.();
+                        if (entry) {
+                            entryPromises.push(scanFiles(entry));
+                        }
+                    }
+                }
+
+                Promise.all(entryPromises).then(fileGroups => {
+                    fileGroups.forEach(group => files.push(...group));
+                    if (files.length > 0) {
+                        uploadFiles(files);
+                    } else {
+                        showError("No valid files found in drop.");
+                    }
+                });
+            }
+        }
+        checkSubscriptionStatus().then((status) => {
+            if (!status.allow_uploads) {
+                uploadArea.addEventListener('click', showSubscriptionModal);
+                uploadArea.addEventListener('drop', async (e) => {
+                    e.preventDefault();
+                    uploadArea.classList.remove('active');
+                    await showSubscriptionModal();
+                });
+            } else {
+                uploadArea.addEventListener('drop', handleDrop);
+            }
+        });
+        // Format file size
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // Close modal when clicking outside
+        window.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.style.display = 'none';
+            }
+        });
+    });
+
+</script>
 {% endblock %}

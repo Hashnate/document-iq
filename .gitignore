@@ -1,2 +1,7 @@
 /extracted_files
 /uploads
+/file_cache
+/__pycache__
+/venv
+/migrations
+/instance

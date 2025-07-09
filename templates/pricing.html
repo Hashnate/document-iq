@@ -1,0 +1,1011 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="pricing-page">
+    <!-- Hero Section -->
+    <section class="pricing-hero text-center py-5">
+        <div class="container">
+            <h1 class="display-4 mb-3">Find Your Perfect Plan</h1>
+            <p class="lead mb-4">Powerful document analysis tailored to your needs</p>
+            <div class="d-flex justify-content-center">
+                <div class="toggle-wrapper mb-4">
+                    <span class="toggle-label">Monthly</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="billingToggle">
+                        <span class="slider round"></span>
+                    </label>
+                    <span class="toggle-label">Annual <span class="badge badge-success">Save 20%</span></span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Cards -->
+    <div class="container">
+        <div class="row justify-content-center">
+            <!-- Basic Plan -->
+            <div class="col-lg-4 mb-4">
+                <div class="card pricing-card h-100">
+                    <div class="card-body">
+                        <div class="plan-header">
+                            <h3 class="plan-name">Basic</h3>
+                            <p class="plan-description">For individuals getting started</p>
+                        </div>
+                        <div class="price-display">
+                            <span class="price-currency">QAR</span>
+                            <span class="price-amount">99</span>
+                            <span class="price-period">/month</span>
+                            <span class="annual-price d-none">79 <small>/month</small></span>
+                        </div>
+                        <ul class="plan-features">
+                            <li><i class="fas fa-check-circle text-success"></i> <strong>500</strong> documents/month
+                            </li>
+                            <li><i class="fas fa-check-circle text-success"></i> <strong>100MB</strong> max file size
+                            </li>
+                            <li><i class="fas fa-check-circle text-success"></i> Email support</li>
+                            <li><i class="fas fa-check-circle text-success"></i> Basic analytics</li>
+                        </ul>
+                        {% if current_user.is_authenticated %}
+                        {% if current_user.subscription_plan == 'basic' and current_user.is_subscribed %}
+                        <button class="btn btn-current-plan" disabled>
+                            <i class="fas fa-check-circle"></i> Current Plan
+                        </button>
+                        {% else %}
+                        <button class="btn btn-choose-plan" onclick="showPaymentModal('basic')">
+                            Choose Basic
+                        </button>
+                        {% endif %}
+                        {% else %}
+                        <a href="{{ url_for('register') }}" class="btn btn-choose-plan">
+                            Get Started
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pro Plan (Featured) -->
+            <div class="col-lg-4 mb-4">
+                <div class="card pricing-card featured h-100">
+                    <div class="popular-badge">Most Popular</div>
+                    <div class="card-body">
+                        <div class="plan-header">
+                            <h3 class="plan-name">Professional</h3>
+                            <p class="plan-description">For power users and teams</p>
+                        </div>
+                        <div class="price-display">
+                            <span class="price-currency">QAR</span>
+                            <span class="price-amount">199</span>
+                            <span class="price-period">/month</span>
+                            <span class="annual-price d-none">159 <small>/month</small></span>
+                        </div>
+                        <ul class="plan-features">
+                            <li><i class="fas fa-check-circle text-success"></i> <strong>2000</strong> documents/month
+                            </li>
+                            <li><i class="fas fa-check-circle text-success"></i> <strong>500MB</strong> max file size
+                            </li>
+                            <li><i class="fas fa-check-circle text-success"></i> Priority email & chat support</li>
+                            <li><i class="fas fa-check-circle text-success"></i> Advanced analytics</li>
+                            <li><i class="fas fa-check-circle text-success"></i> API access</li>
+                        </ul>
+                        {% if current_user.is_authenticated %}
+                        {% if current_user.subscription_plan == 'pro' and current_user.is_subscribed %}
+                        <button class="btn btn-current-plan" disabled>
+                            <i class="fas fa-check-circle"></i> Current Plan
+                        </button>
+                        {% else %}
+                        <button class="btn btn-featured-plan" onclick="showPaymentModal('pro')">
+                            Choose Professional
+                        </button>
+                        {% endif %}
+                        {% else %}
+                        <a href="{{ url_for('register') }}" class="btn btn-featured-plan">
+                            Get Started
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Free Trial Plan -->
+            <div class="col-lg-4 mb-4">
+                <div class="card pricing-card h-100">
+                    <div class="trial-badge">No Credit Card</div>
+                    <div class="card-body">
+                        <div class="plan-header">
+                            <h3 class="plan-name">Free Trial</h3>
+                            <p class="plan-description">Experience all features risk-free</p>
+                        </div>
+                        <div class="price-display">
+                            <span class="price-amount">0</span>
+                            <span class="price-currency">QAR</span>
+                            <span class="price-period">for 14 days</span>
+                        </div>
+                        <ul class="plan-features">
+                            <li><i class="fas fa-check-circle text-success"></i> <strong>Unlimited</strong> documents
+                            </li>
+                            <li><i class="fas fa-check-circle text-success"></i> <strong>100MB</strong> max file size
+                            </li>
+                            <li><i class="fas fa-check-circle text-success"></i> All Professional features</li>
+                            <li><i class="fas fa-check-circle text-success"></i> No credit card required</li>
+                            <li><i class="fas fa-check-circle text-success"></i> Cancel anytime</li>
+                        </ul>
+                        {% if current_user.is_authenticated %}
+                        {% if current_user.subscription_plan == 'trial' and current_user.is_subscribed %}
+                        <button class="btn btn-current-plan" disabled>
+                            <i class="fas fa-check-circle"></i> Trial Active ({{ (current_user.trial_end_date -
+                            now).days }} days left)
+                        </button>
+                        {% else %}
+                        <button class="btn btn-trial-plan" onclick="startTrial()">
+                            <i class="fas fa-rocket"></i> Start Free Trial
+                        </button>
+                        {% endif %}
+                        {% else %}
+                        <a href="{{ url_for('register') }}" class="btn btn-trial-plan">
+                            <i class="fas fa-rocket"></i> Start Free Trial
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Comparison Table -->
+    <section class="comparison-table py-5 bg-light">
+        <div class="container">
+            <h2 class="text-center mb-5">Plan Comparison</h2>
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Features</th>
+                            <th scope="col">Basic</th>
+                            <th scope="col">Professional</th>
+                            <th scope="col">Free Trial</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <th scope="row">Documents/month</th>
+                            <td>500</td>
+                            <td>2000</td>
+                            <td>Unlimited</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Max file size</th>
+                            <td>100MB</td>
+                            <td>500MB</td>
+                            <td>100MB</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Support</th>
+                            <td>Email</td>
+                            <td>Priority email & chat</td>
+                            <td>Priority email & chat</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Analytics</th>
+                            <td>Basic</td>
+                            <td>Advanced</td>
+                            <td>Advanced</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">API Access</th>
+                            <td><i class="fas fa-times text-danger"></i></td>
+                            <td><i class="fas fa-check text-success"></i></td>
+                            <td><i class="fas fa-check text-success"></i></td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Duration</th>
+                            <td>Ongoing</td>
+                            <td>Ongoing</td>
+                            <td>14 days</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Payment Required</th>
+                            <td><i class="fas fa-check text-success"></i></td>
+                            <td><i class="fas fa-check text-success"></i></td>
+                            <td><i class="fas fa-times text-danger"></i></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section class="testimonials py-5">
+        <div class="container">
+            <h2 class="text-center mb-5">What Our Customers Say</h2>
+            <div class="row">
+                <div class="col-md-4 mb-4">
+                    <div class="testimonial-card">
+                        <div class="rating mb-2">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <p class="testimonial-text">"The free trial gave me full access to test the Professional
+                            features. After seeing the value, upgrading was an easy decision."</p>
+                        <div class="testimonial-author">
+                            <strong>Fatima A.</strong>, Small Business Owner
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="testimonial-card">
+                        <div class="rating mb-2">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <p class="testimonial-text">"I was able to process all my documents during the trial period with
+                            no limitations. The perfect way to evaluate the service."</p>
+                        <div class="testimonial-author">
+                            <strong>Khalid R.</strong>, Startup Founder
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="testimonial-card">
+                        <div class="rating mb-2">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star-half-alt"></i>
+                        </div>
+                        <p class="testimonial-text">"The Basic plan exceeded our expectations. Perfect for our small
+                            team's needs after trying the Professional features in the trial."</p>
+                        <div class="testimonial-author">
+                            <strong>Sarah M.</strong>, Marketing Team
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="faq-section py-5 bg-light">
+        <div class="container">
+            <h2 class="text-center mb-5">Frequently Asked Questions</h2>
+            <div class="accordion" id="faqAccordion">
+                <div class="card">
+                    <div class="card-header" id="headingOne">
+                        <h3 class="mb-0">
+                            <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseOne"
+                                aria-expanded="true">
+                                How does the free trial work?
+                                <i class="fas fa-chevron-down float-right"></i>
+                            </button>
+                        </h3>
+                    </div>
+                    <div id="collapseOne" class="collapse show" aria-labelledby="headingOne"
+                        data-parent="#faqAccordion">
+                        <div class="card-body">
+                            Our free trial gives you 14 days of full access to all Professional plan features. No credit
+                            card is required to start.
+                            After 14 days, you can choose to upgrade to a paid plan or your account will be downgraded
+                            to the free Basic plan limitations.
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header" id="headingTwo">
+                        <h3 class="mb-0">
+                            <button class="btn btn-link collapsed" type="button" data-toggle="collapse"
+                                data-target="#collapseTwo">
+                                What happens when my trial ends?
+                                <i class="fas fa-chevron-down float-right"></i>
+                            </button>
+                        </h3>
+                    </div>
+                    <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#faqAccordion">
+                        <div class="card-body">
+                            When your trial ends, you'll automatically be moved to the Basic plan limitations. Your data
+                            remains intact,
+                            and you can upgrade at any time to regain full access. We'll send you reminders before your
+                            trial ends.
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header" id="headingThree">
+                        <h3 class="mb-0">
+                            <button class="btn btn-link collapsed" type="button" data-toggle="collapse"
+                                data-target="#collapseThree">
+                                Can I extend my free trial?
+                                <i class="fas fa-chevron-down float-right"></i>
+                            </button>
+                        </h3>
+                    </div>
+                    <div id="collapseThree" class="collapse" aria-labelledby="headingThree" data-parent="#faqAccordion">
+                        <div class="card-body">
+                            Free trials are limited to one per user. If you need more time to evaluate, please contact
+                            our support team -
+                            we may be able to offer an extension in special circumstances.
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header" id="headingFour">
+                        <h3 class="mb-0">
+                            <button class="btn btn-link collapsed" type="button" data-toggle="collapse"
+                                data-target="#collapseFour">
+                                What payment methods do you accept?
+                                <i class="fas fa-chevron-down float-right"></i>
+                            </button>
+                        </h3>
+                    </div>
+                    <div id="collapseFour" class="collapse" aria-labelledby="headingFour" data-parent="#faqAccordion">
+                        <div class="card-body">
+                            We accept all major credit cards (Visa, Mastercard, American Express) through our secure
+                            payment processor.
+                            We also support bank transfers for annual Professional plans.
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header" id="headingFive">
+                        <h3 class="mb-0">
+                            <button class="btn btn-link collapsed" type="button" data-toggle="collapse"
+                                data-target="#collapseFive">
+                                Can I switch plans later?
+                                <i class="fas fa-chevron-down float-right"></i>
+                            </button>
+                        </h3>
+                    </div>
+                    <div id="collapseFive" class="collapse" aria-labelledby="headingFive" data-parent="#faqAccordion">
+                        <div class="card-body">
+                            Yes! You can upgrade or downgrade at any time. When upgrading, you'll get immediate access
+                            to the new features.
+                            Downgrades take effect at your next billing cycle. All changes are prorated.
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="text-center mt-5">
+                <p class="lead">Still have questions?</p>
+                <a href="#" class="btn btn-outline-primary">Contact Support</a>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- Payment Modal -->
+<div class="modal fade" id="paymentModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Subscribe to <span id="planName"></span> Plan</h5>
+                <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"
+                    onclick="$('#paymentModal').modal('hide')">
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="payment-form">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="form-group">
+                        <label for="card-element">Credit or debit card</label>
+                        <div id="card-element" class="form-control" style="height: 40px; padding: 10px;"></div>
+                        <div id="card-errors" role="alert" class="text-danger"></div>
+                    </div>
+                    <input type="hidden" id="plan-id" name="plan_id">
+                    <input type="hidden" id="billing-type" name="billing_type" value="monthly">
+                </form>
+                <div class="payment-summary mt-3">
+                    <h6>Order Summary</h6>
+                    <div class="d-flex justify-content-between">
+                        <span>Plan:</span>
+                        <span id="summary-plan">Basic</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span>Price:</span>
+                        <span id="summary-price">99 QAR/month</span>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between font-weight-bold">
+                        <span>Total:</span>
+                        <span id="summary-total">99 QAR/month</span>
+                    </div>
+                    <div class="summary-savings text-success d-none" id="annualSavings">
+                        <i class="fas fa-piggy-bank"></i> You save <span id="savingsAmount">240 QAR</span> annually!
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal"
+                    onclick="$('#paymentModal').modal('hide')">Cancel</button>
+                <button type="button" class="btn btn-primary" id="submit-payment">
+                    <span id="submit-text">Subscribe</span>
+                    <span id="spinner" class="spinner-border spinner-border-sm d-none" role="status"
+                        aria-hidden="true"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Trial Confirmation Modal -->
+<div class="modal fade" id="trialModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header border-bottom-0">
+                <h5 class="modal-title">Start Your Free Trial</h5>
+                <button type="button" class="btn-close" aria-label="Close"
+                    onclick="$('#trialModal').modal('hide')"></button>
+            </div>
+            <div class="modal-body py-4">
+                <div class="text-center mb-4">
+                    <i class="fas fa-gift text-primary" style="font-size: 3rem;"></i>
+                </div>
+                <h4 class="text-center mb-3">14-Day Free Trial</h4>
+                <p class="text-center text-muted">
+                    Get full access to all Professional features for 14 days.
+                    No credit card required. Cancel anytime.
+                </p>
+
+                <div class="trial-features mt-4 p-3 bg-light rounded">
+                    <div class="feature-item mb-2">
+                        <i class="fas fa-check-circle text-success mr-2"></i>
+                        <span>Unlimited document processing</span>
+                    </div>
+                    <div class="feature-item mb-2">
+                        <i class="fas fa-check-circle text-success mr-2"></i>
+                        <span>100MB max file size</span>
+                    </div>
+                    <div class="feature-item mb-2">
+                        <i class="fas fa-check-circle text-success mr-2"></i>
+                        <span>Priority email & chat support</span>
+                    </div>
+                    <div class="feature-item mb-2">
+                        <i class="fas fa-check-circle text-success mr-2"></i>
+                        <span>Advanced analytics</span>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-check-circle text-success mr-2"></i>
+                        <span>API access</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-top-0">
+                <button type="button" class="btn btn-outline-secondary" data-dismiss="modal"
+                    onclick="$('#trialModal').modal('hide')">Not Now</button>
+                <button type="button" class="btn btn-primary" id="confirm-trial">
+                    <span id="trial-button-text">Start Free Trial</span>
+                    <span id="trial-spinner" class="spinner-border spinner-border-sm d-none ml-2"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CSS -->
+<style>
+    .pricing-page {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .pricing-hero {
+        background: linear-gradient(135deg, #6e8efb, #a777e3);
+        color: white;
+    }
+
+    .pricing-hero h1 {
+        font-weight: 700;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .toggle-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .toggle-label {
+        font-weight: 500;
+        color: rgb(0, 0, 0);
+    }
+
+    .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 60px;
+        height: 30px;
+    }
+
+    .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: .4s;
+        border-radius: 34px;
+    }
+
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 22px;
+        width: 22px;
+        left: 4px;
+        bottom: 4px;
+        background-color: white;
+        transition: .4s;
+        border-radius: 50%;
+    }
+
+    input:checked+.slider {
+        background-color: #4CAF50;
+    }
+
+    input:checked+.slider:before {
+        transform: translateX(30px);
+    }
+
+    .pricing-card {
+        border-radius: 10px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border: none;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .pricing-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+    }
+
+    .pricing-card.featured {
+        border: 2px solid #4e73df;
+        transform: scale(1.03);
+    }
+
+    .pricing-card.featured:hover {
+        transform: scale(1.05) translateY(-5px);
+    }
+
+    .popular-badge {
+        position: absolute;
+        top: 10px;
+        right: -30px;
+        background: #4e73df;
+        color: white;
+        padding: 5px 30px;
+        transform: rotate(45deg);
+        font-size: 12px;
+        font-weight: bold;
+    }
+
+    .trial-badge {
+        position: absolute;
+        top: 10px;
+        right: -30px;
+        background: linear-gradient(135deg, #10a37f, #1dd1a1);
+        color: white;
+        padding: 5px 30px;
+        transform: rotate(45deg);
+        font-size: 12px;
+        font-weight: bold;
+    }
+
+    .plan-header {
+        padding: 20px 0;
+        border-bottom: 1px solid #eee;
+    }
+
+    .plan-name {
+        font-size: 24px;
+        font-weight: 700;
+        margin-bottom: 5px;
+    }
+
+    .plan-description {
+        color: #6c757d;
+        font-size: 14px;
+    }
+
+    .price-display {
+        padding: 20px 0;
+        text-align: center;
+    }
+
+    .price-currency {
+        font-size: 20px;
+        vertical-align: top;
+        margin-right: 2px;
+    }
+
+    .price-amount {
+        font-size: 48px;
+        font-weight: 700;
+        line-height: 1;
+    }
+
+    .price-period {
+        font-size: 16px;
+        color: #6c757d;
+    }
+
+    .plan-features {
+        padding: 20px 0;
+        margin: 0;
+        list-style: none;
+    }
+
+    .plan-features li {
+        padding: 8px 0;
+        border-bottom: 1px dashed #eee;
+    }
+
+    .btn-choose-plan {
+        width: 100%;
+        padding: 12px;
+        font-weight: 600;
+        border-radius: 6px;
+        background: var(--primary-color);
+        color: white;
+        border: none;
+        transition: all 0.3s ease;
+    }
+
+    .btn-choose-plan:hover {
+        background: #3a56c0;
+        transform: translateY(-2px);
+        color: white;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-featured-plan {
+        width: 100%;
+        padding: 12px;
+        font-weight: 600;
+        border-radius: 6px;
+        background: linear-gradient(135deg, #6e8efb, #a777e3);
+        color: white;
+        border: none;
+        transition: all 0.3s ease;
+    }
+
+    .btn-featured-plan:hover {
+        background: linear-gradient(135deg, #5d7de8, #9666d8);
+        transform: translateY(-2px);
+        color: white;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .btn-trial-plan {
+        width: 100%;
+        padding: 12px;
+        font-weight: 600;
+        border-radius: 6px;
+        background: linear-gradient(135deg, #10a37f, #1dd1a1);
+        color: white;
+        border: none;
+        transition: all 0.3s ease;
+    }
+
+    .btn-trial-plan:hover {
+        background: linear-gradient(135deg, #0d9488, #10a37f);
+        transform: translateY(-2px);
+        color: white;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .btn-current-plan {
+        width: 100%;
+        padding: 12px;
+        font-weight: 600;
+        border-radius: 6px;
+        background: #e9ecef;
+        color: #495057;
+        border: none;
+    }
+
+    .testimonial-card {
+        background: white;
+        padding: 25px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        height: 100%;
+    }
+
+    .rating {
+        color: #ffc107;
+    }
+
+    .testimonial-text {
+        font-style: italic;
+        margin-bottom: 15px;
+    }
+
+    .testimonial-author {
+        font-weight: 600;
+    }
+
+    .comparison-table {
+        background-color: #f8f9fa;
+    }
+
+    .comparison-table th {
+        font-weight: 600;
+        background-color: #e9ecef;
+    }
+
+    .faq-section .card-header {
+        background-color: white;
+    }
+
+    .faq-section .btn-link {
+        color: #495057;
+        text-decoration: none;
+        width: 100%;
+        text-align: left;
+    }
+
+    .faq-section .btn-link:hover {
+        color: var(--primary-color);
+    }
+
+    .trial-features {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px;
+    }
+
+    .feature-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 8px;
+    }
+
+    .modal {
+        z-index: 1060;
+    }
+
+    @media (max-width: 768px) {
+        .pricing-card.featured {
+            transform: none;
+        }
+
+        .pricing-card.featured:hover {
+            transform: translateY(-5px);
+        }
+
+        .popular-badge,
+        .trial-badge {
+            right: -25px;
+            padding: 5px 25px;
+            font-size: 10px;
+        }
+    }
+
+    .lead {
+        color: black;
+    }
+</style>
+
+<!-- JavaScript Libraries -->
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Main JavaScript -->
+<script>
+    // Global functions and variables
+    function showPaymentModal(planId) {
+        const plan = plans[planId];
+        if (!plan) return;
+
+        const isAnnual = $('#billingToggle').is(':checked');
+        const price = isAnnual ? plan.annualPrice : plan.monthlyPrice;
+        const cycle = isAnnual ? 'Annual' : 'Monthly';
+
+        $('#planName').text(plan.name);
+        $('#plan-id').val(planId);
+        $('#billing-type').val(isAnnual ? 'annual' : 'monthly');
+        $('#summary-plan').text(plan.name);
+        $('#summary-price').text(`${price} QAR/${cycle.toLowerCase()}`);
+        $('#summary-total').text(`${price} QAR/${cycle.toLowerCase()}`);
+
+        if (isAnnual) {
+            const savings = (plan.monthlyPrice * 12) - (plan.annualPrice * 12);
+            $('#savingsAmount').text(`${savings} QAR`);
+            $('#annualSavings').removeClass('d-none');
+        } else {
+            $('#annualSavings').addClass('d-none');
+        }
+
+        initStripeElements();
+        $('#paymentModal').modal('show');
+    }
+
+    function startTrial() {
+        $('#trialModal').modal('show');
+    }
+
+    const plans = {
+        'basic': {
+            name: 'Basic',
+            monthlyPrice: 99,
+            annualPrice: 79,
+            features: [
+                '500 documents/month',
+                '100MB max file size',
+                'Email support',
+                'Basic analytics'
+            ]
+        },
+        'pro': {
+            name: 'Professional',
+            monthlyPrice: 199,
+            annualPrice: 159,
+            features: [
+                '2000 documents/month',
+                '500MB max file size',
+                'Priority email & chat support',
+                'Advanced analytics',
+                'API access'
+            ]
+        },
+        'trial': {
+            name: 'Free Trial',
+            monthlyPrice: 0,
+            annualPrice: 0,
+            features: [
+                'Unlimited documents for 14 days',
+                '100MB max file size',
+                'All Professional features',
+                'No credit card required'
+            ]
+        }
+    };
+
+    // DOM Ready Handler
+    $(document).ready(function () {
+        // Toggle between monthly and annual billing
+        $('#billingToggle').change(function () {
+            const isAnnual = this.checked;
+            $('.price-amount, .price-period').toggleClass('d-none', isAnnual);
+            $('.annual-price').toggleClass('d-none', !isAnnual);
+            $('#billing-type').val(isAnnual ? 'annual' : 'monthly');
+        });
+
+        // Confirm trial handler
+        $('#confirm-trial').click(function () {
+            const btn = $(this);
+            btn.prop('disabled', true);
+            $('#trial-button-text').text('Starting...');
+            $('#trial-spinner').removeClass('d-none');
+
+            fetch('/start_trial', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': $('input[name="csrf_token"]').val()
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) throw new Error(data.error);
+                    $('#trialModal').modal('hide');
+                    window.location.reload();
+                })
+                .catch(error => {
+                    alert(error.message);
+                    btn.prop('disabled', false);
+                    $('#trial-button-text').text('Start Free Trial');
+                    $('#trial-spinner').addClass('d-none');
+                });
+        });
+
+        // Modal close handlers
+        $('[data-dismiss="modal"]').click(function () {
+            $(this).closest('.modal').modal('hide');
+        });
+
+        // Stripe initialization
+        function initStripeElements() {
+            const stripe = Stripe('{{ config["STRIPE_PUBLIC_KEY"] }}');
+            const elements = stripe.elements();
+            const card = elements.create('card', {
+                style: {
+                    base: {
+                        fontSize: '16px',
+                        color: '#32325d',
+                        '::placeholder': {
+                            color: '#aab7c4'
+                        }
+                    },
+                    invalid: {
+                        color: '#fa755a'
+                    }
+                }
+            });
+
+            card.mount('#card-element');
+
+            card.addEventListener('change', function (event) {
+                const displayError = $('#card-errors');
+                if (event.error) {
+                    displayError.text(event.error.message).show();
+                } else {
+                    displayError.text('').hide();
+                }
+            });
+
+            $('#submit-payment').click(async function (ev) {
+                ev.preventDefault();
+                const btn = $(this);
+                btn.prop('disabled', true);
+                $('#submit-text').text('Processing...');
+                $('#spinner').removeClass('d-none');
+
+                const { paymentMethod, error } = await stripe.createPaymentMethod({
+                    type: 'card',
+                    card: card,
+                    billing_details: {
+                        name: '{{ current_user.username if current_user.is_authenticated else "" }}',
+                        email: '{{ current_user.email if current_user.is_authenticated else "" }}'
+                    }
+                });
+
+                if (error) {
+                    $('#card-errors').text(error.message);
+                    btn.prop('disabled', false);
+                    $('#submit-text').text('Subscribe');
+                    $('#spinner').addClass('d-none');
+                    return;
+                }
+
+                // Process payment
+                fetch('/create_subscription', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': $('input[name="csrf_token"]').val()
+                    },
+                    body: JSON.stringify({
+                        plan_id: $('#plan-id').val(),
+                        payment_method_id: paymentMethod.id,
+                        billing_type: $('#billing-type').val()
+                    })
+                })
+                    .then(response => response.json())
+                    .then(result => {
+                        if (result.error) throw new Error(result.error);
+                        return stripe.confirmCardPayment(result.client_secret);
+                    })
+                    .then(confirmResult => {
+                        if (confirmResult.error) throw new Error(confirmResult.error.message);
+                        if (confirmResult.paymentIntent.status === 'succeeded') {
+                            window.location.reload();
+                        }
+                    })
+                    .catch(error => {
+                        $('#card-errors').text(error.message);
+                        btn.prop('disabled', false);
+                        $('#submit-text').text('Subscribe');
+                        $('#spinner').addClass('d-none');
+                    });
+            });
+        }
+    });
+</script>
+{% endblock %}

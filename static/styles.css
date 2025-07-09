@@ -1077,3 +1077,217 @@ body {
             display: none;
         }
 
+
+        /* Add these new styles to your existing styles.css */
+
+/* Auth styles */
+.auth-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: calc(100vh - var(--navbar-height));
+    padding: 2rem;
+}
+
+.auth-card {
+    background: white;
+    border-radius: 12px;
+    padding: 2.5rem;
+    width: 100%;
+    max-width: 450px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e5e7eb;
+}
+
+.auth-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    text-align: center;
+    color: var(--primary-color);
+}
+
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-group label {
+    font-weight: 500;
+    color: #4b5563;
+}
+
+.form-group input {
+    padding: 0.75rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 1rem;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(16, 163, 127, 0.2);
+}
+
+.btn-auth {
+    width: 100%;
+    padding: 0.75rem;
+    border-radius: 8px;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    font-weight: 500;
+    cursor: pointer;
+    margin-top: 0.5rem;
+}
+
+.btn-auth:hover {
+    background: #0d9488;
+}
+
+.auth-footer {
+    text-align: center;
+    margin-top: 1.5rem;
+    color: #6b7280;
+}
+
+.auth-footer a {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.auth-footer a:hover {
+    text-decoration: underline;
+}
+
+.form-check {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: -0.5rem;
+}
+
+.form-check input {
+    width: auto;
+}
+
+/* Dropdown styles */
+.dropdown-menu {
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.dropdown-item {
+    padding: 0.5rem 1rem;
+    color: #4b5563;
+}
+
+.dropdown-item:hover {
+    background-color: #f3f4f6;
+    color: #111827;
+}
+
+.dropdown-divider {
+    margin: 0.25rem 0;
+    border-color: #e5e7eb;
+}
+
+
+/* Pricing Page Styles */
+.pricing-container {
+    padding: 3rem 0;
+    background: #f8f9fa;
+}
+
+.pricing-header {
+    margin-bottom: 3rem;
+}
+
+.pricing-card {
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+    margin-bottom: 2rem;
+    border: none;
+}
+
+.pricing-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.pricing-card.featured {
+    border: 2px solid var(--primary-color);
+}
+
+.pricing-card-title {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+.pricing-faq {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+/* Billing Page Styles */
+.billing-container {
+    padding: 2rem 0;
+}
+
+.subscription-status {
+    border-left: 4px solid var(--success-color);
+}
+
+.stat-card {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+}
+
+/* Payment Form Styles */
+#card-element, #card-element-update {
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    padding: 10px;
+}
+
+#card-errors, #card-errors-update {
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .pricing-card {
+        margin-bottom: 1.5rem;
+    }
+    
+    .billing-container .col-md-8 {
+        order: 2;
+    }
+    
+    .billing-container .col-md-4 {
+        order: 1;
+        margin-bottom: 2rem;
+    }
+}
+
+    .close-modal {
+        position: absolute;
+        right: 15px;
+        top: 10px;
+        font-size: 1.5rem;
+        cursor: pointer;
+    }

@@ -1,343 +1,842 @@
-2025-06-25 17:40:52,761 - app - INFO - Starting application
-2025-06-25 17:41:19,346 - app - INFO - Starting application
-2025-06-25 17:41:45,875 - app - INFO - Starting application
-2025-06-25 17:44:27,430 - app - INFO - Starting application
-2025-06-25 17:44:28,711 - app - INFO - Starting application
-2025-06-25 17:48:32,793 - app - INFO - Received request to create new chat
-2025-06-25 17:48:32,793 - app - INFO - Created new chat with ID: b639ba25-f9d0-4bd3-a516-3737faa92766
-2025-06-25 17:48:32,802 - app - INFO - Received request for chat ID: b639ba25-f9d0-4bd3-a516-3737faa92766
-2025-06-25 17:49:09,729 - app - INFO - Starting application
-2025-06-25 17:49:09,926 - app - INFO - Starting application
-2025-06-25 17:49:20,884 - app - INFO - Received request to create new chat
-2025-06-25 17:49:20,884 - app - INFO - Created new chat with ID: 8912263d-78cb-4c34-944e-1d98ea82a748
-2025-06-25 17:49:20,905 - app - INFO - Received request for chat ID: 8912263d-78cb-4c34-944e-1d98ea82a748
-2025-06-25 17:50:01,126 - app - INFO - Received request to create new chat
-2025-06-25 17:50:01,126 - app - INFO - Created new chat with ID: 462331c9-746c-4c80-bbe3-56ac4109d63a
-2025-06-25 17:50:01,134 - app - INFO - Received request for chat ID: 462331c9-746c-4c80-bbe3-56ac4109d63a
-2025-06-25 17:51:03,130 - app - INFO - Received request to create new chat
-2025-06-25 17:51:03,132 - app - INFO - Created new chat with ID: ff31625a-4d45-4772-89ad-432090c16a91
-2025-06-25 17:51:03,148 - app - INFO - Received request for chat ID: ff31625a-4d45-4772-89ad-432090c16a91
-2025-06-25 17:53:45,569 - app - INFO - Received request to delete chat ID: ff31625a-4d45-4772-89ad-432090c16a91
-2025-06-25 17:53:45,570 - app - INFO - Successfully deleted chat ID: ff31625a-4d45-4772-89ad-432090c16a91
-2025-06-25 17:53:47,962 - app - INFO - Received request to delete chat ID: 462331c9-746c-4c80-bbe3-56ac4109d63a
-2025-06-25 17:53:47,963 - app - INFO - Successfully deleted chat ID: 462331c9-746c-4c80-bbe3-56ac4109d63a
-2025-06-25 17:53:49,592 - app - INFO - Received request to delete chat ID: 8912263d-78cb-4c34-944e-1d98ea82a748
-2025-06-25 17:53:49,592 - app - INFO - Successfully deleted chat ID: 8912263d-78cb-4c34-944e-1d98ea82a748
-2025-06-25 17:54:01,445 - app - INFO - Received request to create new chat
-2025-06-25 17:54:01,445 - app - INFO - Created new chat with ID: b65a0c56-85e1-4683-8fc2-44bb798d8ee6
-2025-06-25 17:54:01,461 - app - INFO - Received request for chat ID: b65a0c56-85e1-4683-8fc2-44bb798d8ee6
-2025-06-25 17:55:15,366 - app - INFO - Received request to create new chat
-2025-06-25 17:55:15,367 - app - INFO - Created new chat with ID: e6647313-5262-4bad-be8d-3ad74f50ee79
-2025-06-25 17:55:15,381 - app - INFO - Received request for chat ID: e6647313-5262-4bad-be8d-3ad74f50ee79
-2025-06-25 17:55:59,433 - app - INFO - Starting application
-2025-06-25 17:56:02,735 - app - INFO - Starting application
-2025-06-25 17:56:05,992 - app - INFO - Starting application
-2025-06-25 17:56:09,289 - app - INFO - Starting application
-2025-06-25 17:56:10,558 - app - INFO - Starting application
-2025-06-25 17:56:17,893 - app - INFO - Starting application
-2025-06-25 17:56:22,194 - app - INFO - Starting application
-2025-06-25 17:56:25,475 - app - INFO - Starting application
-2025-06-25 17:56:45,840 - app - INFO - Saved uploaded file to: uploads/document_iq.zip
-2025-06-25 17:56:45,840 - app - INFO - Starting processing of uploads/document_iq.zip
-2025-06-25 17:56:45,841 - app - INFO - Validating ZIP structure
-2025-06-25 17:56:45,843 - app - INFO - Extracting ZIP contents to extracted_files
-2025-06-25 17:56:45,854 - app - INFO - Processing 7 extracted files
-2025-06-25 17:56:45,855 - app - INFO - Successfully processed 1 files
-2025-06-25 17:56:46,312 - app - INFO - Received request to create new chat
-2025-06-25 17:56:46,313 - app - INFO - Created new chat with ID: aebea4eb-8264-4e22-aa31-9734066e48fb
-2025-06-25 17:56:46,327 - app - INFO - Received request for chat ID: aebea4eb-8264-4e22-aa31-9734066e48fb
-2025-06-25 17:56:59,753 - app - INFO - Received request for chat ID: aebea4eb-8264-4e22-aa31-9734066e48fb
-2025-06-25 18:18:23,286 - app - INFO - Saved uploaded file to: uploads/1010_-_ITT_-_Instruction_To_Tenderers.zip
-2025-06-25 18:18:23,289 - app - INFO - Starting processing of uploads/1010_-_ITT_-_Instruction_To_Tenderers.zip
-2025-06-25 18:18:23,290 - app - INFO - Validating ZIP structure
-2025-06-25 18:18:23,293 - app - INFO - Extracting ZIP contents to extracted_files
-2025-06-25 18:18:23,313 - app - INFO - Processing 4 extracted files
-2025-06-25 18:18:25,404 - app - INFO - Successfully processed 4 files
-2025-06-25 18:18:25,865 - app - INFO - Received request to create new chat
-2025-06-25 18:18:25,865 - app - INFO - Created new chat with ID: 862d3068-d399-43a1-8a97-9ce124cd9856
-2025-06-25 18:18:25,894 - app - INFO - Received request for chat ID: 862d3068-d399-43a1-8a97-9ce124cd9856
-2025-06-25 18:18:52,352 - app - INFO - Saved uploaded file to: uploads/115._QatarEnergy_-_RFQ_GT25100700_-REHABILITATION_OF_4_LPG_TANKS_MESAIEED_OPERATIONS.zip
-2025-06-25 18:18:52,353 - app - INFO - Starting processing of uploads/115._QatarEnergy_-_RFQ_GT25100700_-REHABILITATION_OF_4_LPG_TANKS_MESAIEED_OPERATIONS.zip
-2025-06-25 18:18:52,353 - app - INFO - Validating ZIP structure
-2025-06-25 18:18:52,357 - app - INFO - Extracting ZIP contents to extracted_files
-2025-06-25 18:18:52,696 - app - INFO - Processing 612 extracted files
-2025-06-25 18:20:17,409 - app - INFO - Successfully processed 170 files
-2025-06-25 18:20:17,535 - app - INFO - Received request to create new chat
-2025-06-25 18:20:17,535 - app - INFO - Created new chat with ID: 37dd1cd5-41bc-4c4d-aaf8-c023d83ca294
-2025-06-25 18:20:17,628 - app - INFO - Received request for chat ID: 37dd1cd5-41bc-4c4d-aaf8-c023d83ca294
-2025-06-25 20:28:04,674 - app - INFO - Saved uploaded file to: uploads/Tender_Bulletin_01_13.02.2025.zip
-2025-06-25 20:28:04,676 - app - INFO - Starting processing of uploads/Tender_Bulletin_01_13.02.2025.zip
-2025-06-25 20:28:04,677 - app - INFO - Validating ZIP structure
-2025-06-25 20:28:04,679 - app - INFO - Extracting ZIP contents to extracted_files
-2025-06-25 20:28:04,715 - app - INFO - Processing 5 extracted files
-2025-06-25 20:28:06,802 - app - INFO - Successfully processed 2 files
-2025-06-25 20:28:07,095 - app - INFO - Received request to create new chat
-2025-06-25 20:28:07,095 - app - INFO - Created new chat with ID: eb0ee5be-404b-4f05-b398-ac2b835e2ffa
-2025-06-25 20:28:07,111 - app - INFO - Received request for chat ID: eb0ee5be-404b-4f05-b398-ac2b835e2ffa
-2025-06-25 20:28:26,299 - app - INFO - Received request to delete chat ID: aebea4eb-8264-4e22-aa31-9734066e48fb
-2025-06-25 20:28:26,300 - app - INFO - Successfully deleted chat ID: aebea4eb-8264-4e22-aa31-9734066e48fb
-2025-06-25 20:28:30,550 - app - INFO - Received request to delete chat ID: 862d3068-d399-43a1-8a97-9ce124cd9856
-2025-06-25 20:28:30,551 - app - INFO - Successfully deleted chat ID: 862d3068-d399-43a1-8a97-9ce124cd9856
-2025-06-25 20:28:47,568 - app - INFO - Received request for chat ID: eb0ee5be-404b-4f05-b398-ac2b835e2ffa
-2025-06-25 20:28:47,568 - app - INFO - Processing files in extraction folder
-2025-06-25 20:28:49,659 - app - INFO - Sending request to Ollama API
-2025-06-25 20:29:39,544 - app - INFO - Updated chat title to: pls summarise this
-2025-06-25 20:29:39,546 - app - INFO - Successfully processed chat request
-2025-06-25 20:30:38,029 - app - INFO - Saved uploaded file to: uploads/BNF-78-1.pdf.zip
-2025-06-25 20:30:38,030 - app - INFO - Starting processing of uploads/BNF-78-1.pdf.zip
-2025-06-25 20:30:38,030 - app - INFO - Validating ZIP structure
-2025-06-25 20:30:38,034 - app - INFO - Extracting ZIP contents to extracted_files
-2025-06-25 20:30:38,098 - app - INFO - Processing 1 extracted files
-2025-06-25 20:31:04,030 - app - INFO - Successfully processed 1 files
-2025-06-25 20:31:04,528 - app - INFO - Received request to create new chat
-2025-06-25 20:31:04,528 - app - INFO - Created new chat with ID: 323ca840-f457-4758-9673-47329687bbff
-2025-06-25 20:31:04,552 - app - INFO - Received request for chat ID: 323ca840-f457-4758-9673-47329687bbff
-2025-06-25 20:31:32,797 - app - INFO - Received request for chat ID: 323ca840-f457-4758-9673-47329687bbff
-2025-06-25 20:31:32,798 - app - INFO - Processing files in extraction folder
-2025-06-25 20:31:58,770 - app - INFO - Sending request to Ollama API
-2025-06-25 20:32:38,149 - app - INFO - Updated chat title to: list down the medicine for anx...
-2025-06-25 20:32:38,157 - app - INFO - Successfully processed chat request
-2025-06-25 20:33:16,197 - app - INFO - Saved uploaded file to: uploads/Tender_Bulletin_01_13.02.2025.zip
-2025-06-25 20:33:16,198 - app - INFO - Starting processing of uploads/Tender_Bulletin_01_13.02.2025.zip
-2025-06-25 20:33:16,199 - app - INFO - Validating ZIP structure
-2025-06-25 20:33:16,207 - app - INFO - Extracting ZIP contents to extracted_files
-2025-06-25 20:33:16,240 - app - INFO - Processing 5 extracted files
-2025-06-25 20:33:18,676 - app - INFO - Successfully processed 2 files
-2025-06-25 20:33:18,727 - app - INFO - Received request to create new chat
-2025-06-25 20:33:18,727 - app - INFO - Created new chat with ID: 27c41bd6-6588-4f32-8b1d-428fa452ef9a
-2025-06-25 20:33:18,739 - app - INFO - Received request for chat ID: 27c41bd6-6588-4f32-8b1d-428fa452ef9a
-2025-06-26 15:01:09,480 - app - INFO - Received request for chat ID: 27c41bd6-6588-4f32-8b1d-428fa452ef9a
-2025-06-26 15:01:11,990 - app - INFO - Received request for chat ID: 323ca840-f457-4758-9673-47329687bbff
-2025-06-26 17:21:53,545 - app - INFO - Starting application
-2025-06-26 17:21:56,495 - app - INFO - Starting application
-2025-06-26 17:21:56,700 - app - INFO - Starting application
-2025-06-26 17:22:22,762 - app - INFO - Starting application
-2025-06-26 17:22:22,970 - app - INFO - Starting application
-2025-06-26 17:22:33,326 - app - INFO - Starting application
-2025-06-26 17:22:37,515 - app - INFO - Starting application
-2025-06-26 17:22:37,706 - app - INFO - Starting application
-2025-06-26 17:22:53,591 - app - INFO - Starting application
-2025-06-26 17:22:53,787 - app - INFO - Starting application
-2025-06-26 21:27:29,722 - app - INFO - Starting application on port 8000
-2025-06-26 21:27:50,902 - app - INFO - Starting application on port 8000
-2025-06-26 21:31:25,405 - app - INFO - Starting application on port 8000
-2025-06-26 21:32:06,443 - app - INFO - Starting application on port 8000
-2025-06-26 21:33:21,996 - app - INFO - Starting application on port 8000
-2025-06-26 21:33:22,206 - app - INFO - Starting application on port 8000
-2025-06-26 21:33:37,668 - app - INFO - Starting application on port 8000
-2025-06-26 21:33:39,975 - app - INFO - Starting application on port 8000
-2025-06-26 21:33:42,903 - app - INFO - Starting application on port 8000
-2025-06-26 21:33:43,092 - app - INFO - Starting application on port 8000
-2025-06-26 21:33:53,015 - app - INFO - Successfully extracted ZIP file: Tender_Bulletin_01_13.02.2025.zip
-2025-06-26 21:33:54,103 - app - INFO - Received request to create new chat
-2025-06-26 21:33:54,104 - app - INFO - Created new chat with ID: ed848356-ca33-4dca-b691-c566aa3f5ddc
-2025-06-26 21:33:54,114 - app - INFO - Received request for chat ID: ed848356-ca33-4dca-b691-c566aa3f5ddc
-2025-06-26 21:34:05,467 - app - INFO - Successfully extracted ZIP file: 115._QatarEnergy_-_RFQ_GT25100700_-REHABILITATION_OF_4_LPG_TANKS_MESAIEED_OPERATIONS_Tender_Bulletin_01_13.02.2025.zip
-2025-06-26 21:34:07,229 - app - INFO - Received request to create new chat
-2025-06-26 21:34:07,230 - app - INFO - Created new chat with ID: 807b4e8c-caed-419f-84c3-00f9500ed367
-2025-06-26 21:34:07,256 - app - INFO - Received request for chat ID: 807b4e8c-caed-419f-84c3-00f9500ed367
-2025-06-27 05:51:43,962 - app - INFO - Successfully extracted ZIP file: 115._QatarEnergy_-_RFQ_GT25100700_-REHABILITATION_OF_4_LPG_TANKS_MESAIEED_OPERATIONS_Tender_Bulletin_01_13.02.2025.zip
-2025-06-27 05:51:46,027 - app - INFO - Received request to create new chat
-2025-06-27 05:51:46,027 - app - INFO - Created new chat with ID: 874ae34f-a6b8-4f9f-958f-260dabc66532
-2025-06-27 05:51:46,045 - app - INFO - Received request for chat ID: 874ae34f-a6b8-4f9f-958f-260dabc66532
-2025-06-27 05:52:19,909 - app - INFO - Received request for chat ID: 874ae34f-a6b8-4f9f-958f-260dabc66532
-2025-06-27 05:52:34,393 - app - INFO - Received request for chat ID: 807b4e8c-caed-419f-84c3-00f9500ed367
-2025-06-27 05:52:36,310 - app - INFO - Received request for chat ID: ed848356-ca33-4dca-b691-c566aa3f5ddc
-2025-06-27 05:52:53,783 - app - INFO - Received request for chat ID: ed848356-ca33-4dca-b691-c566aa3f5ddc
-2025-06-27 05:52:53,784 - app - INFO - Processing files in extraction folder
-2025-06-27 05:55:01,152 - app - INFO - Sending request to Ollama API
-2025-06-27 05:56:02,568 - app - INFO - Received request to delete chat ID: 807b4e8c-caed-419f-84c3-00f9500ed367
-2025-06-27 05:56:02,573 - app - INFO - Successfully deleted chat ID: 807b4e8c-caed-419f-84c3-00f9500ed367
-2025-06-27 05:56:05,733 - app - INFO - Received request to delete chat ID: 874ae34f-a6b8-4f9f-958f-260dabc66532
-2025-06-27 05:56:05,735 - app - INFO - Successfully deleted chat ID: 874ae34f-a6b8-4f9f-958f-260dabc66532
-2025-06-27 05:57:39,959 - app - INFO - Received request for chat ID: ed848356-ca33-4dca-b691-c566aa3f5ddc
-2025-06-27 05:58:02,427 - app - INFO - Received request for chat ID: ed848356-ca33-4dca-b691-c566aa3f5ddc
-2025-06-27 05:58:11,042 - app - INFO - Updated chat title to: summarise it
-2025-06-27 05:58:11,044 - app - INFO - Successfully processed chat request
-2025-06-27 06:04:24,649 - app - INFO - Received request for chat ID: ed848356-ca33-4dca-b691-c566aa3f5ddc
-2025-06-27 06:04:54,972 - app - INFO - Received request for chat ID: ed848356-ca33-4dca-b691-c566aa3f5ddc
-2025-06-27 06:07:33,076 - app - INFO - Received request for chat ID: ed848356-ca33-4dca-b691-c566aa3f5ddc
-2025-06-27 06:07:52,385 - app - INFO - Received request to delete chat ID: ed848356-ca33-4dca-b691-c566aa3f5ddc
-2025-06-27 06:07:52,387 - app - INFO - Successfully deleted chat ID: ed848356-ca33-4dca-b691-c566aa3f5ddc
-2025-06-27 06:09:38,897 - app - INFO - Received request to create new chat
-2025-06-27 06:09:38,898 - app - INFO - Created new chat with ID: 1c16f0de-77b0-4c47-855f-a821e4bb3290
-2025-06-27 06:09:38,915 - app - INFO - Received request for chat ID: 1c16f0de-77b0-4c47-855f-a821e4bb3290
-2025-06-27 06:09:56,058 - app - INFO - Received request for chat ID: 1c16f0de-77b0-4c47-855f-a821e4bb3290
-2025-06-27 06:09:56,059 - app - INFO - Processing files in extraction folder
-2025-06-27 06:09:56,944 - app - INFO - Sending request to Ollama API
-2025-06-27 06:10:24,986 - app - INFO - Updated chat title to: summarise it
-2025-06-27 06:10:24,988 - app - INFO - Successfully processed chat request
-2025-06-27 06:17:03,532 - app - INFO - Received request for chat ID: 1c16f0de-77b0-4c47-855f-a821e4bb3290
-2025-06-27 06:17:06,570 - app - INFO - Received request to delete chat ID: 1c16f0de-77b0-4c47-855f-a821e4bb3290
-2025-06-27 06:17:06,570 - app - INFO - Successfully deleted chat ID: 1c16f0de-77b0-4c47-855f-a821e4bb3290
-2025-06-27 06:17:16,520 - app - INFO - Successfully extracted ZIP file: Tender_Bulletin_01_13.02.2025.zip
-2025-06-27 06:17:17,535 - app - INFO - Received request to create new chat
-2025-06-27 06:17:17,535 - app - INFO - Created new chat with ID: b3538f86-c6ff-4878-9347-1df39e45aa31
-2025-06-27 06:17:17,555 - app - INFO - Received request for chat ID: b3538f86-c6ff-4878-9347-1df39e45aa31
-2025-06-27 06:17:24,116 - app - INFO - Received request for chat ID: b3538f86-c6ff-4878-9347-1df39e45aa31
-2025-06-27 06:18:05,197 - app - INFO - Received request to create new chat
-2025-06-27 06:18:05,197 - app - INFO - Created new chat with ID: ba5c6eaf-f7d1-46f0-a45a-d0e8c16b8abd
-2025-06-27 06:18:05,209 - app - INFO - Received request for chat ID: ba5c6eaf-f7d1-46f0-a45a-d0e8c16b8abd
-2025-06-27 06:18:06,244 - app - INFO - Received request to create new chat
-2025-06-27 06:18:06,244 - app - INFO - Created new chat with ID: 7f13af30-d30d-4161-a719-41110f643721
-2025-06-27 06:18:06,254 - app - INFO - Received request for chat ID: 7f13af30-d30d-4161-a719-41110f643721
-2025-06-27 06:18:06,813 - app - INFO - Received request to create new chat
-2025-06-27 06:18:06,813 - app - INFO - Created new chat with ID: ee5aed48-cdf5-47eb-971d-999df88ab2f9
-2025-06-27 06:18:06,826 - app - INFO - Received request for chat ID: ee5aed48-cdf5-47eb-971d-999df88ab2f9
-2025-06-27 06:18:07,042 - app - INFO - Received request to create new chat
-2025-06-27 06:18:07,042 - app - INFO - Created new chat with ID: 00df5e6a-f69b-4615-906b-9f7621afb53c
-2025-06-27 06:18:07,053 - app - INFO - Received request for chat ID: 00df5e6a-f69b-4615-906b-9f7621afb53c
-2025-06-27 06:18:07,256 - app - INFO - Received request to create new chat
-2025-06-27 06:18:07,256 - app - INFO - Created new chat with ID: 1e9445aa-e51e-4491-9af9-ab00ec93e66f
-2025-06-27 06:18:07,264 - app - INFO - Received request for chat ID: 1e9445aa-e51e-4491-9af9-ab00ec93e66f
-2025-06-27 06:18:07,455 - app - INFO - Received request to create new chat
-2025-06-27 06:18:07,455 - app - INFO - Created new chat with ID: 9ee3bfaa-033b-4428-b9fc-84f5b30ea57f
-2025-06-27 06:18:07,463 - app - INFO - Received request for chat ID: 9ee3bfaa-033b-4428-b9fc-84f5b30ea57f
-2025-06-27 06:18:07,639 - app - INFO - Received request to create new chat
-2025-06-27 06:18:07,639 - app - INFO - Created new chat with ID: 310c685b-f014-4337-9576-40fcc2ba0cd0
-2025-06-27 06:18:07,646 - app - INFO - Received request for chat ID: 310c685b-f014-4337-9576-40fcc2ba0cd0
-2025-06-27 06:18:07,822 - app - INFO - Received request to create new chat
-2025-06-27 06:18:07,822 - app - INFO - Created new chat with ID: b3faded6-2de3-4f7f-8a46-6c1b8e1f45be
-2025-06-27 06:18:07,830 - app - INFO - Received request for chat ID: b3faded6-2de3-4f7f-8a46-6c1b8e1f45be
-2025-06-27 06:18:08,023 - app - INFO - Received request to create new chat
-2025-06-27 06:18:08,023 - app - INFO - Created new chat with ID: ed0d9a96-63fc-4697-be6d-ef2187faccc9
-2025-06-27 06:18:08,031 - app - INFO - Received request for chat ID: ed0d9a96-63fc-4697-be6d-ef2187faccc9
-2025-06-27 06:18:08,222 - app - INFO - Received request to create new chat
-2025-06-27 06:18:08,222 - app - INFO - Created new chat with ID: 3e997ecf-7c27-4f23-af06-80db5a931e3e
-2025-06-27 06:18:08,229 - app - INFO - Received request for chat ID: 3e997ecf-7c27-4f23-af06-80db5a931e3e
-2025-06-27 06:18:08,455 - app - INFO - Received request to create new chat
-2025-06-27 06:18:08,456 - app - INFO - Created new chat with ID: 2d8b8dc8-8365-43fa-b22b-862ad5a8b0d4
-2025-06-27 06:18:08,464 - app - INFO - Received request for chat ID: 2d8b8dc8-8365-43fa-b22b-862ad5a8b0d4
-2025-06-27 06:18:08,725 - app - INFO - Received request to create new chat
-2025-06-27 06:18:08,726 - app - INFO - Created new chat with ID: c19e76e1-7647-4ab3-bb52-ab6110d1ea75
-2025-06-27 06:18:08,736 - app - INFO - Received request for chat ID: c19e76e1-7647-4ab3-bb52-ab6110d1ea75
-2025-06-27 06:18:13,949 - app - INFO - Received request to delete chat ID: 2d8b8dc8-8365-43fa-b22b-862ad5a8b0d4
-2025-06-27 06:18:13,949 - app - INFO - Successfully deleted chat ID: 2d8b8dc8-8365-43fa-b22b-862ad5a8b0d4
-2025-06-27 06:18:16,779 - app - INFO - Received request to delete chat ID: b3538f86-c6ff-4878-9347-1df39e45aa31
-2025-06-27 06:18:16,779 - app - INFO - Successfully deleted chat ID: b3538f86-c6ff-4878-9347-1df39e45aa31
-2025-06-27 06:18:19,512 - app - INFO - Received request to delete chat ID: ba5c6eaf-f7d1-46f0-a45a-d0e8c16b8abd
-2025-06-27 06:18:19,513 - app - INFO - Successfully deleted chat ID: ba5c6eaf-f7d1-46f0-a45a-d0e8c16b8abd
-2025-06-27 06:18:20,717 - app - INFO - Received request to delete chat ID: 7f13af30-d30d-4161-a719-41110f643721
-2025-06-27 06:18:20,717 - app - INFO - Successfully deleted chat ID: 7f13af30-d30d-4161-a719-41110f643721
-2025-06-27 06:18:22,584 - app - INFO - Received request to delete chat ID: ee5aed48-cdf5-47eb-971d-999df88ab2f9
-2025-06-27 06:18:22,584 - app - INFO - Successfully deleted chat ID: ee5aed48-cdf5-47eb-971d-999df88ab2f9
-2025-06-27 06:18:24,043 - app - INFO - Received request to delete chat ID: 00df5e6a-f69b-4615-906b-9f7621afb53c
-2025-06-27 06:18:24,043 - app - INFO - Successfully deleted chat ID: 00df5e6a-f69b-4615-906b-9f7621afb53c
-2025-06-27 06:18:25,596 - app - INFO - Received request to delete chat ID: 1e9445aa-e51e-4491-9af9-ab00ec93e66f
-2025-06-27 06:18:25,596 - app - INFO - Successfully deleted chat ID: 1e9445aa-e51e-4491-9af9-ab00ec93e66f
-2025-06-27 06:18:26,987 - app - INFO - Received request to delete chat ID: 9ee3bfaa-033b-4428-b9fc-84f5b30ea57f
-2025-06-27 06:18:26,987 - app - INFO - Successfully deleted chat ID: 9ee3bfaa-033b-4428-b9fc-84f5b30ea57f
-2025-06-27 06:18:28,414 - app - INFO - Received request to delete chat ID: 310c685b-f014-4337-9576-40fcc2ba0cd0
-2025-06-27 06:18:28,414 - app - INFO - Successfully deleted chat ID: 310c685b-f014-4337-9576-40fcc2ba0cd0
-2025-06-27 06:18:29,745 - app - INFO - Received request to delete chat ID: b3faded6-2de3-4f7f-8a46-6c1b8e1f45be
-2025-06-27 06:18:29,745 - app - INFO - Successfully deleted chat ID: b3faded6-2de3-4f7f-8a46-6c1b8e1f45be
-2025-06-27 06:18:31,055 - app - INFO - Received request to delete chat ID: ed0d9a96-63fc-4697-be6d-ef2187faccc9
-2025-06-27 06:18:31,056 - app - INFO - Successfully deleted chat ID: ed0d9a96-63fc-4697-be6d-ef2187faccc9
-2025-06-27 06:18:32,382 - app - INFO - Received request to delete chat ID: 3e997ecf-7c27-4f23-af06-80db5a931e3e
-2025-06-27 06:18:32,382 - app - INFO - Successfully deleted chat ID: 3e997ecf-7c27-4f23-af06-80db5a931e3e
-2025-06-27 06:18:34,559 - app - INFO - Received request to delete chat ID: c19e76e1-7647-4ab3-bb52-ab6110d1ea75
-2025-06-27 06:18:34,559 - app - INFO - Successfully deleted chat ID: c19e76e1-7647-4ab3-bb52-ab6110d1ea75
-2025-06-27 06:25:51,151 - app - INFO - Received request to create new chat
-2025-06-27 06:25:51,153 - app - INFO - Created new chat with ID: 45e7901a-9201-4f87-9345-d3c82a54e253
-2025-06-27 06:25:51,169 - app - INFO - Received request for chat ID: 45e7901a-9201-4f87-9345-d3c82a54e253
-2025-06-27 06:26:15,247 - app - INFO - Received request for chat ID: 45e7901a-9201-4f87-9345-d3c82a54e253
-2025-06-27 06:26:15,249 - app - INFO - Processing files in extraction folder
-2025-06-27 06:26:16,083 - app - INFO - Sending request to Ollama API
-2025-06-27 06:26:34,890 - app - INFO - Updated chat title to: summarise it
-2025-06-27 06:26:34,897 - app - INFO - Successfully processed chat request
-2025-06-27 06:30:02,903 - app - INFO - Received request for chat ID: 45e7901a-9201-4f87-9345-d3c82a54e253
-2025-06-27 06:30:05,502 - app - INFO - Received request for chat ID: 45e7901a-9201-4f87-9345-d3c82a54e253
-2025-06-27 06:30:05,503 - app - INFO - Processing files in extraction folder
-2025-06-27 06:30:06,345 - app - INFO - Sending request to Ollama API
-2025-06-27 06:30:45,748 - app - INFO - Successfully processed chat request
-2025-06-27 06:36:20,323 - app - INFO - Received request for chat ID: 45e7901a-9201-4f87-9345-d3c82a54e253
-2025-06-27 06:36:42,355 - app - INFO - Received request to create new chat
-2025-06-27 06:36:42,356 - app - INFO - Created new chat with ID: d56a0269-6dd3-4434-b599-879ffba6c717
-2025-06-27 06:36:42,365 - app - INFO - Received request for chat ID: d56a0269-6dd3-4434-b599-879ffba6c717
-2025-06-27 06:36:47,081 - app - INFO - Received request for chat ID: d56a0269-6dd3-4434-b599-879ffba6c717
-2025-06-27 06:36:47,081 - app - INFO - Processing files in extraction folder
-2025-06-27 06:36:51,343 - app - INFO - Sending request to Ollama API
-2025-06-27 06:37:32,848 - app - INFO - Updated chat title to: summarise it
-2025-06-27 06:37:32,850 - app - INFO - Successfully processed chat request
-2025-06-27 06:38:23,051 - app - INFO - Received request to create new chat
-2025-06-27 06:38:23,052 - app - INFO - Created new chat with ID: 08fa11b8-ddaa-4d64-9b53-275a6f8d0475
-2025-06-27 06:38:23,067 - app - INFO - Received request for chat ID: 08fa11b8-ddaa-4d64-9b53-275a6f8d0475
-2025-06-27 06:38:27,983 - app - INFO - Received request for chat ID: 08fa11b8-ddaa-4d64-9b53-275a6f8d0475
-2025-06-27 06:38:27,983 - app - INFO - Processing files in extraction folder
-2025-06-27 06:40:27,756 - app - INFO - Sending request to Ollama API
-2025-06-27 06:43:15,062 - app - INFO - Updated chat title to: summarise it pls
-2025-06-27 06:43:15,065 - app - INFO - Successfully processed chat request
-2025-06-27 06:44:15,829 - app - INFO - Received request for chat ID: 08fa11b8-ddaa-4d64-9b53-275a6f8d0475
-2025-06-27 06:46:17,738 - app - INFO - Starting application on port 8000
-2025-06-27 06:46:17,945 - app - INFO - Starting application on port 8000
-2025-06-27 06:51:52,483 - app - INFO - Starting application on port 8000
-2025-06-27 06:55:02,517 - app - INFO - Starting application on port 8000
-2025-06-27 06:55:19,970 - app - INFO - Successfully extracted ZIP file: Tender_Bulletin_01_13.02.2025.zip
-2025-06-27 06:55:20,982 - app - INFO - Received request to create new chat
-2025-06-27 06:55:20,982 - app - INFO - Created new chat with ID: 0aed94c4-d7a2-4a3c-8689-4b67fb843ed8
-2025-06-27 06:55:20,997 - app - INFO - Received request for chat ID: 0aed94c4-d7a2-4a3c-8689-4b67fb843ed8
-2025-06-27 06:55:26,730 - app - INFO - Received request for chat ID: 0aed94c4-d7a2-4a3c-8689-4b67fb843ed8
-2025-06-27 06:55:26,731 - app - INFO - Processing files in extraction folder
-2025-06-27 06:55:30,803 - app - INFO - Sending request to Ollama API
-2025-06-27 06:56:12,920 - app - INFO - Updated chat title to: summarise it
-2025-06-27 06:56:12,928 - app - INFO - Successfully processed chat request
-2025-06-27 07:39:26,645 - app - INFO - Received request to create new chat
-2025-06-27 07:39:26,647 - app - INFO - Created new chat with ID: 91cdb844-7b7f-4be7-9516-478d14613ebf
-2025-06-27 07:39:26,656 - app - INFO - Received request for chat ID: 91cdb844-7b7f-4be7-9516-478d14613ebf
-2025-06-27 07:39:27,722 - app - INFO - Received request for chat ID: 0aed94c4-d7a2-4a3c-8689-4b67fb843ed8
-2025-06-27 07:39:39,541 - app - INFO - Received request for chat ID: 91cdb844-7b7f-4be7-9516-478d14613ebf
-2025-06-27 07:40:07,900 - app - INFO - Received request for chat ID: 91cdb844-7b7f-4be7-9516-478d14613ebf
-2025-06-27 07:40:07,902 - app - INFO - Processing files in extraction folder
-2025-06-27 07:40:12,077 - app - INFO - Sending request to Ollama API
-2025-06-27 07:40:48,868 - app - INFO - Updated chat title to: is there any date or times men...
-2025-06-27 07:40:48,872 - app - INFO - Successfully processed chat request
-2025-06-27 07:59:12,755 - app - INFO - Starting application on port 8000
-2025-06-28 00:08:25,050 - app - INFO - Starting application on port 8000
-2025-06-28 00:08:47,055 - app - INFO - Starting application on port 8000
-2025-06-28 00:10:42,214 - app - INFO - Starting application on port 8000
-2025-06-28 00:11:08,138 - app - INFO - Starting application on port 8000
-2025-06-28 00:11:25,216 - app - INFO - Starting application on port 8000
-2025-06-28 00:11:36,616 - app - INFO - Starting application on port 8000
-2025-06-28 00:11:56,183 - app - INFO - Received request to create new query
-2025-06-28 00:11:56,184 - app - INFO - Created new query with ID: 7f72d88d-56e7-4c78-8f72-c6c3f937aa12
-2025-06-28 00:11:56,200 - app - INFO - Received request for chat ID: 7f72d88d-56e7-4c78-8f72-c6c3f937aa12
-2025-06-28 00:12:01,755 - app - INFO - Received request for chat ID: 7f72d88d-56e7-4c78-8f72-c6c3f937aa12
-2025-06-28 00:12:01,756 - app - INFO - Processing files in extraction folder
-2025-06-28 00:12:01,799 - app - INFO - Sending request to Ollama API
-2025-06-28 00:12:28,082 - app - INFO - Updated chat title to: summarise it
-2025-06-28 00:12:28,088 - app - INFO - Successfully processed chat request
-2025-06-28 00:12:57,132 - app - INFO - Received request for chat ID: 7f72d88d-56e7-4c78-8f72-c6c3f937aa12
-2025-06-28 00:12:57,135 - app - INFO - Processing files in extraction folder
-2025-06-28 00:12:57,170 - app - INFO - Sending request to Ollama API
-2025-06-28 00:13:01,605 - app - INFO - Successfully processed chat request
-2025-06-28 06:44:03,453 - app - INFO - Received request to create new query
-2025-06-28 06:44:03,454 - app - INFO - Created new query with ID: 4c6255f4-11c0-4a9e-b6d8-8b112dda0cf2
-2025-06-28 06:44:03,467 - app - INFO - Received request for chat ID: 4c6255f4-11c0-4a9e-b6d8-8b112dda0cf2
-2025-06-28 06:44:07,525 - app - INFO - Received request for chat ID: 4c6255f4-11c0-4a9e-b6d8-8b112dda0cf2
-2025-06-28 06:44:07,526 - app - INFO - Processing files in extraction folder
-2025-06-28 06:44:07,564 - app - INFO - Sending request to Ollama API
-2025-06-28 06:45:01,608 - app - INFO - Updated chat title to: summarise it
-2025-06-28 06:45:01,611 - app - INFO - Successfully processed chat request
-2025-06-28 06:46:57,412 - app - INFO - Successfully extracted ZIP file: Tender_Bulletin_01_13.02.2025.zip
-2025-06-28 06:46:58,427 - app - INFO - Received request to create new query
-2025-06-28 06:46:58,428 - app - INFO - Created new query with ID: edf4c48d-1c6a-4e34-ac0e-d6606c8582c7
-2025-06-28 06:46:58,442 - app - INFO - Received request for chat ID: edf4c48d-1c6a-4e34-ac0e-d6606c8582c7
-2025-06-28 06:47:06,881 - app - INFO - Received request for chat ID: edf4c48d-1c6a-4e34-ac0e-d6606c8582c7
-2025-06-28 06:47:06,882 - app - INFO - Processing files in extraction folder
-2025-06-28 06:47:11,009 - app - INFO - Sending request to Ollama API
-2025-06-28 06:47:46,686 - app - INFO - Updated chat title to: summerise it
-2025-06-28 06:47:46,689 - app - INFO - Successfully processed chat request
-2025-06-28 06:57:34,878 - app - INFO - Successfully extracted ZIP file: Tender_Bulletin_01_13.02.2025.zip
-2025-06-28 06:57:35,894 - app - INFO - Received request to create new query
-2025-06-28 06:57:35,894 - app - INFO - Created new query with ID: c04caabb-8dc2-4c59-aebe-2b474817cc45
-2025-06-28 06:57:35,909 - app - INFO - Received request for chat ID: c04caabb-8dc2-4c59-aebe-2b474817cc45
-2025-06-28 06:57:40,312 - app - INFO - Received request for chat ID: c04caabb-8dc2-4c59-aebe-2b474817cc45
-2025-06-28 06:57:40,313 - app - INFO - Processing files in extraction folder
-2025-06-28 06:57:44,477 - app - INFO - Sending request to Ollama API
-2025-06-28 06:58:27,992 - app - INFO - Updated chat title to: summarise it
-2025-06-28 06:58:27,994 - app - INFO - Successfully processed chat request
-2025-06-29 09:49:41,721 - app - INFO - Starting application on port 8000
-2025-06-29 09:49:41,937 - app - INFO - Starting application on port 8000
-2025-06-29 12:43:39,317 - app - INFO - Starting application on port 8000
-2025-06-29 12:43:39,530 - app - INFO - Starting application on port 8000
-2025-06-29 15:52:50,728 - app - INFO - Starting application on port 8000
+2025-07-08 06:13:28,590 - app - INFO - Starting application on port 8000
+2025-07-08 06:24:20,426 - app - INFO - Starting application on port 8000
+2025-07-08 06:26:30,049 - app - ERROR - Exception on /billing [GET]
+Traceback (most recent call last):
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1486, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1484, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1469, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask_login/utils.py", line 290, in decorated_view
+    return current_app.ensure_sync(func)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/app.py", line 888, in billing
+    return render_template('billing.html',
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/templating.py", line 151, in render_template
+    return _render(app, template, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/templating.py", line 132, in _render
+    rv = template.render(context)
+         ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/jinja2/environment.py", line 1295, in render
+    self.environment.handle_exception()
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/home/administrator/document-iq/templates/billing.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "/home/administrator/document-iq/templates/base.html", line 82, in top-level template code
+    {% block content %}{% endblock %}
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/templates/billing.html", line 215, in block 'content'
+    <p>You'll continue to have access until {{ current_user.current_period_end.strftime('%B %d, %Y') }}.</p>
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/jinja2/utils.py", line 92, in from_obj
+    if hasattr(obj, "jinja_pass_arg"):
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+jinja2.exceptions.UndefinedError: 'None' has no attribute 'strftime'
+2025-07-08 06:34:58,021 - app - INFO - Starting application on port 8000
+2025-07-08 06:59:05,797 - app - INFO - Starting application on port 8000
+2025-07-08 06:59:14,616 - app - INFO - User authenticated: True
+2025-07-08 06:59:14,616 - app - INFO - User subscribed: False
+2025-07-08 06:59:26,113 - app - INFO - User authenticated: True
+2025-07-08 06:59:26,114 - app - INFO - User subscribed: False
+2025-07-08 06:59:26,114 - app - WARNING - Blocking upload due to lack of subscription
+2025-07-08 07:12:34,509 - app - INFO - Starting application on port 8000
+2025-07-08 07:12:40,140 - app - INFO - User authenticated: True
+2025-07-08 07:12:40,140 - app - INFO - User subscribed: False
+2025-07-08 07:21:57,209 - app - INFO - Starting application on port 8000
+2025-07-08 07:26:05,668 - app - INFO - User authenticated: True
+2025-07-08 07:26:05,669 - app - INFO - User subscribed: False
+2025-07-08 07:26:59,236 - app - INFO - Starting application on port 8000
+2025-07-08 07:27:03,572 - app - INFO - User authenticated: True
+2025-07-08 07:27:03,572 - app - INFO - User subscribed: False
+2025-07-08 07:30:50,261 - app - INFO - User authenticated: False
+2025-07-08 07:30:50,261 - app - INFO - User subscribed: False
+2025-07-08 07:31:23,429 - app - INFO - Starting application on port 8000
+2025-07-08 07:33:10,146 - app - INFO - User authenticated: True
+2025-07-08 07:33:10,146 - app - INFO - User subscribed: False
+2025-07-08 07:33:19,475 - app - INFO - User authenticated: True
+2025-07-08 07:33:19,475 - app - INFO - User subscribed: False
+2025-07-08 07:33:19,476 - app - WARNING - Blocking upload due to lack of subscription
+2025-07-08 07:34:16,506 - app - INFO - User authenticated: True
+2025-07-08 07:34:16,506 - app - INFO - User subscribed: False
+2025-07-08 07:41:00,664 - app - INFO - User authenticated: False
+2025-07-08 07:41:00,664 - app - INFO - User subscribed: False
+2025-07-08 07:41:51,455 - app - INFO - Starting application on port 8000
+2025-07-08 07:48:22,388 - app - INFO - User authenticated: False
+2025-07-08 07:48:22,388 - app - INFO - User subscribed: False
+2025-07-08 07:48:33,290 - app - INFO - User authenticated: True
+2025-07-08 07:48:33,290 - app - INFO - User subscribed: False
+2025-07-08 07:48:45,681 - app - INFO - User authenticated: True
+2025-07-08 07:48:45,681 - app - INFO - User subscribed: False
+2025-07-08 07:48:45,682 - app - WARNING - Blocking upload due to lack of subscription
+2025-07-08 07:49:47,441 - app - INFO - Starting application on port 8000
+2025-07-08 07:53:00,510 - app - INFO - Starting application on port 8000
+2025-07-08 07:55:13,072 - app - INFO - Starting application on port 8000
+2025-07-08 07:55:20,668 - app - INFO - User authenticated: True
+2025-07-08 07:55:20,668 - app - INFO - User subscribed: False
+2025-07-08 07:55:22,994 - app - INFO - User authenticated: False
+2025-07-08 07:55:22,995 - app - INFO - User subscribed: False
+2025-07-08 08:03:45,704 - app - INFO - User authenticated: False
+2025-07-08 08:03:45,705 - app - INFO - User subscribed: False
+2025-07-08 08:04:01,244 - app - INFO - User authenticated: True
+2025-07-08 08:04:01,244 - app - INFO - User subscribed: False
+2025-07-08 08:04:14,465 - app - INFO - User authenticated: True
+2025-07-08 08:04:14,465 - app - INFO - User subscribed: False
+2025-07-08 08:04:14,466 - app - WARNING - Blocking upload due to lack of subscription
+2025-07-08 08:05:51,215 - app - INFO - Starting application on port 8000
+2025-07-08 08:07:12,889 - app - INFO - User authenticated: True
+2025-07-08 08:07:12,889 - app - INFO - User subscribed: False
+2025-07-08 08:08:08,839 - app - INFO - Starting application on port 8000
+2025-07-08 08:08:14,073 - app - INFO - User authenticated: False
+2025-07-08 08:08:14,073 - app - INFO - User subscribed: False
+2025-07-08 08:08:23,940 - app - INFO - User authenticated: True
+2025-07-08 08:08:23,941 - app - INFO - User subscribed: False
+2025-07-08 08:11:17,070 - app - INFO - Starting application on port 8000
+2025-07-08 08:11:57,626 - app - ERROR - Exception on /billing [GET]
+Traceback (most recent call last):
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1486, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1484, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1469, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask_login/utils.py", line 290, in decorated_view
+    return current_app.ensure_sync(func)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/app.py", line 888, in billing
+    return render_template('billing.html',
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/templating.py", line 150, in render_template
+    template = app.jinja_env.get_or_select_template(template_name_or_list)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/jinja2/environment.py", line 1087, in get_or_select_template
+    return self.get_template(template_name_or_list, parent, globals)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/jinja2/environment.py", line 1016, in get_template
+    return self._load_template(name, globals)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/jinja2/environment.py", line 975, in _load_template
+    template = self.loader.load(self, name, self.make_globals(globals))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/jinja2/loaders.py", line 138, in load
+    code = environment.compile(source, name, filename)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/jinja2/environment.py", line 771, in compile
+    self.handle_exception(source=source_hint)
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/home/administrator/document-iq/templates/billing.html", line 86, in template
+    {{ ((current_user.documents_uploaded / (plan.limits.max_documents or 1)) * 100 | round(1) }}% used
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+jinja2.exceptions.TemplateSyntaxError: unexpected '}', expected ')'
+2025-07-08 08:13:54,722 - app - INFO - Starting application on port 8000
+2025-07-08 08:13:58,566 - app - INFO - User authenticated: True
+2025-07-08 08:13:58,566 - app - INFO - User subscribed: False
+2025-07-08 08:15:03,134 - app - INFO - Starting application on port 8000
+2025-07-08 08:16:29,688 - app - INFO - Starting application on port 8000
+2025-07-08 08:16:58,533 - app - INFO - User authenticated: True
+2025-07-08 08:16:58,533 - app - INFO - User subscribed: False
+2025-07-08 08:20:48,544 - app - INFO - User authenticated: False
+2025-07-08 08:20:48,544 - app - INFO - User subscribed: False
+2025-07-08 08:20:49,963 - app - INFO - User authenticated: False
+2025-07-08 08:20:49,964 - app - INFO - User subscribed: False
+2025-07-08 08:20:49,990 - app - INFO - User authenticated: False
+2025-07-08 08:20:49,990 - app - INFO - User subscribed: False
+2025-07-08 08:20:50,417 - app - INFO - User authenticated: False
+2025-07-08 08:20:50,417 - app - INFO - User subscribed: False
+2025-07-08 08:20:51,175 - app - INFO - User authenticated: False
+2025-07-08 08:20:51,175 - app - INFO - User subscribed: False
+2025-07-08 08:21:27,703 - app - INFO - User authenticated: False
+2025-07-08 08:21:27,703 - app - INFO - User subscribed: False
+2025-07-08 08:22:10,704 - app - INFO - User authenticated: False
+2025-07-08 08:22:10,704 - app - INFO - User subscribed: False
+2025-07-08 08:22:45,074 - app - INFO - User authenticated: True
+2025-07-08 08:22:45,074 - app - INFO - User subscribed: False
+2025-07-08 08:31:36,520 - app - INFO - User authenticated: False
+2025-07-08 08:31:36,520 - app - INFO - User subscribed: False
+2025-07-08 08:57:28,439 - app - INFO - User authenticated: False
+2025-07-08 08:57:28,439 - app - INFO - User subscribed: False
+2025-07-08 09:48:27,678 - app - INFO - User authenticated: False
+2025-07-08 09:48:27,678 - app - INFO - User subscribed: False
+2025-07-08 10:20:10,459 - app - INFO - User authenticated: True
+2025-07-08 10:20:10,459 - app - INFO - User subscribed: False
+2025-07-08 10:20:38,755 - app - INFO - User authenticated: True
+2025-07-08 10:20:38,756 - app - INFO - User subscribed: False
+2025-07-08 10:20:51,058 - app - INFO - User authenticated: True
+2025-07-08 10:20:51,058 - app - INFO - User subscribed: False
+2025-07-08 10:20:51,059 - app - WARNING - Blocking upload due to lack of subscription
+2025-07-08 10:28:12,399 - app - INFO - User authenticated: False
+2025-07-08 10:28:12,400 - app - INFO - User subscribed: False
+2025-07-08 11:06:31,662 - app - INFO - Starting application on port 8000
+2025-07-08 11:06:39,214 - app - ERROR - Exception on / [GET]
+Traceback (most recent call last):
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1963, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 943, in do_execute
+    cursor.execute(statement, parameters)
+sqlite3.OperationalError: no such column: user.trial_start_date
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1486, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1482, in full_dispatch_request
+    rv = self.preprocess_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1974, in preprocess_request
+    rv = self.ensure_sync(before_func)()
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/app.py", line 725, in check_subscription
+    if current_user.is_authenticated and not current_user.is_admin:
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/werkzeug/local.py", line 311, in __get__
+    obj = instance._get_current_object()
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/werkzeug/local.py", line 515, in _get_current_object
+    return get_name(local())
+                    ^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask_login/utils.py", line 25, in <lambda>
+    current_user = LocalProxy(lambda: _get_user())
+                                      ^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask_login/utils.py", line 372, in _get_user
+    current_app.login_manager._load_user()
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask_login/login_manager.py", line 364, in _load_user
+    user = self._user_callback(user_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/app.py", line 260, in load_user
+    return User.query.get(int(user_id))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<string>", line 2, in get
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/sqlalchemy/util/deprecations.py", line 386, in warned
+    return fn(*args, **kwargs)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/sqlalchemy/orm/query.py", line 1126, in get
+    return self._get_impl(ident, loading.load_on_pk_identity)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/sqlalchemy/orm/query.py", line 1135, in _get_impl
+    return self.session._get_impl(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 3873, in _get_impl
+    return db_load_fn(
+           ^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/sqlalchemy/orm/loading.py", line 694, in load_on_pk_identity
+    session.execute(
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2365, in execute
+    return self._execute_internal(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2251, in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/sqlalchemy/orm/context.py", line 306, in orm_execute_statement
+    result = conn.execute(
+             ^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1415, in execute
+    return meth(
+           ^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/sqlalchemy/sql/elements.py", line 523, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1637, in _execute_clauseelement
+    ret = self._execute_context(
+          ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1842, in _execute_context
+    return self._exec_single_context(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1982, in _exec_single_context
+    self._handle_dbapi_exception(
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2351, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1963, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 943, in do_execute
+    cursor.execute(statement, parameters)
+sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) no such column: user.trial_start_date
+[SQL: SELECT user.id AS user_id, user.username AS user_username, user.email AS user_email, user.password_hash AS user_password_hash, user.created_at AS user_created_at, user.last_login AS user_last_login, user.is_active AS user_is_active, user.is_admin AS user_is_admin, user.subscription_plan AS user_subscription_plan, user.subscription_status AS user_subscription_status, user.subscription_id AS user_subscription_id, user.payment_method_id AS user_payment_method_id, user.current_period_end AS user_current_period_end, user.cancel_at_period_end AS user_cancel_at_period_end, user.documents_uploaded AS user_documents_uploaded, user.last_billing_date AS user_last_billing_date, user.trial_start_date AS user_trial_start_date, user.trial_end_date AS user_trial_end_date 
+FROM user 
+WHERE user.id = ?]
+[parameters: (1,)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-07-08 11:07:00,443 - app - INFO - Starting application on port 8000
+2025-07-08 11:07:06,002 - app - ERROR - Exception on / [GET]
+Traceback (most recent call last):
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1963, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 943, in do_execute
+    cursor.execute(statement, parameters)
+sqlite3.OperationalError: no such column: user.trial_start_date
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1486, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1482, in full_dispatch_request
+    rv = self.preprocess_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1974, in preprocess_request
+    rv = self.ensure_sync(before_func)()
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/app.py", line 725, in check_subscription
+    if current_user.is_authenticated and not current_user.is_admin:
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/werkzeug/local.py", line 311, in __get__
+    obj = instance._get_current_object()
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/werkzeug/local.py", line 515, in _get_current_object
+    return get_name(local())
+                    ^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask_login/utils.py", line 25, in <lambda>
+    current_user = LocalProxy(lambda: _get_user())
+                                      ^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask_login/utils.py", line 372, in _get_user
+    current_app.login_manager._load_user()
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask_login/login_manager.py", line 364, in _load_user
+    user = self._user_callback(user_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/app.py", line 260, in load_user
+    return User.query.get(int(user_id))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<string>", line 2, in get
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/sqlalchemy/util/deprecations.py", line 386, in warned
+    return fn(*args, **kwargs)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/sqlalchemy/orm/query.py", line 1126, in get
+    return self._get_impl(ident, loading.load_on_pk_identity)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/sqlalchemy/orm/query.py", line 1135, in _get_impl
+    return self.session._get_impl(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 3873, in _get_impl
+    return db_load_fn(
+           ^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/sqlalchemy/orm/loading.py", line 694, in load_on_pk_identity
+    session.execute(
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2365, in execute
+    return self._execute_internal(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2251, in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/sqlalchemy/orm/context.py", line 306, in orm_execute_statement
+    result = conn.execute(
+             ^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1415, in execute
+    return meth(
+           ^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/sqlalchemy/sql/elements.py", line 523, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1637, in _execute_clauseelement
+    ret = self._execute_context(
+          ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1842, in _execute_context
+    return self._exec_single_context(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1982, in _exec_single_context
+    self._handle_dbapi_exception(
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2351, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1963, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 943, in do_execute
+    cursor.execute(statement, parameters)
+sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) no such column: user.trial_start_date
+[SQL: SELECT user.id AS user_id, user.username AS user_username, user.email AS user_email, user.password_hash AS user_password_hash, user.created_at AS user_created_at, user.last_login AS user_last_login, user.is_active AS user_is_active, user.is_admin AS user_is_admin, user.subscription_plan AS user_subscription_plan, user.subscription_status AS user_subscription_status, user.subscription_id AS user_subscription_id, user.payment_method_id AS user_payment_method_id, user.current_period_end AS user_current_period_end, user.cancel_at_period_end AS user_cancel_at_period_end, user.documents_uploaded AS user_documents_uploaded, user.last_billing_date AS user_last_billing_date, user.trial_start_date AS user_trial_start_date, user.trial_end_date AS user_trial_end_date 
+FROM user 
+WHERE user.id = ?]
+[parameters: (1,)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-07-08 11:13:17,632 - app - ERROR - Exception on / [GET]
+Traceback (most recent call last):
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1963, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 943, in do_execute
+    cursor.execute(statement, parameters)
+sqlite3.OperationalError: no such column: user.trial_start_date
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1486, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1482, in full_dispatch_request
+    rv = self.preprocess_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1974, in preprocess_request
+    rv = self.ensure_sync(before_func)()
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/app.py", line 725, in check_subscription
+    if current_user.is_authenticated and not current_user.is_admin:
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/werkzeug/local.py", line 311, in __get__
+    obj = instance._get_current_object()
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/werkzeug/local.py", line 515, in _get_current_object
+    return get_name(local())
+                    ^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask_login/utils.py", line 25, in <lambda>
+    current_user = LocalProxy(lambda: _get_user())
+                                      ^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask_login/utils.py", line 372, in _get_user
+    current_app.login_manager._load_user()
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask_login/login_manager.py", line 364, in _load_user
+    user = self._user_callback(user_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/app.py", line 260, in load_user
+    return User.query.get(int(user_id))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<string>", line 2, in get
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/sqlalchemy/util/deprecations.py", line 386, in warned
+    return fn(*args, **kwargs)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/sqlalchemy/orm/query.py", line 1126, in get
+    return self._get_impl(ident, loading.load_on_pk_identity)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/sqlalchemy/orm/query.py", line 1135, in _get_impl
+    return self.session._get_impl(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 3873, in _get_impl
+    return db_load_fn(
+           ^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/sqlalchemy/orm/loading.py", line 694, in load_on_pk_identity
+    session.execute(
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2365, in execute
+    return self._execute_internal(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2251, in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/sqlalchemy/orm/context.py", line 306, in orm_execute_statement
+    result = conn.execute(
+             ^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1415, in execute
+    return meth(
+           ^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/sqlalchemy/sql/elements.py", line 523, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1637, in _execute_clauseelement
+    ret = self._execute_context(
+          ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1842, in _execute_context
+    return self._exec_single_context(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1982, in _exec_single_context
+    self._handle_dbapi_exception(
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2351, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1963, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 943, in do_execute
+    cursor.execute(statement, parameters)
+sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) no such column: user.trial_start_date
+[SQL: SELECT user.id AS user_id, user.username AS user_username, user.email AS user_email, user.password_hash AS user_password_hash, user.created_at AS user_created_at, user.last_login AS user_last_login, user.is_active AS user_is_active, user.is_admin AS user_is_admin, user.subscription_plan AS user_subscription_plan, user.subscription_status AS user_subscription_status, user.subscription_id AS user_subscription_id, user.payment_method_id AS user_payment_method_id, user.current_period_end AS user_current_period_end, user.cancel_at_period_end AS user_cancel_at_period_end, user.documents_uploaded AS user_documents_uploaded, user.last_billing_date AS user_last_billing_date, user.trial_start_date AS user_trial_start_date, user.trial_end_date AS user_trial_end_date 
+FROM user 
+WHERE user.id = ?]
+[parameters: (1,)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-07-08 11:14:03,973 - app - INFO - Starting application on port 8000
+2025-07-08 11:14:08,258 - app - INFO - User authenticated: False
+2025-07-08 11:14:08,259 - app - INFO - User subscribed: False
+2025-07-08 11:14:35,305 - app - INFO - User authenticated: True
+2025-07-08 11:14:35,306 - app - INFO - User subscribed: False
+2025-07-08 11:14:47,146 - app - INFO - User authenticated: True
+2025-07-08 11:14:47,147 - app - INFO - User subscribed: False
+2025-07-08 11:14:47,147 - app - WARNING - Blocking upload due to lack of subscription
+2025-07-08 11:14:54,562 - app - ERROR - Exception on /pricing [GET]
+Traceback (most recent call last):
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1486, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1484, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1469, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask_login/utils.py", line 290, in decorated_view
+    return current_app.ensure_sync(func)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/app.py", line 771, in pricing
+    'enterprise': SubscriptionPlan.ENTERPRISE
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: type object 'SubscriptionPlan' has no attribute 'ENTERPRISE'
+2025-07-08 11:15:42,197 - app - INFO - Starting application on port 8000
+2025-07-08 11:15:54,551 - app - ERROR - Exception on /pricing [GET]
+Traceback (most recent call last):
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1486, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1484, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1469, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask_login/utils.py", line 290, in decorated_view
+    return current_app.ensure_sync(func)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/app.py", line 773, in pricing
+    return render_template('pricing.html', plans=plans)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/templating.py", line 151, in render_template
+    return _render(app, template, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/templating.py", line 132, in _render
+    rv = template.render(context)
+         ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/jinja2/environment.py", line 1295, in render
+    self.environment.handle_exception()
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/home/administrator/document-iq/templates/pricing.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "/home/administrator/document-iq/templates/base.html", line 49, in top-level template code
+    Trial: {{ (current_user.trial_end_date - now).days }} days left
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+jinja2.exceptions.UndefinedError: 'now' is undefined
+2025-07-08 11:16:20,823 - app - ERROR - Exception on /pricing [GET]
+Traceback (most recent call last):
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1486, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1484, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1469, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask_login/utils.py", line 290, in decorated_view
+    return current_app.ensure_sync(func)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/app.py", line 773, in pricing
+    return render_template('pricing.html', plans=plans)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/templating.py", line 151, in render_template
+    return _render(app, template, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/templating.py", line 132, in _render
+    rv = template.render(context)
+         ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/jinja2/environment.py", line 1295, in render
+    self.environment.handle_exception()
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/home/administrator/document-iq/templates/pricing.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "/home/administrator/document-iq/templates/base.html", line 49, in top-level template code
+    Trial: {{ (current_user.trial_end_date - now).days }} days left
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+jinja2.exceptions.UndefinedError: 'now' is undefined
+2025-07-08 11:22:33,487 - app - INFO - User authenticated: False
+2025-07-08 11:22:33,487 - app - INFO - User subscribed: False
+2025-07-08 11:25:48,579 - app - INFO - Starting application on port 8000
+2025-07-08 11:28:15,873 - app - INFO - User authenticated: True
+2025-07-08 11:28:15,874 - app - INFO - User subscribed: True
+2025-07-08 11:28:15,878 - app - ERROR - Exception on / [GET]
+Traceback (most recent call last):
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1486, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1484, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1469, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/app.py", line 1485, in index
+    return render_template('index.html', chats=conversations)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/templating.py", line 151, in render_template
+    return _render(app, template, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/templating.py", line 132, in _render
+    rv = template.render(context)
+         ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/jinja2/environment.py", line 1295, in render
+    self.environment.handle_exception()
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/home/administrator/document-iq/templates/index.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "/home/administrator/document-iq/templates/base.html", line 49, in top-level template code
+    Trial: {{ (current_user.trial_end_date - now).days }} days left
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+jinja2.exceptions.UndefinedError: 'now' is undefined
+2025-07-08 11:31:15,625 - app - INFO - Starting application on port 8000
+2025-07-08 11:31:23,539 - app - INFO - User authenticated: True
+2025-07-08 11:31:23,539 - app - INFO - User subscribed: True
+2025-07-08 11:32:23,868 - app - INFO - User authenticated: True
+2025-07-08 11:32:23,869 - app - INFO - User subscribed: True
+2025-07-08 11:32:34,557 - app - INFO - User authenticated: True
+2025-07-08 11:32:34,557 - app - INFO - User subscribed: True
+2025-07-08 11:32:35,118 - app - INFO - Received request to create new query
+2025-07-08 11:32:35,130 - app - INFO - Created new query with ID: 62ee9eff-7fe0-4d88-bfaa-b6ee329964dc
+2025-07-08 11:34:19,875 - app - INFO - User authenticated: True
+2025-07-08 11:34:19,875 - app - INFO - User subscribed: True
+2025-07-08 11:40:40,076 - app - INFO - Starting application on port 8000
+2025-07-08 11:41:39,239 - app - INFO - Starting application on port 8000
+2025-07-08 11:41:45,751 - app - INFO - User authenticated: True
+2025-07-08 11:41:45,751 - app - INFO - User subscribed: True
+2025-07-08 11:43:54,356 - app - INFO - User authenticated: True
+2025-07-08 11:43:54,356 - app - INFO - User subscribed: True
+2025-07-08 11:45:41,050 - app - INFO - User authenticated: False
+2025-07-08 11:45:41,050 - app - INFO - User subscribed: False
+2025-07-08 11:47:42,405 - app - INFO - User authenticated: False
+2025-07-08 11:47:42,406 - app - INFO - User subscribed: False
+2025-07-08 11:54:02,257 - app - INFO - User authenticated: True
+2025-07-08 11:54:02,258 - app - INFO - User subscribed: True
+2025-07-08 11:57:15,379 - app - INFO - User authenticated: False
+2025-07-08 11:57:15,379 - app - INFO - User subscribed: False
+2025-07-08 12:05:03,946 - app - INFO - Starting application on port 8000
+2025-07-08 12:05:14,356 - app - INFO - User authenticated: True
+2025-07-08 12:05:14,356 - app - INFO - User subscribed: True
+2025-07-08 12:05:24,503 - app - INFO - User authenticated: False
+2025-07-08 12:05:24,503 - app - INFO - User subscribed: False
+2025-07-08 12:05:29,675 - app - INFO - User authenticated: True
+2025-07-08 12:05:29,676 - app - INFO - User subscribed: True
+2025-07-08 12:05:30,242 - app - INFO - Received request to create new query
+2025-07-08 12:05:30,255 - app - INFO - Created new query with ID: fbb3dc51-b245-4ea8-a3d2-a834b41b3638
+2025-07-08 12:06:27,226 - app - INFO - Received request to delete chat ID: 62ee9eff-7fe0-4d88-bfaa-b6ee329964dc
+2025-07-08 12:06:27,240 - app - INFO - Successfully deleted chat ID: 62ee9eff-7fe0-4d88-bfaa-b6ee329964dc
+2025-07-08 12:06:32,849 - app - INFO - Received request to delete chat ID: fbb3dc51-b245-4ea8-a3d2-a834b41b3638
+2025-07-08 12:06:32,860 - app - INFO - Successfully deleted chat ID: fbb3dc51-b245-4ea8-a3d2-a834b41b3638
+2025-07-08 12:06:33,567 - app - INFO - User authenticated: True
+2025-07-08 12:06:33,567 - app - INFO - User subscribed: True
+2025-07-08 12:06:46,819 - app - INFO - User authenticated: True
+2025-07-08 12:06:46,819 - app - INFO - User subscribed: True
+2025-07-08 12:06:54,392 - app - INFO - User authenticated: True
+2025-07-08 12:06:54,393 - app - INFO - User subscribed: True
+2025-07-08 12:06:54,928 - app - INFO - Received request to create new query
+2025-07-08 12:06:54,938 - app - INFO - Created new query with ID: a51209a9-0e8e-4bf6-b841-50636b5a7a24
+2025-07-08 12:10:05,549 - app - INFO - Starting application on port 8000
+2025-07-08 12:10:59,702 - app - INFO - User authenticated: True
+2025-07-08 12:10:59,702 - app - INFO - User subscribed: True
+2025-07-08 12:11:18,999 - app - INFO - User authenticated: True
+2025-07-08 12:11:18,999 - app - INFO - User subscribed: True
+2025-07-08 12:11:19,531 - app - INFO - Received request to create new query
+2025-07-08 12:11:19,541 - app - INFO - Created new query with ID: a8f4d723-8604-42d2-8ac6-d1151a1e6a09
+2025-07-08 12:15:41,248 - app - INFO - Starting application on port 8000
+2025-07-08 12:19:51,143 - app - INFO - Starting application on port 8000
+2025-07-08 12:20:00,133 - app - INFO - User authenticated: True
+2025-07-08 12:20:00,134 - app - INFO - User subscribed: True
+2025-07-08 12:20:06,061 - app - INFO - User authenticated: True
+2025-07-08 12:20:06,061 - app - INFO - User subscribed: True
+2025-07-08 12:20:06,603 - app - INFO - Received request to create new query
+2025-07-08 12:20:06,616 - app - INFO - Created new query with ID: 5c30cd88-b6c0-4e96-8998-0e82660a12a6
+2025-07-08 12:21:55,045 - app - INFO - User authenticated: True
+2025-07-08 12:21:55,045 - app - INFO - User subscribed: True
+2025-07-08 12:26:26,426 - app - INFO - Starting application on port 8000
+2025-07-08 12:26:31,492 - app - INFO - User authenticated: True
+2025-07-08 12:26:31,492 - app - INFO - User subscribed: True
+2025-07-08 12:29:36,559 - app - INFO - User authenticated: True
+2025-07-08 12:29:36,560 - app - INFO - User subscribed: True
+2025-07-08 12:31:13,635 - app - INFO - Received request to delete chat ID: a8f4d723-8604-42d2-8ac6-d1151a1e6a09
+2025-07-08 12:31:13,645 - app - INFO - Successfully deleted chat ID: a8f4d723-8604-42d2-8ac6-d1151a1e6a09
+2025-07-08 12:31:18,997 - app - INFO - Received request to delete chat ID: a51209a9-0e8e-4bf6-b841-50636b5a7a24
+2025-07-08 12:31:19,006 - app - INFO - Successfully deleted chat ID: a51209a9-0e8e-4bf6-b841-50636b5a7a24
+2025-07-08 12:31:29,199 - app - INFO - User authenticated: True
+2025-07-08 12:31:29,199 - app - INFO - User subscribed: True
+2025-07-08 12:34:33,970 - app - INFO - User authenticated: False
+2025-07-08 12:34:33,970 - app - INFO - User subscribed: False
+2025-07-08 12:36:45,018 - app - INFO - Starting application on port 8000
+2025-07-08 12:36:50,768 - app - INFO - User authenticated: True
+2025-07-08 12:36:50,768 - app - INFO - User subscribed: True
+2025-07-08 12:37:26,103 - app - INFO - User authenticated: True
+2025-07-08 12:37:26,103 - app - INFO - User subscribed: True
+2025-07-08 12:38:55,511 - app - INFO - User authenticated: True
+2025-07-08 12:38:55,511 - app - INFO - User subscribed: False
+2025-07-08 12:39:15,551 - app - INFO - User authenticated: True
+2025-07-08 12:39:15,551 - app - INFO - User subscribed: True
+2025-07-08 12:47:08,034 - app - INFO - Starting application on port 8000
+2025-07-08 12:47:37,262 - app - INFO - Starting application on port 8000
+2025-07-08 12:49:48,887 - app - INFO - Starting application on port 8000
+2025-07-08 13:11:50,334 - app - INFO - Starting application on port 8000
+2025-07-08 13:16:28,603 - app - INFO - Starting application on port 8000
+2025-07-08 13:33:01,941 - app - INFO - Starting application on port 8000
+2025-07-08 13:33:24,757 - app - INFO - Starting application on port 8000
+2025-07-08 13:33:57,182 - app - INFO - Starting application on port 8000
+2025-07-08 13:38:13,610 - app - INFO - Starting application on port 8000
+2025-07-08 13:39:42,489 - app - INFO - Received request to create new query
+2025-07-08 13:39:42,501 - app - INFO - Created new query with ID: b4226339-fa53-41c2-acac-db0110089041
+2025-07-08 13:40:45,353 - app - INFO - Received request to create new query
+2025-07-08 13:40:45,361 - app - INFO - Created new query with ID: adb3a5f0-3856-4768-8c61-5439691ed01e
+2025-07-08 13:43:57,492 - app - INFO - Received request to delete chat ID: b4226339-fa53-41c2-acac-db0110089041
+2025-07-08 13:43:57,502 - app - INFO - Successfully deleted chat ID: b4226339-fa53-41c2-acac-db0110089041
+2025-07-08 13:45:16,145 - app - INFO - Starting application on port 8000
+2025-07-08 13:45:27,657 - app - INFO - Received request to create new query
+2025-07-08 13:45:27,668 - app - INFO - Created new query with ID: 07880543-d5de-4fd4-84c6-a3685b7f16a5
+2025-07-08 13:54:39,095 - app - INFO - Successfully extracted text files from ZIP: 115._QatarEnergy_-_RFQ_GT25100700_-REHABILITATION_OF_4_LPG_TANKS_MESAIEED_OPERATIONS.zip
+2025-07-08 13:56:34,786 - app - INFO - Starting application on port 8000
+2025-07-08 13:58:32,060 - app - INFO - Received request to create new query
+2025-07-08 13:58:32,074 - app - INFO - Created new query with ID: 6162a5a4-5c75-40b6-8d50-edcbead73fe6
+2025-07-09 01:36:34,398 - app - INFO - Starting application on port 8000
+2025-07-09 01:38:15,621 - app - INFO - Starting application on port 8000
+2025-07-09 01:39:57,979 - app - INFO - Starting application on port 8000
+2025-07-09 01:40:30,562 - app - INFO - Starting application on port 8000
+2025-07-09 01:45:00,620 - app - INFO - Starting application on port 8000
+2025-07-09 01:47:40,001 - app - INFO - Starting application on port 8000
+2025-07-09 01:48:49,148 - app - INFO - Starting application on port 8000
+2025-07-09 01:59:42,950 - app - INFO - Starting application on port 8000
+2025-07-09 02:05:47,978 - app - WARNING - Blocking upload due to lack of subscription
+2025-07-09 02:11:16,106 - app - INFO - Starting application on port 8000
+2025-07-09 02:11:48,260 - app - INFO - Starting application on port 8000
+2025-07-09 02:12:47,488 - app - INFO - Starting application on port 8000
+2025-07-09 02:50:39,398 - app - INFO - Starting application on port 8000
+2025-07-09 02:55:25,262 - app - INFO - Starting application on port 8000
+2025-07-09 02:56:33,715 - app - INFO - Starting application on port 8000
+2025-07-09 02:56:59,596 - app - INFO - Starting application on port 8000
+2025-07-09 03:11:36,169 - app - INFO - Starting application on port 8000
+2025-07-09 03:14:15,742 - app - INFO - Starting application on port 8000
+2025-07-09 03:15:04,626 - app - INFO - Starting application on port 8000
+2025-07-09 03:17:20,384 - app - INFO - Starting application on port 8000
+2025-07-09 03:19:39,958 - app - INFO - Starting application on port 8000
+2025-07-09 03:21:08,871 - app - INFO - Starting application on port 8000
+2025-07-09 03:23:19,240 - app - INFO - Received request to create new query
+2025-07-09 03:23:19,253 - app - INFO - Created new query with ID: ebdeed39-1743-4f56-b4ef-5ef4d6b65984
+2025-07-09 03:25:57,312 - app - INFO - Starting application on port 8000
+2025-07-09 03:28:29,248 - app - INFO - Starting application on port 8000
+2025-07-09 03:29:19,459 - app - INFO - Starting application on port 8000
+2025-07-09 03:34:48,260 - app - INFO - Starting application on port 8000
+2025-07-09 03:36:30,640 - app - INFO - Starting application on port 8000
+2025-07-09 03:37:00,090 - app - INFO - Starting application on port 8000
+2025-07-09 03:37:20,404 - app - INFO - Starting application on port 8000
+2025-07-09 03:42:19,605 - app - INFO - Starting application on port 8000
+2025-07-09 03:43:32,345 - app - INFO - Starting application on port 8000
+2025-07-09 03:44:14,954 - app - INFO - Starting application on port 8000
+2025-07-09 03:44:31,954 - app - INFO - Starting application on port 8000
+2025-07-09 03:45:12,097 - app - INFO - Starting application on port 8000
+2025-07-09 03:46:29,475 - app - INFO - Starting application on port 8000
+2025-07-09 03:47:33,716 - app - INFO - Starting application on port 8000
+2025-07-09 03:55:00,809 - app - INFO - Starting application on port 8000
+2025-07-09 03:55:36,395 - app - INFO - Starting application on port 8000
+2025-07-09 03:57:52,414 - app - INFO - Received request to create new query
+2025-07-09 03:57:52,427 - app - INFO - Created new query with ID: 0e8dd191-05e8-4f36-ad90-784399410fd9
+2025-07-09 04:00:19,440 - app - INFO - Starting application on port 8000
+2025-07-09 04:00:47,510 - app - INFO - Starting application on port 8000
+2025-07-09 04:02:43,531 - app - INFO - Starting application on port 8000
+2025-07-09 04:03:24,953 - app - INFO - Starting application on port 8000
+2025-07-09 04:19:59,092 - app - INFO - Starting application on port 8000
+2025-07-09 04:29:21,530 - app - INFO - Starting application on port 8000
+2025-07-09 04:32:48,748 - app - INFO - Starting application on port 8000
+2025-07-09 04:34:12,910 - app - INFO - Starting application on port 8000
+2025-07-09 04:36:43,200 - app - INFO - Starting application on port 8000
+2025-07-09 04:39:48,031 - app - INFO - Starting application on port 8000
+2025-07-09 04:40:11,200 - app - INFO - Starting application on port 8000
+2025-07-09 04:40:37,078 - app - INFO - Starting application on port 8000
+2025-07-09 04:41:05,900 - app - INFO - Starting application on port 8000
+2025-07-09 04:41:16,467 - app - INFO - Received request to create new query
+2025-07-09 04:41:16,479 - app - INFO - Created new query with ID: fa9d191c-7dbe-4152-884b-d0e27c969453
+2025-07-09 04:42:18,598 - app - INFO - Starting application on port 8000
+2025-07-09 04:47:34,768 - app - INFO - Starting application on port 8000
+2025-07-09 04:50:14,665 - app - INFO - Starting application on port 8000
+2025-07-09 04:54:53,905 - app - INFO - Starting application on port 8000
+2025-07-09 04:55:03,084 - app - INFO - Received request to create new query
+2025-07-09 04:55:03,096 - app - INFO - Created new query with ID: cd0912ea-ab95-465a-9b0c-c6b1f8a5a11d
+2025-07-09 04:58:43,174 - app - INFO - Starting application on port 8000
+2025-07-09 05:00:10,249 - app - INFO - Starting application on port 8000
+2025-07-09 05:00:37,706 - app - INFO - Starting application on port 8000
+2025-07-09 05:01:12,342 - app - INFO - Starting application on port 8000
+2025-07-09 05:01:21,985 - app - INFO - Received request to create new query
+2025-07-09 05:01:21,999 - app - INFO - Created new query with ID: d441fc2f-b4c3-4574-a98b-53d7ecb76298
+2025-07-09 05:02:02,876 - app - INFO - Starting application on port 8000
+2025-07-09 05:02:54,339 - app - INFO - Starting application on port 8000
+2025-07-09 05:03:30,860 - app - INFO - Starting application on port 8000
+2025-07-09 05:09:22,198 - app - INFO - Starting application on port 8000
+2025-07-09 05:13:06,369 - app - INFO - Starting application on port 8000
+2025-07-09 05:14:09,409 - app - INFO - Starting application on port 8000
+2025-07-09 05:15:17,066 - app - INFO - Starting application on port 8000
+2025-07-09 05:15:24,767 - app - INFO - Received request to create new query
+2025-07-09 05:15:24,780 - app - INFO - Created new query with ID: b392bf6b-cca2-4bfd-96b2-284f607fb570
+2025-07-09 05:15:38,277 - app - INFO - Received request to delete chat ID: 5c30cd88-b6c0-4e96-8998-0e82660a12a6
+2025-07-09 05:15:38,289 - app - INFO - Successfully deleted chat ID: 5c30cd88-b6c0-4e96-8998-0e82660a12a6
+2025-07-09 05:15:40,933 - app - INFO - Received request to delete chat ID: b392bf6b-cca2-4bfd-96b2-284f607fb570
+2025-07-09 05:15:40,943 - app - INFO - Successfully deleted chat ID: b392bf6b-cca2-4bfd-96b2-284f607fb570
+2025-07-09 05:15:44,503 - app - INFO - Received request to delete chat ID: d441fc2f-b4c3-4574-a98b-53d7ecb76298
+2025-07-09 05:15:44,513 - app - INFO - Successfully deleted chat ID: d441fc2f-b4c3-4574-a98b-53d7ecb76298
+2025-07-09 05:15:47,780 - app - INFO - Received request to delete chat ID: cd0912ea-ab95-465a-9b0c-c6b1f8a5a11d
+2025-07-09 05:15:47,789 - app - INFO - Successfully deleted chat ID: cd0912ea-ab95-465a-9b0c-c6b1f8a5a11d
+2025-07-09 05:16:00,130 - app - INFO - Received request to create new query
+2025-07-09 05:16:00,140 - app - INFO - Created new query with ID: 39eb55cb-a960-4100-b7c0-22db79782fe2
+2025-07-09 05:17:26,044 - app - INFO - Starting application on port 8000
+2025-07-09 05:18:11,601 - app - INFO - Starting application on port 8000
+2025-07-09 05:23:38,606 - app - INFO - Starting application on port 8000
+2025-07-09 05:26:09,076 - app - INFO - Starting application on port 8000
+2025-07-09 05:26:18,725 - app - INFO - Received request to create new query
+2025-07-09 05:26:18,737 - app - INFO - Created new query with ID: 79211d66-0ede-4376-a076-314c8a3ffb59
+2025-07-09 05:27:04,023 - app - INFO - Starting application on port 8000
+2025-07-09 05:27:18,154 - app - INFO - Received request to create new query
+2025-07-09 05:27:18,167 - app - INFO - Created new query with ID: 38764721-5c4a-439c-bac5-6c7edb130ef6
+2025-07-09 05:27:24,858 - app - INFO - Received request to delete chat ID: 38764721-5c4a-439c-bac5-6c7edb130ef6
+2025-07-09 05:27:24,934 - app - INFO - Successfully deleted chat ID: 38764721-5c4a-439c-bac5-6c7edb130ef6
+2025-07-09 05:28:40,745 - app - INFO - Starting application on port 8000
+2025-07-09 05:29:37,666 - app - INFO - Starting application on port 8000
+2025-07-09 05:30:35,544 - app - INFO - Received request to create new query
+2025-07-09 05:30:35,556 - app - INFO - Created new query with ID: 9ba7ccf0-b4e1-4390-bb45-92418156fa65
+2025-07-09 05:31:02,322 - app - INFO - Received request to delete chat ID: 79211d66-0ede-4376-a076-314c8a3ffb59
+2025-07-09 05:31:02,335 - app - INFO - Successfully deleted chat ID: 79211d66-0ede-4376-a076-314c8a3ffb59
+2025-07-09 05:31:05,380 - app - INFO - Received request to delete chat ID: 39eb55cb-a960-4100-b7c0-22db79782fe2
+2025-07-09 05:31:05,390 - app - INFO - Successfully deleted chat ID: 39eb55cb-a960-4100-b7c0-22db79782fe2
+2025-07-09 05:39:46,394 - app - INFO - Starting application on port 8000
+2025-07-09 05:40:06,699 - app - INFO - Received request to create new query
+2025-07-09 05:40:06,713 - app - INFO - Created new query with ID: f71414d6-fcf9-42c5-af1c-7370f723c3d7
+2025-07-09 05:40:38,733 - app - INFO - Received request to delete chat ID: 9ba7ccf0-b4e1-4390-bb45-92418156fa65
+2025-07-09 05:40:38,747 - app - INFO - Successfully deleted chat ID: 9ba7ccf0-b4e1-4390-bb45-92418156fa65
+2025-07-09 05:40:47,100 - app - INFO - Received request to delete chat ID: f71414d6-fcf9-42c5-af1c-7370f723c3d7
+2025-07-09 05:40:47,110 - app - INFO - Successfully deleted chat ID: f71414d6-fcf9-42c5-af1c-7370f723c3d7
+2025-07-09 05:40:54,946 - app - INFO - Received request to create new query
+2025-07-09 05:40:54,955 - app - INFO - Created new query with ID: af823614-fdef-4402-86d8-057e679f20c2
+2025-07-09 05:48:45,395 - app - INFO - Starting application on port 8000
+2025-07-09 05:48:58,673 - app - INFO - Received request to create new query
+2025-07-09 05:48:58,686 - app - INFO - Created new query with ID: 45e171f4-fe0a-4e24-9a8a-060b38402b82
+2025-07-09 05:52:25,500 - app - INFO - Starting application on port 8000
+2025-07-09 05:52:37,750 - app - INFO - Received request to create new query
+2025-07-09 05:52:37,765 - app - INFO - Created new query with ID: 03275866-b3a6-498d-8bc9-37528f2380d7
+2025-07-09 05:55:48,152 - app - INFO - Starting application on port 8000
+2025-07-09 05:57:46,513 - app - INFO - Starting application on port 8000
+2025-07-09 05:58:07,636 - app - INFO - Received request to create new query
+2025-07-09 05:58:07,649 - app - INFO - Created new query with ID: 74c7dcb3-60e2-42d2-a05b-299836f9f23e
+2025-07-09 05:58:52,904 - app - INFO - Serving file: /home/administrator/document-iq/extracted_files/FORM_18_-DAVIS.pdf (Size: 772202 bytes)
+2025-07-09 05:58:53,414 - app - INFO - Serving file: /home/administrator/document-iq/extracted_files/FORM_18_-DAVIS.pdf (Size: 772202 bytes)
+2025-07-09 05:58:58,892 - app - INFO - Serving file: /home/administrator/document-iq/extracted_files/FORM_18_-DAVIS.pdf (Size: 772202 bytes)
+2025-07-09 05:58:59,497 - app - INFO - Serving file: /home/administrator/document-iq/extracted_files/FORM_18_-DAVIS.pdf (Size: 772202 bytes)
