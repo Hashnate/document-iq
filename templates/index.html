@@ -72,7 +72,6 @@
         position: relative;
     }
 
-
     .modal-actions {
         display: flex;
         justify-content: flex-end;
@@ -91,10 +90,6 @@
         background-color: var(--primary-color);
         color: white;
     }
-
-    /* .btn-secondary {
-        background-color: #f1f1f1;
-    } */
 
     .btn-trial {
         background-color: #2196F3;
@@ -150,6 +145,17 @@
                 });
 
                 if (!response.ok) {
+                    if (response.status === 401) {
+                        // Unauthorized - user is not logged in
+                        return {
+                            is_logged_in: false,
+                            has_subscription: false,
+                            has_active_trial: false,
+                            has_trial_available: false,
+                            trial_days_remaining: 0,
+                            allow_uploads: false
+                        };
+                    }
                     throw new Error('Failed to check subscription status');
                 }
 
@@ -157,11 +163,13 @@
 
                 return {
                     ...data,
+                    is_logged_in: true, // Assume logged in if we get a successful response
                     allow_uploads: data.has_subscription || data.has_active_trial
                 };
             } catch (error) {
                 console.error('Error checking subscription:', error);
                 return {
+                    is_logged_in: false,
                     has_subscription: false,
                     has_active_trial: false,
                     has_trial_available: false,
@@ -170,10 +178,27 @@
                 };
             }
         }
-        // Show appropriate subscription modal based on user status
-        async function showSubscriptionModal() {
-            const status = await checkSubscriptionStatus();
 
+        // Show appropriate subscription modal or redirect to login
+        async function handleUnauthorizedAccess() {
+            const status = await checkSubscriptionStatus();
+            
+            if (!status.is_logged_in) {
+                // Redirect to login page for non-logged-in users
+                window.location.href = '/login?next=' + encodeURIComponent(window.location.pathname);
+                return false;
+            }
+            
+            if (!status.allow_uploads) {
+                // Show subscription modal for logged-in users without subscription
+                return showSubscriptionModal(status);
+            }
+            
+            return true;
+        }
+
+        // Show subscription modal based on user status
+        function showSubscriptionModal(status) {
             // Create modal content
             const modalContent = document.createElement('div');
             modalContent.className = 'modal-content';
@@ -188,13 +213,7 @@
             const title = document.createElement('h3');
             const message = document.createElement('p');
 
-            if (status.has_active_trial) {
-                title.textContent = 'Trial Active';
-                message.textContent = `You have ${status.trial_days_remaining} days remaining in your free trial.`;
-                // Allow uploads for active trials
-                modal.style.display = 'none';
-                return true;
-            } else if (status.has_trial_available) {
+            if (status.has_trial_available && !status.has_active_trial) {
                 title.textContent = 'Start Your Free Trial';
                 message.textContent = 'You can start a free trial to upload files.';
             } else {
@@ -258,7 +277,11 @@
             e.preventDefault();
             uploadArea.classList.remove('active');
 
-            // ✅ Step 1: Capture all entries immediately before any await
+            // Check authorization first
+            const isAuthorized = await handleUnauthorizedAccess();
+            if (!isAuthorized) return;
+
+            // Process files if authorized
             const items = [...e.dataTransfer.items];
             const entryCopies = [];
 
@@ -266,19 +289,11 @@
                 if (items[i].kind === 'file') {
                     const entry = items[i].webkitGetAsEntry?.();
                     if (entry) {
-                        entryCopies.push(entry); // save the entry for use *after* the await
+                        entryCopies.push(entry);
                     }
                 }
             }
 
-            // ✅ Step 2: Now do the async call
-            const status = await checkSubscriptionStatus();
-            if (!status.allow_uploads) {
-                await showSubscriptionModal();
-                return;
-            }
-
-            // ✅ Step 3: Use the saved entries
             const files = [];
             const entryPromises = entryCopies.map((entry) => scanFiles(entry));
             const fileGroups = await Promise.all(entryPromises);
@@ -290,15 +305,12 @@
                 showError("No valid files found in drop.");
             }
         });
+
         // Handle click to select files
         uploadArea.addEventListener('click', async () => {
-            console.log('upload area clicked');
-            fileInput.click(); // Bypass subscription check for testing
-            const status = await checkSubscriptionStatus();
-            if (!status.allow_uploads) {
-                await showSubscriptionModal();
-                return;
-            }
+            const isAuthorized = await handleUnauthorizedAccess();
+            if (!isAuthorized) return;
+            
             fileInput.click();
         });
 
@@ -331,6 +343,7 @@
                 }
             });
         }
+
         // Upload files to server
         function uploadFiles(files) {
             if (files.length === 0) return;
@@ -423,46 +436,6 @@
             xhr.send(formData);
         }
 
-        function handleDrop(e) {
-            e.preventDefault();
-            uploadArea.classList.remove('active');
-
-            const items = e.dataTransfer.items;
-            const files = [];
-            const entryPromises = [];
-
-            if (items) {
-                for (let i = 0; i < items.length; i++) {
-                    if (items[i].kind === 'file') {
-                        const entry = items[i].webkitGetAsEntry?.();
-                        if (entry) {
-                            entryPromises.push(scanFiles(entry));
-                        }
-                    }
-                }
-
-                Promise.all(entryPromises).then(fileGroups => {
-                    fileGroups.forEach(group => files.push(...group));
-                    if (files.length > 0) {
-                        uploadFiles(files);
-                    } else {
-                        showError("No valid files found in drop.");
-                    }
-                });
-            }
-        }
-        checkSubscriptionStatus().then((status) => {
-            if (!status.allow_uploads) {
-                uploadArea.addEventListener('click', showSubscriptionModal);
-                uploadArea.addEventListener('drop', async (e) => {
-                    e.preventDefault();
-                    uploadArea.classList.remove('active');
-                    await showSubscriptionModal();
-                });
-            } else {
-                uploadArea.addEventListener('drop', handleDrop);
-            }
-        });
         // Format file size
         function formatFileSize(bytes) {
             if (bytes === 0) return '0 Bytes';
@@ -479,6 +452,5 @@
             }
         });
     });
-
 </script>
 {% endblock %}

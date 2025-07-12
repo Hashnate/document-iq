@@ -840,3 +840,80 @@ jinja2.exceptions.UndefinedError: 'now' is undefined
 2025-07-09 05:58:53,414 - app - INFO - Serving file: /home/administrator/document-iq/extracted_files/FORM_18_-DAVIS.pdf (Size: 772202 bytes)
 2025-07-09 05:58:58,892 - app - INFO - Serving file: /home/administrator/document-iq/extracted_files/FORM_18_-DAVIS.pdf (Size: 772202 bytes)
 2025-07-09 05:58:59,497 - app - INFO - Serving file: /home/administrator/document-iq/extracted_files/FORM_18_-DAVIS.pdf (Size: 772202 bytes)
+2025-07-09 06:04:44,844 - app - INFO - Received request to delete chat ID: af823614-fdef-4402-86d8-057e679f20c2
+2025-07-09 06:04:44,857 - app - INFO - Successfully deleted chat ID: af823614-fdef-4402-86d8-057e679f20c2
+2025-07-09 06:14:08,214 - app - INFO - Received request to create new query
+2025-07-09 06:14:08,225 - app - INFO - Created new query with ID: 79e851d4-8eb3-4d49-b0b8-6e5c0fc35a72
+2025-07-09 06:15:52,134 - app - INFO - Serving file: /home/administrator/document-iq/extracted_files/FORM_18_-DAVIS.pdf (Size: 772202 bytes)
+2025-07-09 06:15:52,646 - app - INFO - Serving file: /home/administrator/document-iq/extracted_files/FORM_18_-DAVIS.pdf (Size: 772202 bytes)
+2025-07-09 06:24:18,737 - app - INFO - Starting application on port 8000
+2025-07-09 06:27:14,840 - app - INFO - Received request to create new query
+2025-07-09 06:27:14,855 - app - INFO - Created new query with ID: c62a55f0-45bd-44d7-912b-b45636d461bd
+2025-07-09 07:11:46,717 - app - INFO - Starting application on port 8000
+2025-07-09 07:14:08,907 - app - INFO - Received request to create new query
+2025-07-09 07:14:08,919 - app - INFO - Created new query with ID: 874fd404-6200-428f-8a3c-453ec0164ad6
+2025-07-09 07:14:48,012 - app - INFO - Starting application on port 8000
+2025-07-09 07:16:38,038 - app - INFO - Starting application on port 8000
+2025-07-09 07:19:19,569 - app - INFO - Starting application on port 8000
+2025-07-09 07:21:17,455 - app - INFO - Starting application on port 8000
+2025-07-09 07:21:41,397 - app - INFO - Starting application on port 8000
+2025-07-09 07:23:35,078 - app - INFO - Starting application on port 8000
+2025-07-09 07:23:58,421 - app - INFO - Starting application on port 8000
+2025-07-09 07:28:30,575 - app - INFO - Starting application on port 8000
+2025-07-09 07:52:24,468 - app - ERROR - Exception on /billing [GET]
+Traceback (most recent call last):
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1486, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1484, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1469, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask_login/utils.py", line 290, in decorated_view
+    return current_app.ensure_sync(func)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/app.py", line 1199, in billing
+    return render_template('billing.html',
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/templating.py", line 151, in render_template
+    return _render(app, template, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/templating.py", line 132, in _render
+    rv = template.render(context)
+         ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/jinja2/environment.py", line 1295, in render
+    self.environment.handle_exception()
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/home/administrator/document-iq/templates/billing.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "/home/administrator/document-iq/templates/base.html", line 93, in top-level template code
+    {% block content %}{% endblock %}
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/templates/billing.html", line 127, in block 'content'
+    {% if plan.limits.max_documents %}{{ plan.limits.max_documents }}{% else %}∞{% endif %}
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/jinja2/environment.py", line 490, in getattr
+    return getattr(obj, attribute)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+jinja2.exceptions.UndefinedError: 'dict object' has no attribute 'limits'
+2025-07-09 07:55:28,982 - app - INFO - Received request to create new query
+2025-07-09 07:55:29,002 - app - INFO - Created new query with ID: 3979f7b3-4ca2-4206-803b-93a62742a1b2
+2025-07-09 08:01:29,988 - app - INFO - Received request to create new query
+2025-07-09 08:01:30,000 - app - INFO - Created new query with ID: 172e18c8-8b05-4332-a68b-656745caae27
+2025-07-09 08:05:31,468 - app - ERROR - DOCX extraction failed for /home/administrator/document-iq/extracted_files/7/Final_list_of_drawings.docx: 'Paragraph' object has no attribute 'tables'
+2025-07-09 08:05:34,753 - app - ERROR - DOCX extraction failed for /home/administrator/document-iq/extracted_files/7/1._Response_to_TB_01_-_GT25100700.docx: 'Paragraph' object has no attribute 'tables'
+2025-07-11 13:13:37,589 - app - INFO - Starting application on port 8000
+2025-07-11 13:19:18,948 - app - INFO - Received request to delete chat ID: 45e171f4-fe0a-4e24-9a8a-060b38402b82
+2025-07-11 13:19:18,957 - app - INFO - Successfully deleted chat ID: 45e171f4-fe0a-4e24-9a8a-060b38402b82
+2025-07-11 13:19:22,946 - app - INFO - Received request to delete chat ID: 03275866-b3a6-498d-8bc9-37528f2380d7
+2025-07-11 13:19:22,956 - app - INFO - Successfully deleted chat ID: 03275866-b3a6-498d-8bc9-37528f2380d7
+2025-07-11 13:19:32,041 - app - INFO - Received request to delete chat ID: 874fd404-6200-428f-8a3c-453ec0164ad6
+2025-07-11 13:19:32,050 - app - INFO - Successfully deleted chat ID: 874fd404-6200-428f-8a3c-453ec0164ad6
+2025-07-11 13:19:37,573 - app - INFO - Received request to delete chat ID: c62a55f0-45bd-44d7-912b-b45636d461bd
+2025-07-11 13:19:37,581 - app - INFO - Successfully deleted chat ID: c62a55f0-45bd-44d7-912b-b45636d461bd
