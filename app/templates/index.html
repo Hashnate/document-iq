@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="chat-container">
+    <div class="chat-history" id="chatHistory">
+        <!-- Messages will appear here -->
+    </div>
+    
+    <div class="input-area">
+        <div class="upload-section" id="uploadSection">
+            <div class="upload-box">
+                <input type="file" id="fileInput" accept=".zip" class="hidden">
+                <label for="fileInput" class="upload-label">
+                    <div class="upload-icon">
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M7 10V9C7 6.23858 9.23858 4 12 4C14.7614 4 17 6.23858 17 9V10M12 14V21M12 21L9 18M12 21L15 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <div class="upload-text">
+                        <h3>Upload documents</h3>
+                        <p>Drag & drop a ZIP file or click to browse</p>
+                    </div>
+                </label>
+                <div class="progress-container hidden" id="progressContainer">
+                    <div class="progress-bar" id="progressBar"></div>
+                    <div class="progress-text" id="progressText">0%</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="query-section hidden" id="querySection">
+            <div class="search-box">
+                <input type="text" id="queryInput" placeholder="Ask anything about your documents..." autocomplete="off">
+                <button id="searchButton" class="search-button">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="footer-text">
+                <p>DocAnalyzer can make mistakes. Consider verifying important information.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="status-overlay hidden" id="statusOverlay">
+    <div class="status-content">
+        <div class="spinner"></div>
+        <div class="status-text" id="statusText">Processing your documents...</div>
+        <div class="progress-details" id="progressDetails"></div>
+        <div class="document-tree" id="documentTree"></div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+{% endblock %}
