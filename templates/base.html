@@ -4,15 +4,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Document IQ {% block title %}{% endblock %}</title>
     <!-- Stripe -->
     <script src="https://js.stripe.com/v3/"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-
-    {% block extra_css %}{% endblock %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}"> {% block extra_css %}{% endblock %}
 </head>
 
 <body style="height: 100vh; overflow-y: auto;">
@@ -22,24 +19,18 @@
                 <i class="bi bi-robot"></i> Document IQ
             </a>
             <div class="d-flex align-items-center">
-                {% if current_user.is_authenticated %}
-                {% with conversations = current_user.conversations|sort(attribute='updated_at', reverse=True) %}
-                {% if conversations %}
-                {% set last_chat = conversations[0] %}
-                <a href="{{ url_for('chat', chat_id=last_chat.id) }}" class="btn btn-sm btn-outline-light me-2"
-                    id="go-to-chat-btn">
+                {% if current_user.is_authenticated %} {% with conversations = current_user.conversations|sort(attribute='updated_at', reverse=True) %} {% if conversations %} {% set last_chat = conversations[0] %}
+                <a href="{{ url_for('chat', chat_id=last_chat.id) }}" class="btn btn-sm btn-outline-light me-2" id="go-to-chat-btn">
                     <i class="bi bi-chat-left-text"></i> Continue Chat
                 </a>
-                {% endif %}
-                {% endwith %}
+                {% endif %} {% endwith %}
 
                 <button id="file-explorer-toggle" class="btn btn-sm btn-outline-light me-2">
                     <i class="bi bi-folder2-open"></i> File Explorer
                 </button>
 
                 <div class="dropdown">
-                    <button class="btn btn-sm btn-outline-light dropdown-toggle" type="button" id="userDropdown"
-                        data-bs-toggle="dropdown">
+                    <button class="btn btn-sm btn-outline-light dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown">
                         <i class="bi bi-person-circle"></i> {{ current_user.username }}
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end">
@@ -57,7 +48,13 @@
                         <li>
                             <hr class="dropdown-divider">
                         </li>
-                        <li><a class="dropdown-item" href="{{ url_for('logout') }}">Log Out</a></li>
+                        <li>
+                            <form action="{{ url_for('logout') }}" method="POST" style="display: inline;">
+                                <button type="submit" class="dropdown-item" style="background: none; border: none; cursor: pointer;">
+                                    <i class="bi bi-box-arrow-right"></i> Log Out
+                                </button>
+                            </form>
+                        </li>
                     </ul>
                 </div>
                 {% else %}
@@ -86,16 +83,19 @@
             <div id="file-tree" class="file-tree"></div>
         </div>
     </div>
-    {% endif %}
-
-    {% include 'partials/_flash_messages.html' %}
-
-    {% block content %}{% endblock %}
+    {% endif %} {% include 'partials/_flash_messages.html' %} {% block content %}{% endblock %}
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        //  $.ajaxSetup({
+        //     beforeSend: function(xhr, settings) {
+        //         if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type)) {
+        //             xhr.setRequestHeader("X-CSRFToken", $('meta[name="csrf-token"]').attr('content'));
+        //         }
+        //     }
+        // });
         // Combined all JavaScript in one DOMContentLoaded listener
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', function() {
             // Auto-scroll to bottom of chat
             function scrollToBottom() {
                 const chatMessages = document.getElementById('chat-messages');
@@ -108,7 +108,7 @@
             // Form submission handler
             const chatForm = document.getElementById('chat-form');
             if (chatForm) {
-                chatForm.addEventListener('submit', function () {
+                chatForm.addEventListener('submit', function() {
                     const loadingIndicator = document.getElementById('loading-indicator');
                     if (loadingIndicator) loadingIndicator.style.display = 'flex';
                 });
@@ -117,7 +117,7 @@
             // File upload handler
             const fileUpload = document.getElementById('file-upload');
             if (fileUpload) {
-                fileUpload.addEventListener('change', function () {
+                fileUpload.addEventListener('change', function() {
                     if (this.files.length > 0) {
                         const loadingIndicator = document.getElementById('loading-indicator');
                         if (loadingIndicator) loadingIndicator.style.display = 'flex';
@@ -142,7 +142,7 @@
             const fileTree = document.getElementById('file-tree');
 
             if (explorerToggle && fileExplorer) {
-                explorerToggle.addEventListener('click', function () {
+                explorerToggle.addEventListener('click', function() {
                     fileExplorer.classList.toggle('open');
                     if (fileExplorer.classList.contains('open') && fileTree && fileTree.innerHTML === '') {
                         loadFileTree();
@@ -151,7 +151,7 @@
             }
 
             if (closeExplorer && fileExplorer) {
-                closeExplorer.addEventListener('click', function () {
+                closeExplorer.addEventListener('click', function() {
                     fileExplorer.classList.remove('open');
                 });
             }
@@ -161,14 +161,18 @@
                     .then(response => response.json())
                     .then(data => {
                         if (fileTree) {
-                            fileTree.innerHTML = buildTreeHTML(data);
-                            setupTreeInteractions();
+                            if (data.length === 0) {
+                                fileTree.innerHTML = '<div class="text-muted">No files uploaded in this session</div>';
+                            } else {
+                                fileTree.innerHTML = buildTreeHTML(data);
+                                setupTreeInteractions();
+                            }
                         }
                     })
                     .catch(error => {
                         console.error('Error loading file tree:', error);
                         if (fileTree) {
-                            fileTree.innerHTML = '<div class="text-muted">No files uploaded yet</div>';
+                            fileTree.innerHTML = '<div class="text-muted">Error loading files</div>';
                         }
                     });
             }
@@ -209,20 +213,28 @@
             function getFileIconClass(filename) {
                 const ext = filename.split('.').pop().toLowerCase();
                 switch (ext) {
-                    case 'pdf': return 'bi-file-earmark-pdf-fill file-icon-pdf';
-                    case 'docx': return 'bi-file-earmark-word-fill file-icon-doc';
-                    case 'txt': return 'bi-file-earmark-text-fill file-icon-txt';
-                    case 'md': return 'bi-file-earmark-text-fill file-icon-md';
-                    case 'csv': return 'bi-file-earmark-excel-fill file-icon-csv';
-                    case 'json': return 'bi-file-earmark-code-fill file-icon-json';
-                    case 'xml': return 'bi-file-earmark-code-fill file-icon-xml';
-                    default: return 'bi-file-earmark-fill file-icon-default';
+                    case 'pdf':
+                        return 'bi-file-earmark-pdf-fill file-icon-pdf';
+                    case 'docx':
+                        return 'bi-file-earmark-word-fill file-icon-doc';
+                    case 'txt':
+                        return 'bi-file-earmark-text-fill file-icon-txt';
+                    case 'md':
+                        return 'bi-file-earmark-text-fill file-icon-md';
+                    case 'csv':
+                        return 'bi-file-earmark-excel-fill file-icon-csv';
+                    case 'json':
+                        return 'bi-file-earmark-code-fill file-icon-json';
+                    case 'xml':
+                        return 'bi-file-earmark-code-fill file-icon-xml';
+                    default:
+                        return 'bi-file-earmark-fill file-icon-default';
                 }
             }
 
             function setupTreeInteractions() {
                 document.querySelectorAll('.file-tree .folder').forEach(folder => {
-                    folder.addEventListener('click', function (e) {
+                    folder.addEventListener('click', function(e) {
                         if (e.target === this || e.target === this.querySelector('span')) {
                             const ul = this.parentElement.querySelector('ul');
                             if (ul) {
@@ -244,7 +256,7 @@
     </script>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', function() {
             // Auto-dismiss flash messages after 5 seconds
             const flashMessages = document.querySelectorAll('.alert-dismissible');
             flashMessages.forEach(msg => {
@@ -271,6 +283,8 @@
             document.head.appendChild(style);
         });
     </script>
+
+
     <!-- Load jQuery (first) -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 

@@ -7,12 +7,13 @@
             <i class="bi bi-plus-lg"></i> New Upload
         </button>
         <div class="chat-history">
-            {% for id, chat in chats.items() %}
-            <div class="chat-item-wrapper {% if id == chat_id %}active{% endif %}" data-chat-id="{{ id }}">
-                <a href="{{ url_for('chat', chat_id=id) }}" class="chat-item">
+            {% for conversation in conversations %}
+            <div class="chat-item-wrapper {% if conversation.id == chat_id %}active{% endif %}"
+                data-chat-id="{{ conversation.id }}">
+                <a href="{{ url_for('chat', chat_id=conversation.id) }}" class="chat-item">
                     <i class="bi bi-chat-left chat-item-icon"></i>
-                    <span class="chat-item-title" id="chat-title-{{ id }}">{{ chat.title }}</span>
-                    <button class="btn-delete-chat" data-chat-id="{{ id }}" title="Delete chat">
+                    <span class="chat-item-title" id="chat-title-{{ conversation.id }}">{{ conversation.title }}</span>
+                    <button class="btn-delete-chat" data-chat-id="{{ conversation.id }}" title="Delete chat">
                         <i class="bi bi-trash"></i>
                     </button>
                 </a>
@@ -23,7 +24,7 @@
 
     <div class="chat-container" id="chat-container">
         <div class="chat-messages" id="chat-messages">
-            {% for message in conversation.messages %}
+            {% for message in conversation.messages|default([]) %}
             <div class="message {% if message.role == 'assistant' %}message-assistant{% else %}message-user{% endif %}">
                 <div class="message-avatar">
                     {% if message.role == 'user' %}
@@ -52,9 +53,16 @@
                         </div>
                         <div class="sources-list" style="{% if message.sources|length > 2 %}display: none;{% endif %}">
                             {% for source in message.sources %}
-                            <div class="message-source" data-source="{{ source }}">
+                            <div class="message-source"
+                                data-source="{% if source is string %}{{ source }}{% else %}{{ source.path|default('') }}{% endif %}">
                                 <i class="bi bi-file-text message-source-icon"></i>
-                                <span>{{ source }}</span>
+                                <span>
+                                    {% if source is string %}
+                                    {{ source.split('/')[-1] }}
+                                    {% else %}
+                                    {{ source.path.split('/')[-1] if source.path else 'Document' }}
+                                    {% endif %}
+                                </span>
                             </div>
                             {% endfor %}
                         </div>
@@ -70,6 +78,7 @@
                     <i class="bi bi-folder2-open"></i>
                     <h4>Documents Ready</h4>
                     <p>Your files have been uploaded successfully.</p>
+                    {% if uploaded_files %}
                     <div class="uploaded-files-preview">
                         {% for file in uploaded_files|slice(3) %}
                         <div class="file-preview-item">
@@ -83,6 +92,7 @@
                         </div>
                         {% endif %}
                     </div>
+                    {% endif %}
                     <p class="prompt-text">Ask your first question to begin analyzing these documents.</p>
                 </div>
             </div>
@@ -110,7 +120,6 @@
 
         <div class="chat-input-container">
             <form id="chat-form" method="POST" class="chat-input-wrapper">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="input-group">
                     <textarea name="question" class="chat-input" placeholder="Ask a query..." required></textarea>
                     <button type="submit" class="btn-send" id="send-button">
@@ -208,12 +217,10 @@
 
                 // Send to server
                 const chatId = window.location.pathname.split('/').pop();
-                // In the chat form submission handler, update the fetch request:
                 const response = await fetch(`/chat/${chatId}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
                     },
                     body: JSON.stringify({ question: question }),
                     signal: controller.signal
@@ -336,12 +343,9 @@
             textarea.value = '';
             textarea.style.height = 'auto';
             textarea.focus();
-            scrollToBottom();
         }
     }
 
-
-    // After successful message send
     function updateChatTitle(chatId, newTitle) {
         // Update ALL instances of the title in the UI immediately
         document.querySelectorAll(`#chat-title-${chatId}`).forEach(el => {
@@ -358,15 +362,14 @@
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
             },
             body: JSON.stringify({ title: newTitle })
         })
             .catch(error => {
                 console.error('Error updating chat title:', error);
-                // You could revert the UI change here if desired
             });
     }
+
     function initPreviewModal() {
         const modal = document.getElementById('preview-modal');
         const resizeHandle = document.querySelector('.preview-resize-handle');
@@ -410,12 +413,7 @@
         }
     }
 
-    // Global variables for preview
-    let lastPreviewRequest = null;
     async function showFilePreview(filename, page = '', highlight = '') {
-        // Debug logging
-        console.log('Attempting to preview file:', { filename, page, highlight });
-
         // Validate filename
         if (!filename || typeof filename !== 'string') {
             handlePreviewError('Invalid filename provided');
@@ -432,13 +430,13 @@
 
         // Show loading state
         previewContent.innerHTML = `
-        <div class="preview-loading">
-            <div class="loading-spinner"></div>
-            <span>Loading document...</span>
-            <div class="loading-file-name">${escapeHtml(shortName)}</div>
-            <div class="loading-file-path">${escapeHtml(filename)}</div>
-        </div>
-    `;
+            <div class="preview-loading">
+                <div class="loading-spinner"></div>
+                <span>Loading document...</span>
+                <div class="loading-file-name">${escapeHtml(shortName)}</div>
+                <div class="loading-file-path">${escapeHtml(filename)}</div>
+            </div>
+        `;
 
         // Show the modal if not already open
         if (!isPreviewModalOpen) {
@@ -456,8 +454,6 @@
             if (page) url += `&page=${encodeURIComponent(page)}`;
             if (highlight) url += `&highlight=${encodeURIComponent(highlight)}`;
 
-            console.log('Request URL:', url);
-
             // First check if file exists
             const checkResponse = await fetch(url, { method: 'HEAD' });
             if (!checkResponse.ok) {
@@ -474,7 +470,6 @@
 
             // Check content type
             const contentType = response.headers.get('content-type') || '';
-            console.log('Content-Type:', contentType);
 
             if (contentType.includes('application/pdf')) {
                 // Handle PDF response
@@ -522,19 +517,19 @@
                 }
 
                 previewContent.innerHTML = `
-                <div class="preview-document">
-                    <pre>${formattedContent}</pre>
-                </div>
-            `;
+                    <div class="preview-document">
+                        <pre>${formattedContent}</pre>
+                    </div>
+                `;
             }
             else {
                 // Fallback for other content types
                 const text = await response.text();
                 previewContent.innerHTML = `
-                <div class="preview-document">
-                    <pre>${escapeHtml(text)}</pre>
-                </div>
-            `;
+                    <div class="preview-document">
+                        <pre>${escapeHtml(text)}</pre>
+                    </div>
+                `;
             }
 
             // Update metadata section
@@ -547,8 +542,6 @@
             let errorMessage = error.message;
             if (error.message.includes('not found')) {
                 errorMessage = `File not found: ${shortName}`;
-
-                // Suggest checking the file exists in the extracted files
                 errorMessage += `<br><small>Please verify the file exists in the extracted documents.</small>`;
             }
 
@@ -556,101 +549,70 @@
         }
     }
 
-    // Debug function to list all available files
-    async function debugListFiles() {
-        try {
-            const response = await fetch('/get_file_structure');
-            const data = await response.json();
-            console.log('Available files:', data);
-            return data;
-        } catch (error) {
-            console.error('Error listing files:', error);
-            return null;
-        }
-    }
-
-    // Debug function to check file existence
-    async function debugCheckFile(path) {
-        try {
-            const encodedPath = encodeURIComponent(path);
-            const response = await fetch(`/get_file_content?path=${encodedPath}`, { method: 'HEAD' });
-            console.log('File check result:', {
-                path,
-                exists: response.ok,
-                status: response.status
-            });
-            return response.ok;
-        } catch (error) {
-            console.error('Error checking file:', error);
-            return false;
-        }
-    }
-
-
     // Helper functions for different preview types
     function renderPdfPreview(url, title) {
         previewContent.innerHTML = `
-        <div class="pdf-preview-container">
-            <iframe 
-                src="${url}" 
-                class="pdf-preview-frame"
-                title="PDF Preview: ${escapeHtml(title)}"
-                onload="handleIframeLoad(this)"
-                onerror="handleIframeError(this)"
-            ></iframe>
-        </div>
-    `;
+            <div class="pdf-preview-container">
+                <iframe 
+                    src="${url}" 
+                    class="pdf-preview-frame"
+                    title="PDF Preview: ${escapeHtml(title)}"
+                    onload="handleIframeLoad(this)"
+                    onerror="handleIframeError(this)"
+                ></iframe>
+            </div>
+        `;
     }
 
     function renderImagePreview(url, altText) {
         previewContent.innerHTML = `
-        <div class="image-preview-container">
-            <img 
-                src="${url}" 
-                alt="${escapeHtml(altText)}" 
-                class="image-preview"
-                onload="handleImageLoad(this)"
-                onerror="handleImageError(this)"
-            >
-            <div class="image-loading" style="display: none;">
-                <div class="loading-spinner"></div>
+            <div class="image-preview-container">
+                <img 
+                    src="${url}" 
+                    alt="${escapeHtml(altText)}" 
+                    class="image-preview"
+                    onload="handleImageLoad(this)"
+                    onerror="handleImageError(this)"
+                >
+                <div class="image-loading" style="display: none;">
+                    <div class="loading-spinner"></div>
+                </div>
             </div>
-        </div>
-    `;
+        `;
     }
 
     function updatePreviewMeta(filename, page, highlight, url) {
         previewMeta.innerHTML = `
-        <div class="preview-meta-item">
-            <i class="bi bi-file-earmark"></i>
-            <span>${escapeHtml(filename)}</span>
-        </div>
-        ${page ? `<div class="preview-meta-item">
-            <i class="bi bi-file-text"></i>
-            <span>Page ${escapeHtml(page)}</span>
-        </div>` : ''}
-        ${highlight ? `<div class="preview-meta-item">
-            <i class="bi bi-search"></i>
-            <span>"${escapeHtml(highlight)}"</span>
-        </div>` : ''}
-        <div class="preview-meta-item">
-            <i class="bi bi-download"></i>
-            <a href="${url}&download=true" download="${escapeHtml(filename)}">Download</a>
-        </div>
-    `;
+            <div class="preview-meta-item">
+                <i class="bi bi-file-earmark"></i>
+                <span>${escapeHtml(filename)}</span>
+            </div>
+            ${page ? `<div class="preview-meta-item">
+                <i class="bi bi-file-text"></i>
+                <span>Page ${escapeHtml(page)}</span>
+            </div>` : ''}
+            ${highlight ? `<div class="preview-meta-item">
+                <i class="bi bi-search"></i>
+                <span>"${escapeHtml(highlight)}"</span>
+            </div>` : ''}
+            <div class="preview-meta-item">
+                <i class="bi bi-download"></i>
+                <a href="${url}&download=true" download="${escapeHtml(filename)}">Download</a>
+            </div>
+        `;
     }
 
     // Error handling functions
     function handlePreviewError(message) {
         previewContent.innerHTML = `
-        <div class="preview-error">
-            <i class="bi bi-exclamation-triangle"></i>
-            <p>${escapeHtml(message)}</p>
-            <button class="btn-retry" onclick="retryPreview()">
-                <i class="bi bi-arrow-clockwise"></i> Try Again
-            </button>
-        </div>
-    `;
+            <div class="preview-error">
+                <i class="bi bi-exclamation-triangle"></i>
+                <p>${escapeHtml(message)}</p>
+                <button class="btn-retry" onclick="retryPreview()">
+                    <i class="bi bi-arrow-clockwise"></i> Try Again
+                </button>
+            </div>
+        `;
     }
 
     function handleIframeLoad(iframe) {
@@ -680,42 +642,6 @@
                 showFilePreview(source);
             }
         }
-    }
-
-    // Utility functions
-    function escapeHtml(unsafe) {
-        if (!unsafe) return '';
-        return unsafe
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
-    }
-
-    function syntaxHighlight(json) {
-        if (typeof json != 'string') {
-            json = JSON.stringify(json, null, 2);
-        }
-        json = escapeHtml(json);
-        return json.replace(
-            /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
-            function (match) {
-                let cls = 'number';
-                if (/^"/.test(match)) {
-                    if (/:$/.test(match)) {
-                        cls = 'key';
-                    } else {
-                        cls = 'string';
-                    }
-                } else if (/true|false/.test(match)) {
-                    cls = 'boolean';
-                } else if (/null/.test(match)) {
-                    cls = 'null';
-                }
-                return '<span class="' + cls + '">' + match + '</span>';
-            }
-        );
     }
 
     // Initialize reference handlers
@@ -759,31 +685,6 @@
         });
     }
 
-    function initReferenceHandlers() {
-        // Handle clicks on message sources
-        document.addEventListener('click', function (e) {
-            // Handle message source clicks
-            if (e.target.closest('.message-source')) {
-                const sourceElement = e.target.closest('.message-source');
-                const sourceText = sourceElement.dataset.source || sourceElement.querySelector('span').textContent;
-                showFilePreview(sourceText);
-                e.preventDefault();
-                e.stopPropagation();
-            }
-
-            // Handle reference link clicks
-            if (e.target.closest('.reference-link')) {
-                const refLink = e.target.closest('.reference-link');
-                const filename = refLink.dataset.filename;
-                const page = refLink.dataset.page || '';
-                const highlight = refLink.dataset.highlight || '';
-                showFilePreview(filename, page, highlight);
-                e.preventDefault();
-                e.stopPropagation();
-            }
-        });
-    }
-
     function initChatHistory() {
         document.querySelectorAll('.btn-delete-chat').forEach(button => {
             button.addEventListener('click', function (e) {
@@ -802,7 +703,6 @@
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
                         }
                     })
                         .then(response => {
@@ -867,41 +767,47 @@
     }
 
     function updateMessageInUI(messageId, role, content, sources = []) {
-        const messageDiv = document.getElementById(messageId);
-        if (!messageDiv) return;
+    const messageDiv = document.getElementById(messageId);
+    if (!messageDiv) return;
 
-        const processedContent = processContentWithReferences(content);
-        let sourcesHTML = '';
+    const processedContent = processContentWithReferences(content);
+    let sourcesHTML = '';
 
-        if (sources && sources.length > 0) {
-            const showToggle = sources.length > 2;
-            sourcesHTML = `
-                <div class="message-sources">
-                    <div class="sources-header">
-                        <span class="supported-files-title">Sources:</span>
-                        ${showToggle ? '<button class="btn-toggle-sources" onclick="toggleSources(this)">Show more</button>' : ''}
-                    </div>
-                    <div class="sources-list" style="${showToggle ? 'display: none;' : ''}">
-                        ${sources.map(source => `
-                            <div class="message-source" data-source="${escapeHtml(source)}">
-                                <i class="bi bi-file-text message-source-icon"></i>
-                                <span>${escapeHtml(source.split('/').pop().split('\\').pop())}</span>
-                            </div>
-                        `).join('')}
-                    </div>
+    if (sources && sources.length > 0) {
+        const showToggle = sources.length > 2;
+        sourcesHTML = `
+            <div class="message-sources">
+                <div class="sources-header">
+                    <span class="supported-files-title">Sources:</span>
+                    ${showToggle ? '<button class="btn-toggle-sources" onclick="toggleSources(this)">Show more</button>' : ''}
                 </div>
-            `;
-        }
-
-        messageDiv.querySelector('.message-content').innerHTML = `
-            <div class="message-text">
-                ${processedContent}
+                <div class="sources-list" style="${showToggle ? 'display: none;' : ''}">
+                    ${sources.map(source => {
+                        // Handle both string and object sources
+                        const sourcePath = typeof source === 'string' ? source : source.path || '';
+                        const displayName = sourcePath.split('/').pop().split('\\').pop();
+                        return `
+                            <div class="message-source" data-source="${escapeHtml(sourcePath)}">
+                                <i class="bi bi-file-text message-source-icon"></i>
+                                <span>${escapeHtml(displayName)}</span>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
             </div>
-            ${sourcesHTML}
         `;
-
-        scrollToBottom();
     }
+
+    messageDiv.querySelector('.message-content').innerHTML = `
+        <div class="message-text">
+            ${processedContent}
+        </div>
+        ${sourcesHTML}
+    `;
+
+    scrollToBottom();
+}
+
 
     function processContentWithReferences(content) {
         let documentCounter = 0;
@@ -962,14 +868,14 @@
             progressContainer.id = 'file-progress-container';
             progressContainer.className = 'file-progress-container';
             progressContainer.innerHTML = `
-            <div class="file-progress-label">
-                <span>Analysing files for response. This may take a while.</span>
-                <span id="file-progress-percent">0%</span>
-            </div>
-            <div class="file-progress-bar">
-                <div id="file-progress-bar-fill" class="file-progress-bar-fill" style="width: 0%"></div>
-            </div>
-        `;
+                <div class="file-progress-label">
+                    <span>Analysing files for response. This may take a while.</span>
+                    <span id="file-progress-percent">0%</span>
+                </div>
+                <div class="file-progress-bar">
+                    <div id="file-progress-bar-fill" class="file-progress-bar-fill" style="width: 0%"></div>
+                </div>
+            `;
 
             // Insert before the status message
             const statusEl = document.getElementById('status-message');
@@ -992,7 +898,10 @@
     }
 
     function escapeHtml(unsafe) {
-        if (!unsafe) return '';
+        if (typeof unsafe !== 'string') {
+            console.warn('Non-string value passed to escapeHtml:', unsafe);
+            return '';  // Return empty string or handle appropriately
+        }
         return unsafe
             .replace(/&/g, "&amp;")
             .replace(/</g, "&lt;")
@@ -1008,7 +917,6 @@
         }
     }
 
-    // Helper function for JSON syntax highlighting
     function syntaxHighlight(json) {
         if (typeof json != 'string') {
             json = JSON.stringify(json, null, 2);
@@ -1444,7 +1352,6 @@
         max-width: 1000px;
         width: 100%;
         margin: 0 auto;
-        /* center it */
     }
 
     /* Chat input */
@@ -1573,7 +1480,6 @@
         color: #64748b;
     }
 
-
     .last-clicked-source {
         background-color: rgba(16, 163, 127, 0.1);
         border-left: 3px solid var(--primary-color);
@@ -1625,35 +1531,12 @@
         animation: spin 1s linear infinite;
     }
 
-
     .loading-file-path {
         font-size: 0.7rem;
         margin-top: 0.3rem;
         color: #9ca3af;
         word-break: break-all;
         font-family: monospace;
-    }
-
-    .debug-tools {
-        position: fixed;
-        bottom: 10px;
-        right: 10px;
-        z-index: 9999;
-        background: rgba(0, 0, 0, 0.7);
-        color: white;
-        padding: 10px;
-        border-radius: 5px;
-        font-size: 12px;
-    }
-
-    .debug-btn {
-        background: #dc3545;
-        color: white;
-        border: none;
-        padding: 5px 10px;
-        margin: 2px;
-        border-radius: 3px;
-        cursor: pointer;
     }
 
     /* Add this to your CSS section */

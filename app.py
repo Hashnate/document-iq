@@ -8,7 +8,7 @@ import uuid
 import json
 import time
 from datetime import datetime, timezone
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, Response, stream_with_context
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, Response, stream_with_context,session
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.utils import secure_filename
@@ -32,7 +32,26 @@ from datetime import timedelta
 from sqlalchemy import func
 from flask_migrate import Migrate
 
-from flask_wtf.csrf import CSRFProtect
+# from flask_wtf.csrf import CSRFProtect
+from werkzeug.middleware.proxy_fix import ProxyFix
+
+
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from sentence_transformers import SentenceTransformer
+import faiss
+import numpy as np
+
+import requests
+
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from sentence_transformers import SentenceTransformer
+import faiss
+import numpy as np
+import hashlib
+
+from functools import partial
+
 
 # Load environment variables
 load_dotenv()
@@ -41,7 +60,7 @@ load_dotenv()
 
 # Initialize Flask app
 app = Flask(__name__)
-csrf = CSRFProtect(app)
+# csrf = CSRFProtect(app)
 
 # Database configuration
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///documentiq.db')
@@ -52,6 +71,12 @@ app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-key')
 app.config['FATORA_API_KEY'] = os.getenv('FATORA_API_KEY')
 app.config['FATORA_BASE_URL'] = 'https://api.fatora.io/v1'
 app.config['FATORA_WEBHOOK_SECRET'] = os.getenv('FATORA_WEBHOOK_SECRET')
+
+# app.config['SESSION_COOKIE_SECURE'] = True
+# app.config['SESSION_COOKIE_HTTPONLY'] = False
+# app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
+
 
 class SubscriptionPlan:
     BASIC = {
@@ -245,9 +270,302 @@ class FileCache(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
 
+class Document(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    file_path = db.Column(db.String(512), nullable=False)
+    file_hash = db.Column(db.String(64), nullable=False)
+    file_type = db.Column(db.String(32), nullable=False)
+    processed_at = db.Column(db.DateTime, default=datetime.utcnow)
+    document_metadata = db.Column(db.JSON, name="metadata")  # Changed from metadata to document_metadata
+
+class DocumentChunk(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    document_id = db.Column(db.Integer, db.ForeignKey('document.id'), nullable=False)
+    chunk_text = db.Column(db.Text, nullable=False)
+    chunk_hash = db.Column(db.String(64), nullable=False)
+    chunk_metadata = db.Column(db.JSON, name="metadata")  # Changed from metadata to chunk_metadata
+    vector_id = db.Column(db.String(64))  # Reference to vector store
 
 migrate = Migrate(app, db)
 
+
+class DocumentProcessor:
+    def __init__(self, user_id=None):
+        self.user_id = user_id
+        self.embedder = SentenceTransformer(app.config['EMBEDDING_MODEL'])
+        self.embedder.batch_size = app.config['EMBEDDING_BATCH_SIZE']
+        
+        self.text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=app.config['CHUNK_SIZE'],
+            chunk_overlap=app.config['CHUNK_OVERLAP'],
+            separators=["\n\n", "\n", " ", ""]  # Split by paragraphs, lines, then words
+        )
+        
+        self.vector_store = None
+        self._initialize_vector_store()
+        self.executor = ThreadPoolExecutor(max_workers=app.config['MAX_PARALLEL_PROCESSES'])
+
+    def _initialize_vector_store(self):
+        """Initialize or load the FAISS vector store"""
+        os.makedirs(app.config['VECTOR_STORE_PATH'], exist_ok=True)
+        index_file = os.path.join(app.config['VECTOR_STORE_PATH'], 'index.faiss')
+        
+        if os.path.exists(index_file):
+            try:
+                self.vector_store = faiss.read_index(index_file)
+                app.logger.info(f"Loaded existing vector store with {self.vector_store.ntotal} vectors")
+            except Exception as e:
+                app.logger.error(f"Failed to load vector store: {str(e)}")
+                self._create_new_index()
+        else:
+            self._create_new_index()
+
+    def _create_new_index(self):
+        """Create a new FAISS index"""
+        dim = self.embedder.get_sentence_embedding_dimension()
+        self.vector_store = faiss.IndexFlatL2(dim)
+        app.logger.info("Created new vector store")
+
+    def save_vector_store(self):
+        """Save the vector store to disk"""
+        if self.vector_store:
+            index_file = os.path.join(app.config['VECTOR_STORE_PATH'], 'index.faiss')
+            try:
+                faiss.write_index(self.vector_store, index_file)
+                app.logger.info(f"Saved vector store with {self.vector_store.ntotal} vectors")
+            except Exception as e:
+                app.logger.error(f"Failed to save vector store: {str(e)}")
+
+    def process_documents_parallel(self, file_paths):
+        """Process multiple documents in parallel with progress tracking"""
+        results = []
+        total_files = len(file_paths)
+    
+        # Update progress at start
+        update_progress(0, total_files, "Initializing document processing...")
+    
+        process_func = partial(self._process_single_document_wrapper, user_id=self.user_id)
+    
+        with self.executor:
+            futures = {self.executor.submit(process_func, fp): fp for fp in file_paths}
+        
+            for i, future in enumerate(as_completed(futures)):
+                file_path = futures[future]
+                try:
+                    result = future.result()
+                    if result:
+                        results.append(result)
+                    
+                    # Update progress after each file
+                    update_progress(i+1, total_files, f"Processed {os.path.basename(file_path)}")
+                
+                except Exception as e:
+                    app.logger.error(f"Error processing {file_path}: {str(e)}")
+                    update_progress(i+1, total_files, f"Error processing {os.path.basename(file_path)}", error=str(e))
+    
+        self.save_vector_store()
+        return results
+    
+    
+    def _process_single_document_wrapper(self, file_path, user_id=None):
+        """Wrapper for parallel processing"""
+        with app.app_context():
+            return self.process_document(file_path, user_id)
+
+    def process_document(self, file_path, user_id=None):
+        """Full document processing pipeline for a single file"""
+        try:
+            # File validation
+            if not os.path.exists(file_path):
+                app.logger.error(f"File not found: {file_path}")
+                return None
+
+            file_hash = get_file_hash(file_path)
+            if not file_hash:
+                app.logger.error(f"Failed to generate hash for {file_path}")
+                return None
+
+            # Check for existing document
+            existing_doc = Document.query.filter_by(file_hash=file_hash, user_id=user_id).first()
+            if existing_doc:
+                app.logger.info(f"Document already processed: {file_path}")
+                return existing_doc
+
+            # Text extraction
+            text = read_file(file_path, user_id)
+            if not text:
+                app.logger.error(f"Failed to extract text from {file_path}")
+                return None
+
+            # Text preprocessing
+            text = self._preprocess_text(text)
+            chunks = self.text_splitter.split_text(text)
+            if not chunks:
+                app.logger.error(f"No chunks generated from {file_path}")
+                return None
+
+            # Embedding generation
+            embeddings = self._generate_embeddings(chunks)
+            if len(embeddings) != len(chunks):
+                app.logger.error(f"Embedding count mismatch for {file_path}")
+                return None
+
+            # Database storage
+            doc = self._store_document(file_path, file_hash, user_id)
+            self._store_chunks(doc, chunks, embeddings, file_path)
+
+            app.logger.info(f"Processed document {file_path} into {len(chunks)} chunks")
+            return doc
+
+        except Exception as e:
+            db.session.rollback()
+            app.logger.error(f"Error processing document {file_path}: {str(e)}", exc_info=True)
+            return None
+
+    def _preprocess_text(self, text):
+        """Clean and normalize text before chunking"""
+        text = text.replace('\r\n', '\n').replace('\r', '\n')
+        text = re.sub(r'\n{3,}', '\n\n', text)
+        text = re.sub(r'[^\x00-\x7F]+', ' ', text)  # Remove non-ASCII characters
+        return text.strip()
+
+    def _generate_embeddings(self, chunks):
+        """Generate embeddings with batch processing and fallback"""
+        embeddings = []
+        for i in range(0, len(chunks), self.embedder.batch_size):
+            batch = chunks[i:i + self.embedder.batch_size]
+            try:
+                batch_embeddings = self.embedder.encode(
+                    batch,
+                    show_progress_bar=False,
+                    convert_to_numpy=True,
+                    normalize_embeddings=True
+                )
+                embeddings.extend(batch_embeddings)
+            except Exception as e:
+                app.logger.error(f"Batch embedding failed, falling back to single: {str(e)}")
+                for chunk in batch:
+                    try:
+                        embedding = self.embedder.encode(chunk)
+                        embeddings.append(embedding)
+                    except:
+                        embeddings.append(np.zeros(self.embedder.get_sentence_embedding_dimension()))
+        return embeddings
+
+    def _store_document(self, file_path, file_hash, user_id):
+        """Create document record in database"""
+        doc = Document(
+            user_id=user_id,
+            file_path=file_path,
+            file_hash=file_hash,
+            file_type=os.path.splitext(file_path)[1].lower(),
+            document_metadata={
+                'size': os.path.getsize(file_path),
+                'modified': os.path.getmtime(file_path),
+                'original_filename': os.path.basename(file_path)
+            }
+        )
+        db.session.add(doc)
+        db.session.flush()  # Get ID before commit
+        return doc
+
+    def _store_chunks(self, doc, chunks, embeddings, file_path):
+        """Store chunks and their embeddings"""
+        for i, (chunk, embedding) in enumerate(zip(chunks, embeddings)):
+            # Add to vector store
+            vector_id = self.vector_store.ntotal
+            self.vector_store.add(np.array([embedding], dtype=np.float32))
+
+            # Store chunk metadata
+            chunk_record = DocumentChunk(
+                document_id=doc.id,
+                chunk_text=chunk,
+                chunk_hash=hashlib.md5(chunk.encode()).hexdigest(),
+                chunk_metadata={
+                    'document_path': file_path,
+                    'chunk_index': i,
+                    'page': self._estimate_page_number(i, len(chunks)),
+                    'section': self._extract_section_header(chunk)
+                },
+                vector_id=str(vector_id)
+            )
+            db.session.add(chunk_record)
+        
+        db.session.commit()
+
+    def _estimate_page_number(self, chunk_index, total_chunks):
+        """Estimate page number based on chunk position"""
+        chunks_per_page = max(1, total_chunks // 20)  # Target ~20 pages per document
+        return (chunk_index // chunks_per_page) + 1
+
+    def _extract_section_header(self, chunk):
+        """Extract section header from chunk if present"""
+        header_match = re.search(r'^(#+\s+.+?$|^[A-Z][A-Z0-9_ -]{10,}$)', chunk, re.MULTILINE)
+        return header_match.group(1).strip() if header_match else None
+
+    def search_documents(self, query, user_id=None, top_k=None):
+        """Search for relevant document chunks from current session only"""
+        top_k = top_k or app.config['SIMILARITY_TOP_K']
+    
+        try:
+            # Get current session files
+            current_files = session.get('current_upload_files', [])
+            if not current_files:
+                return []
+
+            # Generate query embedding
+            query_embedding = self.embedder.encode([query])
+            query_embedding = np.array(query_embedding, dtype=np.float32)
+    
+            #  Search vector store
+            distances, indices = self.vector_store.search(query_embedding, top_k)
+    
+            # Retrieve chunks from database
+            results = []
+            for idx, distance in zip(indices[0], distances[0]):
+                chunk = DocumentChunk.query.filter_by(vector_id=str(idx)).first()
+                if chunk:
+                    # Verify document ownership and current session
+                    document = Document.query.get(chunk.document_id)
+                    if not document or document.user_id != user_id:
+                        continue
+                
+                    # Check if document is in current session files
+                    doc_filename = document.document_metadata.get('original_filename', '')
+                    doc_path = os.path.join(app.config['EXTRACT_FOLDER'], str(user_id), doc_filename)
+                    if doc_path not in current_files:
+                        continue
+                
+                    results.append({
+                        'chunk': chunk.chunk_text,
+                        'score': float(1 - distance),
+                        'metadata': {
+                            'document_path': doc_filename,
+                            'page': chunk.chunk_metadata.get('page', 1),
+                            'section': chunk.chunk_metadata.get('section', '')
+                        },
+                        'document': {
+                            'id': chunk.document_id,
+                            'path': doc_filename
+                     }
+                    })
+    
+            # Sort by relevance
+            results.sort(key=lambda x: x['score'], reverse=True)
+            return results
+    
+        except Exception as e:
+            app.logger.error(f"Error searching documents: {str(e)}")
+            return []
+
+
+    def __del__(self):
+        """Cleanup executor when instance is destroyed"""
+        if hasattr(self, 'executor'):
+            self.executor.shutdown(wait=False)
+            
+            
 # Initialize database
 with app.app_context():
     db.create_all()
@@ -297,6 +615,15 @@ class Config:
     CHUNK_SIZE = 30000  # For text chunking
     CHUNK_OVERLAP = 500  # Overlap between chunks
     PDF_EXTRACTION_METHOD = 'pdfminer'  # Options: 'pdfminer', 'pdfplumber', 'pypdf2'
+
+    # New RAG configuration
+    EMBEDDING_MODEL = "all-MiniLM-L6-v2"  # Local embedding model
+    CHUNK_SIZE = 1000  # Token size for chunks
+    CHUNK_OVERLAP = 200  # Overlap between chunks
+    SIMILARITY_TOP_K = 4  # Number of chunks to retrieve
+    VECTOR_STORE_PATH = os.path.join(os.getcwd(), 'vector_store')
+    MAX_PARALLEL_PROCESSES = 8  # For CPU-bound tasks
+    EMBEDDING_BATCH_SIZE = 32  # For GPU batch processing
 
 app.config.from_object(Config)
 
@@ -367,8 +694,8 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
-def extract_zip(zip_path, extract_to):
-    """Enhanced ZIP extraction with better error handling"""
+def extract_zip_parallel(zip_path, extract_to):
+    """Enhanced ZIP extraction with parallel processing"""
     try:
         with zipfile.ZipFile(zip_path, 'r') as zip_ref:
             file_infos = [
@@ -377,35 +704,74 @@ def extract_zip(zip_path, extract_to):
                 and '__MACOSX' not in f.filename
                 and allowed_file(f.filename)
             ]
-            total_files = len(file_infos)
             
-            for i, file_info in enumerate(file_infos):
-                try:
-                    file_path = file_info.filename
-                    target_path = os.path.join(extract_to, file_path)
-                    
-                    if file_info.file_size > app.config['MAX_FILE_SIZE']:
-                        app.logger.warning(f"Skipping large file: {file_path}")
-                        continue
-                    
-                    os.makedirs(os.path.dirname(target_path), exist_ok=True)
-                    
-                    with zip_ref.open(file_info) as source, open(target_path, 'wb') as target:
-                        shutil.copyfileobj(source, target)
-                    
-                    if i % 10 == 0:
-                        progress = 30 + int((i / total_files) * 60)
-                        update_progress(progress, 100, f"Extracting {os.path.basename(file_path)}...")
+            # Use ThreadPoolExecutor for parallel extraction
+            with ThreadPoolExecutor(max_workers=app.config['MAX_PARALLEL_PROCESSES']) as executor:
+                futures = []
+                for file_info in file_infos:
+                    futures.append(executor.submit(
+                        extract_single_file,
+                        zip_ref, 
+                        file_info,
+                        extract_to
+                    ))
+                
+                # Wait for all extractions to complete
+                for future in as_completed(futures):
+                    try:
+                        future.result()
+                    except Exception as e:
+                        app.logger.error(f"File extraction failed: {str(e)}")
                         
-                except Exception as e:
-                    app.logger.error(f"Failed to extract {file_path}: {str(e)}")
-                    continue
-                    
         return True
-    except zipfile.BadZipFile:
-        raise ValueError("Invalid ZIP file format")
     except Exception as e:
-        raise ValueError(f"ZIP extraction failed: {str(e)}")
+        app.logger.error(f"ZIP extraction failed: {str(e)}")
+        return False
+
+def generate_embeddings_batch(self, texts):
+    """Generate embeddings in batches for better GPU utilization"""
+    if not texts:
+        return []
+    
+    # Process in batches
+    batch_size = app.config['EMBEDDING_BATCH_SIZE']
+    embeddings = []
+    
+    for i in range(0, len(texts), batch_size):
+        batch = texts[i:i + batch_size]
+        try:
+            batch_embeddings = self.embedder.encode(
+                batch,
+                show_progress_bar=False,
+                convert_to_numpy=True,
+                normalize_embeddings=True
+            )
+            embeddings.extend(batch_embeddings)
+        except Exception as e:
+            app.logger.error(f"Error generating embeddings for batch {i//batch_size}: {str(e)}")
+            # Fallback to single processing for failed batch
+            for text in batch:
+                try:
+                    embedding = self.embedder.encode(text)
+                    embeddings.append(embedding)
+                except:
+                    embeddings.append(np.zeros(self.embedder.get_sentence_embedding_dimension()))
+    
+    return embeddings
+
+def extract_single_file(zip_ref, file_info, extract_to):
+    """Helper function for parallel file extraction"""
+    file_path = file_info.filename
+    target_path = os.path.join(extract_to, file_path)
+    
+    if file_info.file_size > app.config['MAX_FILE_SIZE']:
+        app.logger.warning(f"Skipping large file: {file_path}")
+        return
+        
+    os.makedirs(os.path.dirname(target_path), exist_ok=True)
+    
+    with zip_ref.open(file_info) as source, open(target_path, 'wb') as target:
+        shutil.copyfileobj(source, target)
 
 def get_file_hash(file_path):
     """Guaranteed file hashing with fallback"""
@@ -641,7 +1007,79 @@ def read_file(file_path, user_id=None):
     except Exception as e:
         app.logger.error(f"Fatal error in read_file: {str(e)}")
         return None
-    
+
+@app.route('/upload', methods=['POST'])
+@login_required
+def upload_files():
+    if not current_user.is_subscribed and not current_user.is_admin:
+        return jsonify({'error': 'Subscription required'}), 403
+        
+    try:
+        # Create user directories
+        user_id = str(current_user.id)
+        user_upload_dir = os.path.join(app.config['UPLOAD_FOLDER'], user_id)
+        user_extract_dir = os.path.join(app.config['EXTRACT_FOLDER'], user_id)
+        
+        os.makedirs(user_upload_dir, exist_ok=True)
+        os.makedirs(user_extract_dir, exist_ok=True)
+        
+        # Clean directories
+        clean_directory(user_upload_dir)
+        clean_directory(user_extract_dir)
+        
+        if 'files' not in request.files:
+            return jsonify({'error': 'No files uploaded'}), 400
+            
+        files = request.files.getlist('files')
+        saved_files = []
+        file_paths = []
+        
+        for file in files:
+            if file.filename == '':
+                continue
+                
+            filename = secure_filename(file.filename)
+            is_zip = filename.lower().endswith('.zip')
+            
+            try:
+                if is_zip:
+                    zip_path = os.path.join(user_upload_dir, filename)
+                    file.save(zip_path)
+                    extract_zip_parallel(zip_path, user_extract_dir)
+                    saved_files.append(filename)
+                else:
+                    if not allowed_file(filename):
+                        continue
+                        
+                    file_path = os.path.join(user_extract_dir, filename)
+                    file.save(file_path)
+                    file_paths.append(file_path)
+                    saved_files.append(filename)
+                    
+            except Exception as e:
+                app.logger.error(f'Failed to process {filename}: {str(e)}')
+                continue
+                
+        if not saved_files:
+            return jsonify({'error': 'No valid files were uploaded'}), 400
+            
+        # Store uploaded files in session
+        session['current_upload_files'] = file_paths
+            
+        # Process documents in parallel (CPU bound)
+        processor = DocumentProcessor(user_id=current_user.id)
+        processor.process_documents_parallel(file_paths)
+                
+        return jsonify({
+            'message': f'{len(saved_files)} files processed',
+            'redirect': url_for('new_chat')
+        })
+    except Exception as e:
+        app.logger.error(f'Upload error: {str(e)}')
+        return jsonify({'error': str(e)}), 500
+
+        
+
 def get_file_hash_with_verification(file_path):
     """Generate file hash with verification"""
     try:
@@ -975,16 +1413,24 @@ def check_subscription():
             current_user.documents_uploaded = 0
             db.session.commit()
 
-@app.route('/check_subscription')
+@app.route('/api/check_subscription', methods=['GET'])
 @login_required
-def check_subscription():
-    return jsonify({
-        'has_subscription': current_user.is_subscribed,
-        'has_active_trial': current_user.subscription_plan == 'trial' and current_user.is_subscribed,
-        'has_trial_available': current_user.subscription_plan != 'trial' or not current_user.is_subscribed,
-        'trial_days_remaining': (current_user.trial_end_date - datetime.utcnow()).days if current_user.trial_end_date else 0,
-        'allow_uploads': current_user.is_subscribed  # This will be true for both paid and trial subscriptions
-    })
+def check_subscription_api():
+    try:
+        return jsonify({
+            'is_logged_in': True,
+            'has_subscription': current_user.is_subscribed,
+            'has_active_trial': (current_user.subscription_plan == 'trial' and 
+                                current_user.trial_end_date > datetime.utcnow()),
+            'has_trial_available': (current_user.subscription_plan != 'trial' or 
+                                   not current_user.is_subscribed),
+            'trial_days_remaining': (current_user.trial_end_date - datetime.utcnow()).days 
+                                   if current_user.trial_end_date else 0,
+            'allow_uploads': current_user.is_subscribed,
+            'plan_name': current_user.plan_details.get('name', 'Free')
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/start_trial', methods=['POST'])
 @login_required
@@ -1345,41 +1791,44 @@ def register():
 def login():
     if current_user.is_authenticated:
         return redirect(url_for('index'))
-    
+
     if request.method == 'POST':
+        # CSRF token is automatically validated by Flask-WTF
         username = request.form.get('username')
         password = request.form.get('password')
         remember = request.form.get('remember') == 'on'
-        
+
         user = User.query.filter_by(username=username).first()
-        
-        if not user or not user.check_password(password):
+
+        if user and user.check_password(password):
+            login_user(user, remember=remember)
+            next_page = request.args.get('next')
+            return redirect(next_page or url_for('index'))
+        else:
             flash('Invalid username or password', 'error')
-            return redirect(url_for('login'))
-        
-        login_user(user, remember=remember)
-        user.last_login = datetime.utcnow()
-        db.session.commit()
-        
-        flash('Logged in successfully!', 'success')
-        return redirect(url_for('index'))
-    
+
     return render_template('login.html')
 
-@app.route('/logout')
+
+@app.route('/logout', methods=['GET', 'POST'])
 @login_required
 def logout():
+    app.logger.info(f"Logging out user: {current_user.username}")
     logout_user()
-    flash('You have been logged out.', 'success')
+    session.clear()
+    app.logger.info("User logged out successfully")
+    flash('You have been logged out successfully.', 'success')
     return redirect(url_for('login'))
-
-
 
 @app.route('/new_chat', methods=['GET', 'POST'])
 @login_required
 def new_chat():
     app.logger.info('Received request to create new query')
     try:
+        # Clear any previous session files
+        if 'current_upload_files' in session:
+            del session['current_upload_files']
+            
         chat_id = str(uuid.uuid4())
         
         # Create new conversation in database
@@ -1420,222 +1869,217 @@ def new_chat():
         app.logger.info(f'Created new query with ID: {chat_id}')
         return redirect(url_for('chat', chat_id=chat_id))
     except Exception as e:
-        app.logger.error(f'Error creating new query: {str(e)}', exc_info=True)
+        app.logger.error(f'Error creating new query session: {str(e)}', exc_info=True)
         flash('Error creating new query session', 'error')
         return redirect(url_for('index'))
+    
 
-
-@csrf.exempt
 @app.route('/chat/<chat_id>', methods=['GET', 'POST'])
 @login_required
 def chat(chat_id):
-    # Get the current conversation or return 404 if not found or doesn't belong to user
-    conversation = Conversation.query.filter_by(id=chat_id, user_id=current_user.id).first_or_404()
-    
-    # Get all conversations for this user for the sidebar
-    user_conversations = Conversation.query.filter_by(user_id=current_user.id)\
-        .order_by(Conversation.updated_at.desc()).all()
-    
-    # Convert to dictionary format for template compatibility
-    chats = {
-        conv.id: {
-            'title': conv.title,
-            'created_at': conv.created_at
-        }
-        for conv in user_conversations
-    }
-    
-    if request.method == 'POST':
-        def generate_response():
-            try:
-                # Get the question from request
-                if request.is_json:
+    try:
+        # Verify the chat belongs to the current user
+        conversation = Conversation.query.filter_by(
+            id=chat_id,
+            user_id=current_user.id
+        ).first_or_404()
+
+        if request.method == 'GET':
+            # Handle GET request (initial page load)
+            messages = Message.query.filter_by(
+                conversation_id=chat_id
+            ).order_by(Message.timestamp.asc()).all()
+
+            # Get all conversations for the sidebar
+            user_conversations = Conversation.query.filter_by(
+                user_id=current_user.id
+            ).order_by(Conversation.updated_at.desc()).all()
+
+            # Get uploaded files
+            uploaded_files = get_uploaded_files(current_user.id)
+
+            return render_template(
+                'chat.html',
+                chat_id=chat_id,
+                conversation=conversation,
+                messages=messages,
+                conversations=user_conversations,
+                chat_title=conversation.title,
+                uploaded_files=uploaded_files
+            )
+
+        elif request.method == 'POST':
+            # Handle POST request (chat interaction)
+            def generate_response():
+                try:
+                    if not request.is_json:
+                        yield json.dumps({
+                            'status': 'error',
+                            'message': 'Content-Type must be application/json'
+                        })
+                        return
+
                     data = request.get_json()
                     question = data.get('question', '').strip()
-                else:
-                    question = request.form.get('question', '').strip()
-
-                if not question:
-                    yield json.dumps({'status': 'error', 'message': 'Please enter a question'})
-                    return
-
-                # Save user message to database
-                user_msg = Message(
-                    conversation_id=chat_id,
-                    role='user',
-                    content=question,
-                    timestamp=datetime.now(timezone.utc)
-                )
-                db.session.add(user_msg)
-                db.session.commit()
-
-                # Initial status update
-                yield json.dumps({
-                    'status': 'status_update',
-                    'message': '🔍 Preparing to process files...',
-                    'progress': 0
-                }) + "\n"
-
-                # Process files from user's directory
-                user_extract_dir = os.path.join(app.config['EXTRACT_FOLDER'], str(current_user.id))
-                all_files = []
-                if os.path.exists(user_extract_dir):
-                    for root, _, files in os.walk(user_extract_dir):
-                        for file in files:
-                            file_path = os.path.join(root, file)
-                            if not file.startswith('.') and not file == '__MACOSX':
-                                all_files.append(file_path)
-                
-                total_files = len(all_files)
-                processed_files = 0
-                file_contents = []
-                
-                yield json.dumps({
-                    'status': 'status_update',
-                    'message': f'📂 Found {total_files} files to process...',
-                    'progress': 5
-                }) + "\n"
-
-                # Process each file
-                for i, file_path in enumerate(all_files):
-                    try:
-                        text = read_file(file_path, current_user.id)
-                        if text:
-                            file_contents.append({
-                                'filename': os.path.basename(file_path),
-                                'path': os.path.relpath(file_path, user_extract_dir),
-                                'text': text
-                            })
-                        
-                        processed_files += 1
-                        progress = 5 + int((i / total_files) * 25)
-                        
-                        # Update progress
-                        if i % 5 == 0 or i == total_files - 1:
-                            yield json.dumps({
-                                'status': 'status_update',
-                                'message': f'📄 Processing {os.path.basename(file_path)} ({processed_files}/{total_files})',
-                                'progress': progress
-                            }) + "\n"
-                            
-                    except Exception as e:
-                        app.logger.error(f"Error processing {file_path}: {str(e)}")
-                        continue
-
-                # Combine context
-                combined_context = "\n\n".join(
-                    f"[FILE: {file['path']}]\n{file['text'][:app.config['MAX_CONTEXT_LENGTH']]}"
-                    for file in file_contents
-                ) if file_contents else "No files available for context"
-
-                yield json.dumps({
-                    'status': 'status_update',
-                    'message': '🧠 Analyzing content...',
-                    'progress': 60
-                }) + "\n"
-
-                # Stream AI response
-                full_answer = ""
-                start_time = time.time()
-                yield json.dumps({'status': 'stream_start'}) + "\n"
-                
-                for chunk in get_answer_stream(combined_context, question):
-                    if time.time() - start_time > app.config['STREAM_TIMEOUT']:
-                        raise TimeoutError("Response generation timed out")
-                        
-                    yield json.dumps({'status': 'stream_chunk', 'content': chunk}) + "\n"
-                    full_answer += chunk
                     
-                    # Update progress during streaming
-                    current_progress = 60 + int((len(full_answer) / 10000) * 30)
-                    if current_progress > 90:
-                        current_progress = 90
-                    
-                    if int(time.time() - start_time) % 2 == 0:
+                    if not question:
+                        yield json.dumps({'status': 'error', 'message': 'Please enter a question'})
+                        return
+
+                    # Save user message
+                    user_msg = Message(
+                        conversation_id=chat_id,
+                        role='user',
+                        content=question,
+                        timestamp=datetime.now(timezone.utc))
+                    db.session.add(user_msg)
+                    db.session.commit()
+
+                    # Update conversation title if it's the first message
+                    if conversation.title == 'New Query':
+                        short_title = question[:50] + '...' if len(question) > 50 else question
+                        conversation.title = short_title
+                        db.session.commit()
                         yield json.dumps({
-                            'status': 'status_update',
-                            'message': '✍️ Generating response...',
-                            'progress': current_progress
+                            'status': 'title_update',
+                            'chat_id': chat_id,
+                            'title': short_title
                         }) + "\n"
 
-                # Final updates
-                yield json.dumps({
-                    'status': 'status_update',
-                    'message': '✅ Processing complete',
-                    'progress': 100
-                }) + "\n"
+                    # Initialize processor
+                    processor = DocumentProcessor(user_id=current_user.id)
+                    
+                    # Get relevant chunks
+                    chunks = processor.search_documents(question, current_user.id)
+                    
+                    if not chunks:
+                        yield json.dumps({
+                            'status': 'error',
+                            'message': 'No relevant information found in documents'
+                        })
+                        return
 
-                yield json.dumps({
-                    'status': 'stream_end',
-                    'sources': [f['path'] for f in file_contents],
-                    'conversation_id': chat_id
-                }) + "\n"
+                    # Build context with sources
+                    context = ""
+                    sources = []
+                    for chunk in chunks:
+                        context += f"[Document: {chunk['metadata']['document_path']}, Page ~{chunk['metadata']['page']}]\n"
+                        context += f"{chunk['chunk']}\n\n"
+                        sources.append({
+                            'path': chunk['metadata']['document_path'],
+                            'page': chunk['metadata']['page'],
+                            'text': chunk['chunk'][:200] + '...'  # Preview
+                        })
 
-                # Save assistant reply to database
-                assistant_msg = Message(
-                    conversation_id=chat_id,
-                    role='assistant',
-                    content=full_answer,
-                    sources=[f['path'] for f in file_contents],
-                    timestamp=datetime.now(timezone.utc)
-                )
-                db.session.add(assistant_msg)
-                
-                # Update conversation title if it's still the default
-                if conversation.title == 'New Query':
-                    new_title = question[:50] + ("..." if len(question) > 50 else "")
-                    conversation.title = new_title
-                
-                db.session.commit()
+                    # Stream response from Ollama
+                    yield json.dumps({'status': 'stream_start'}) + "\n"
 
-            except TimeoutError:
-                error_msg = "⏱️ Error: Response generation timed out"
-                yield json.dumps({
-                    'status': 'status_update',
-                    'message': error_msg,
-                    'progress': 100,
-                    'error': True
-                }) + "\n"
-                yield json.dumps({'status': 'error', 'message': error_msg}) + "\n"
-            except Exception as e:
-                error_msg = f"❌ Error: {str(e)}"
-                yield json.dumps({
-                    'status': 'status_update',
-                    'message': error_msg,
-                    'progress': 100,
-                    'error': True
-                }) + "\n"
-                yield json.dumps({'status': 'error', 'message': str(e)}) + "\n"
+                    prompt = build_rag_prompt(context, question)
+                    full_answer = ""
+                    
+                    for chunk in get_ollama_response_stream(prompt):
+                        yield json.dumps({'status': 'stream_chunk', 'content': chunk}) + "\n"
+                        full_answer += chunk
 
-        return Response(stream_with_context(generate_response()), mimetype='application/x-ndjson')
+                    # Save assistant response with sources
+                    assistant_msg = Message(
+                        conversation_id=chat_id,
+                        role='assistant',
+                        content=full_answer,
+                        sources=[s['path'] for s in sources],
+                        timestamp=datetime.now(timezone.utc))
+                    db.session.add(assistant_msg)
+                    
+                    # Update conversation timestamp
+                    conversation.updated_at = datetime.now(timezone.utc)
+                    db.session.commit()
 
-    # For GET requests
-    messages = Message.query.filter_by(conversation_id=chat_id).order_by(Message.timestamp).all()
-    
-    # Get uploaded files for this user
-    uploaded_files = []
-    user_upload_dir = os.path.join(app.config['UPLOAD_FOLDER'], str(current_user.id))
-    if os.path.exists(user_upload_dir):
-        for root, _, files in os.walk(user_upload_dir):
-            for file in files:
-                if not file.startswith('.') and not file == '__MACOSX':
-                    uploaded_files.append(file)
-    
-    return render_template('chat.html',
-                         chat_id=chat_id,
-                         chats=chats,
-                         conversation={
-                             'title': conversation.title,
-                             'created_at': conversation.created_at,
-                             'messages': [{
-                                 'role': msg.role,
-                                 'content': msg.content,
-                                 'sources': msg.sources,
-                                 'timestamp': msg.timestamp
-                             } for msg in messages]
-                         },
-                         uploaded_files=uploaded_files)
+                    yield json.dumps({
+                        'status': 'stream_end',
+                        'sources': sources
+                    }) + "\n"
 
+                except Exception as e:
+                    app.logger.error(f"Error in chat: {str(e)}")
+                    yield json.dumps({
+                        'status': 'error',
+                        'message': f"Error processing your request: {str(e)}"
+                    }) + "\n"
+
+            return Response(stream_with_context(generate_response()), mimetype='application/x-ndjson')
+
+    except Exception as e:
+        app.logger.error(f"Error in chat route: {str(e)}")
+        if request.method == 'GET':
+            flash('Error loading chat', 'error')
+            return redirect(url_for('index'))
+        else:
+            return jsonify({'error': str(e)}), 500
+            
+
+def get_uploaded_files(user_id):
+    """Get list of uploaded files for a user"""
+    try:
+        user_extract_dir = os.path.join(app.config['EXTRACT_FOLDER'], str(user_id))
+        uploaded_files = []
+        
+        if os.path.exists(user_extract_dir):
+            for root, _, files in os.walk(user_extract_dir):
+                for file in files:
+                    if not file.startswith('.') and not file == '__MACOSX':
+                        rel_path = os.path.relpath(os.path.join(root, file), user_extract_dir)
+                        uploaded_files.append({
+                            'name': file,
+                            'path': rel_path,
+                            'size': os.path.getsize(os.path.join(root, file))
+                        })
+        
+        return uploaded_files
+    except Exception as e:
+        app.logger.error(f"Error getting uploaded files: {str(e)}")
+        return []
+
+        
+def build_rag_prompt(context, question):
+    """Construct a RAG prompt with context and instructions"""
+    return (
+        "Use the following documents to answer the question. "
+        "Provide detailed answers with direct quotes when possible. "
+        "Always cite sources using the format [^filename||page].\n\n"
+        "Documents:\n"
+        f"{context}\n"
+        f"Question: {question}\n\n"
+        "Instructions:\n"
+        "1. Answer precisely based on the documents\n"
+        "2. Include relevant quotes with citations\n"
+        "3. If unsure, say you couldn't find the information\n"
+        "4. Format citations as [^filename||page]\n\n"
+        "Answer:"
+    )
+
+
+def get_ollama_response_stream(prompt):
+    """Stream response from Ollama with proper error handling"""
+    try:
+        response = requests.post(
+            app.config['OLLAMA_URL'],
+            json={
+                "model": app.config['OLLAMA_MODEL'],
+                "prompt": prompt,
+                "stream": True
+            },
+            stream=True,
+            timeout=app.config['OLLAMA_TIMEOUT']
+        )
+        
+        for line in response.iter_lines():
+            if line:
+                data = json.loads(line)
+                if 'response' in data:
+                    yield data['response']
+                    
+    except Exception as e:
+        yield f"\n\nError: Failed to get response from AI model ({str(e)})"
 
 @app.route('/delete_chat/<chat_id>', methods=['POST'])
 @login_required
@@ -1803,10 +2247,14 @@ def update_chat_title(chat_id):
     
 
 @app.route('/get_file_structure')
+@login_required
 def get_file_structure():
-    """Return the accurate file structure with multi-level hierarchy"""
-    base_path = app.config['EXTRACT_FOLDER']
+    """Return the file structure for current user only"""
+    user_extract_dir = os.path.join(app.config['EXTRACT_FOLDER'], str(current_user.id))
     file_structure = []
+
+    if not os.path.exists(user_extract_dir):
+        return jsonify([])
 
     def build_tree(current_path, relative_path=""):
         name = os.path.basename(current_path)
@@ -1829,13 +2277,14 @@ def get_file_structure():
                 app.logger.error(f"Error reading directory {current_path}: {str(e)}")
         return item
 
-    if os.path.exists(base_path):
-        for entry in sorted(os.listdir(base_path)):
-            full_path = os.path.join(base_path, entry)
-            if not entry.startswith('.') and not entry == '__MACOSX':
-                file_structure.append(build_tree(full_path))
+    file_structure = []
+    for entry in sorted(os.listdir(user_extract_dir)):
+        full_path = os.path.join(user_extract_dir, entry)
+        if not entry.startswith('.') and not entry == '__MACOSX':
+            file_structure.append(build_tree(full_path))
     
     return jsonify(file_structure)
+
 
 @app.route('/get_file_content')
 def get_file_content():

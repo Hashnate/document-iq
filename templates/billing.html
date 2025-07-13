@@ -347,7 +347,6 @@
             <div class="modal-footer border-top-0">
                 <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Go Back</button>
                 <form method="POST" action="/cancel_subscription">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="btn btn-danger">
                         <i class="fas fa-times-circle mr-1"></i>Cancel Subscription
                     </button>
@@ -380,7 +379,6 @@
             <div class="modal-footer border-top-0">
                 <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Continue Trial</button>
                 <form method="POST" action="/cancel_trial">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="btn btn-warning">
                         <i class="fas fa-times-circle mr-1"></i>End Trial Now
                     </button>
@@ -401,7 +399,6 @@
             </div>
             <div class="modal-body">
                 <form id="update-payment-form">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="form-group">
                         <label for="card-element-update">New Card Details</label>
                         <div id="card-element-update" class="form-control p-3 border rounded" style="height: 45px;"></div>
@@ -572,7 +569,6 @@
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
                         },
                         body: JSON.stringify({
                             payment_method_id: paymentMethod.id

@@ -391,7 +391,6 @@
             </div>
             <div class="modal-body">
                 <form id="payment-form">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="form-group">
                         <label for="card-element">Credit or debit card</label>
                         <div id="card-element" class="form-control" style="height: 40px; padding: 10px;"></div>
@@ -898,7 +897,6 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRFToken': $('input[name="csrf_token"]').val()
                 }
             })
                 .then(response => response.json())
@@ -979,7 +977,6 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRFToken': $('input[name="csrf_token"]').val()
                     },
                     body: JSON.stringify({
                         plan_id: $('#plan-id').val(),

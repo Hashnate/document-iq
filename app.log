@@ -917,3 +917,1049 @@ jinja2.exceptions.UndefinedError: 'dict object' has no attribute 'limits'
 2025-07-11 13:19:32,050 - app - INFO - Successfully deleted chat ID: 874fd404-6200-428f-8a3c-453ec0164ad6
 2025-07-11 13:19:37,573 - app - INFO - Received request to delete chat ID: c62a55f0-45bd-44d7-912b-b45636d461bd
 2025-07-11 13:19:37,581 - app - INFO - Successfully deleted chat ID: c62a55f0-45bd-44d7-912b-b45636d461bd
+2025-07-12 03:50:23,722 - app - INFO - Starting application on port 8000
+2025-07-12 03:58:05,966 - app - INFO - Starting application on port 8000
+2025-07-12 03:58:38,178 - app - INFO - Starting application on port 8000
+2025-07-12 03:58:53,707 - app - INFO - Received request to create new query
+2025-07-12 03:58:53,719 - app - INFO - Created new query with ID: 3e7992ee-0291-497f-8e54-2d837d3666a9
+2025-07-12 03:59:06,430 - app - INFO - Received request to create new query
+2025-07-12 03:59:06,439 - app - INFO - Created new query with ID: 45f4e418-f3a5-44e8-b7ff-bbd3d488dead
+2025-07-12 03:59:14,844 - app - INFO - Received request to delete chat ID: 45f4e418-f3a5-44e8-b7ff-bbd3d488dead
+2025-07-12 03:59:14,986 - app - INFO - Successfully deleted chat ID: 45f4e418-f3a5-44e8-b7ff-bbd3d488dead
+2025-07-12 03:59:17,899 - app - INFO - Received request to delete chat ID: 3e7992ee-0291-497f-8e54-2d837d3666a9
+2025-07-12 03:59:17,909 - app - INFO - Successfully deleted chat ID: 3e7992ee-0291-497f-8e54-2d837d3666a9
+2025-07-12 04:00:19,928 - app - INFO - Starting application on port 8000
+2025-07-12 04:06:11,226 - app - INFO - Starting application on port 8000
+2025-07-12 04:11:50,344 - app - INFO - Starting application on port 8000
+2025-07-12 04:13:22,010 - app - INFO - Starting application on port 8000
+2025-07-12 04:14:50,861 - app - INFO - Starting application on port 8000
+2025-07-12 04:18:39,559 - app - INFO - Starting application on port 8000
+2025-07-12 04:22:57,797 - app - INFO - Starting application on port 8000
+2025-07-12 04:33:00,287 - app - INFO - Starting application on port 8000
+2025-07-12 04:35:21,930 - app - INFO - Starting application on port 8000
+2025-07-12 04:36:45,986 - app - INFO - Starting application on port 8000
+2025-07-12 04:42:30,182 - app - INFO - Starting application on port 8000
+2025-07-12 04:42:44,122 - app - INFO - Received request to create new query
+2025-07-12 04:42:44,135 - app - INFO - Created new query with ID: 5a989158-86eb-460c-9d8c-9dac00780b05
+2025-07-12 04:43:02,748 - app - INFO - Received request to create new query
+2025-07-12 04:43:02,756 - app - INFO - Created new query with ID: b19fe34e-23ef-436e-93fb-b1b3f0477d6d
+2025-07-12 04:43:20,563 - app - INFO - Received request to create new query
+2025-07-12 04:43:20,573 - app - INFO - Created new query with ID: 9bffe710-fdde-4f90-ab03-e00fff7da8f9
+2025-07-12 04:46:16,744 - app - INFO - Starting application on port 8000
+2025-07-12 04:46:53,536 - app - INFO - Starting application on port 8000
+2025-07-12 04:47:08,972 - app - INFO - Received request to create new query
+2025-07-12 04:47:08,986 - app - INFO - Created new query with ID: 0e75e5e6-f0df-4214-b4a6-13b678226854
+2025-07-12 04:47:25,245 - app - INFO - Received request to create new query
+2025-07-12 04:47:25,258 - app - INFO - Created new query with ID: 702402ee-47e9-4321-916f-63d0398161d2
+2025-07-12 04:48:04,645 - app - INFO - Received request to create new query
+2025-07-12 04:48:04,654 - app - INFO - Created new query with ID: 6a0cdfbf-f55a-42d0-90bd-81c825cf28b7
+2025-07-12 04:48:09,784 - app - INFO - Received request to delete chat ID: 6a0cdfbf-f55a-42d0-90bd-81c825cf28b7
+2025-07-12 04:48:09,797 - app - INFO - Successfully deleted chat ID: 6a0cdfbf-f55a-42d0-90bd-81c825cf28b7
+2025-07-12 04:48:16,422 - app - INFO - Received request to delete chat ID: 5a989158-86eb-460c-9d8c-9dac00780b05
+2025-07-12 04:48:16,432 - app - INFO - Successfully deleted chat ID: 5a989158-86eb-460c-9d8c-9dac00780b05
+2025-07-12 04:48:18,854 - app - INFO - Received request to delete chat ID: b19fe34e-23ef-436e-93fb-b1b3f0477d6d
+2025-07-12 04:48:18,864 - app - INFO - Successfully deleted chat ID: b19fe34e-23ef-436e-93fb-b1b3f0477d6d
+2025-07-12 04:48:21,090 - app - INFO - Received request to delete chat ID: 9bffe710-fdde-4f90-ab03-e00fff7da8f9
+2025-07-12 04:48:21,099 - app - INFO - Successfully deleted chat ID: 9bffe710-fdde-4f90-ab03-e00fff7da8f9
+2025-07-12 04:48:23,261 - app - INFO - Received request to delete chat ID: 0e75e5e6-f0df-4214-b4a6-13b678226854
+2025-07-12 04:48:23,270 - app - INFO - Successfully deleted chat ID: 0e75e5e6-f0df-4214-b4a6-13b678226854
+2025-07-12 04:48:25,507 - app - INFO - Received request to delete chat ID: 702402ee-47e9-4321-916f-63d0398161d2
+2025-07-12 04:48:25,515 - app - INFO - Successfully deleted chat ID: 702402ee-47e9-4321-916f-63d0398161d2
+2025-07-12 04:49:35,296 - app - INFO - Received request to create new query
+2025-07-12 04:49:35,305 - app - INFO - Created new query with ID: 4c26ff5e-3199-4aee-a34f-4a68736406f8
+2025-07-12 04:49:48,257 - app - INFO - Received request to create new query
+2025-07-12 04:49:48,266 - app - INFO - Created new query with ID: 3281144f-aa13-4529-a454-0a6736332f98
+2025-07-12 04:50:02,777 - app - INFO - Starting application on port 8000
+2025-07-12 04:50:28,600 - app - INFO - Received request to delete chat ID: 3281144f-aa13-4529-a454-0a6736332f98
+2025-07-12 04:50:28,611 - app - INFO - Successfully deleted chat ID: 3281144f-aa13-4529-a454-0a6736332f98
+2025-07-12 04:50:31,363 - app - INFO - Received request to delete chat ID: 4c26ff5e-3199-4aee-a34f-4a68736406f8
+2025-07-12 04:50:31,372 - app - INFO - Successfully deleted chat ID: 4c26ff5e-3199-4aee-a34f-4a68736406f8
+2025-07-12 04:51:32,921 - app - INFO - Starting application on port 8000
+2025-07-12 04:53:40,527 - app - INFO - Starting application on port 8000
+2025-07-12 04:53:51,212 - app - INFO - Received request to create new query
+2025-07-12 04:53:51,225 - app - INFO - Created new query with ID: 56ed210f-5266-4aa5-a902-354496d80fb7
+2025-07-12 04:54:20,211 - app - ERROR - File not found: /home/administrator/document-iq/extracted_files/Calim_Technology_Services_Company_Profile.pdf (resolved from Calim_Technology_Services_Company_Profile.pdf)
+2025-07-12 04:54:20,211 - app - ERROR - Extract folder contents: ['1']
+2025-07-12 04:57:21,207 - app - ERROR - File not found: /home/administrator/document-iq/extracted_files/Calim_Technology_Services_Company_Profile.pdf (resolved from Calim_Technology_Services_Company_Profile.pdf)
+2025-07-12 04:57:21,207 - app - ERROR - Extract folder contents: ['1']
+2025-07-12 04:59:28,784 - app - ERROR - File not found: /home/administrator/document-iq/extracted_files/Calim_Technology_Services_Company_Profile.pdf (resolved from Calim_Technology_Services_Company_Profile.pdf)
+2025-07-12 04:59:28,784 - app - ERROR - Extract folder contents: ['1']
+2025-07-12 04:59:33,367 - app - ERROR - File not found: /home/administrator/document-iq/extracted_files/Calim_Technology_Services_Company_Profile.pdf (resolved from Calim_Technology_Services_Company_Profile.pdf)
+2025-07-12 04:59:33,367 - app - ERROR - Extract folder contents: ['1']
+2025-07-12 05:00:51,602 - app - ERROR - File not found: /home/administrator/document-iq/extracted_files/Calim_Technology_Services_Company_Profile.pdf (resolved from Calim_Technology_Services_Company_Profile.pdf)
+2025-07-12 05:00:51,602 - app - ERROR - Extract folder contents: ['1']
+2025-07-12 05:02:03,924 - app - INFO - Starting application on port 8000
+2025-07-12 05:05:45,682 - app - INFO - Starting application on port 8000
+2025-07-12 05:06:29,273 - app - INFO - Starting application on port 8000
+2025-07-12 05:07:01,231 - app - INFO - Starting application on port 8000
+2025-07-12 05:07:09,433 - app - INFO - Received request to create new query
+2025-07-12 05:07:09,445 - app - INFO - Created new query with ID: a0d01de3-da9a-4eb9-adb7-569d982a40fd
+2025-07-12 05:07:30,103 - app - INFO - Starting application on port 8000
+2025-07-12 05:09:46,268 - app - INFO - Starting application on port 8000
+2025-07-12 05:10:03,265 - app - INFO - Starting application on port 8000
+2025-07-12 05:10:12,522 - app - INFO - Received request to create new query
+2025-07-12 05:10:12,533 - app - INFO - Created new query with ID: cd20b588-4f2b-462a-93e8-905fa8c59075
+2025-07-12 05:10:20,010 - app - INFO - Received request to delete chat ID: cd20b588-4f2b-462a-93e8-905fa8c59075
+2025-07-12 05:10:20,024 - app - INFO - Successfully deleted chat ID: cd20b588-4f2b-462a-93e8-905fa8c59075
+2025-07-12 05:10:22,952 - app - INFO - Received request to delete chat ID: a0d01de3-da9a-4eb9-adb7-569d982a40fd
+2025-07-12 05:10:22,962 - app - INFO - Successfully deleted chat ID: a0d01de3-da9a-4eb9-adb7-569d982a40fd
+2025-07-12 05:10:25,768 - app - INFO - Received request to delete chat ID: 56ed210f-5266-4aa5-a902-354496d80fb7
+2025-07-12 05:10:25,780 - app - INFO - Successfully deleted chat ID: 56ed210f-5266-4aa5-a902-354496d80fb7
+2025-07-12 05:17:25,857 - app - INFO - Starting application on port 8000
+2025-07-12 05:40:11,024 - app - INFO - Starting application on port 8000
+2025-07-12 05:48:54,707 - app - INFO - Starting application on port 8000
+2025-07-12 05:51:28,294 - app - INFO - Starting application on port 8000
+2025-07-12 05:52:21,054 - app - INFO - Starting application on port 8000
+2025-07-12 05:53:36,863 - app - INFO - Starting application on port 8000
+2025-07-12 05:56:17,899 - app - INFO - Starting application on port 8000
+2025-07-12 05:57:54,009 - app - INFO - Starting application on port 8000
+2025-07-12 05:59:33,876 - app - INFO - Starting application on port 8000
+2025-07-12 06:01:11,338 - app - INFO - Starting application on port 8000
+2025-07-12 06:13:19,125 - app - INFO - Starting application on port 8000
+2025-07-12 06:16:17,074 - app - INFO - Starting application on port 8000
+2025-07-12 06:20:25,283 - app - INFO - Starting application on port 8000
+2025-07-12 06:25:35,811 - app - INFO - Starting application on port 8000
+2025-07-12 06:30:37,474 - app - INFO - Starting application on port 8000
+2025-07-12 06:35:35,793 - app - INFO - Starting application on port 8000
+2025-07-12 06:36:53,111 - app - INFO - Received request to create new query
+2025-07-12 06:36:53,123 - app - INFO - Created new query with ID: e7d76b15-4da8-4a3d-ae90-09aaa473ade6
+2025-07-12 06:39:07,423 - app - INFO - Starting application on port 8000
+2025-07-12 06:39:20,555 - app - INFO - Logging out user: ilham
+2025-07-12 06:39:20,555 - app - INFO - User logged out successfully
+2025-07-12 06:44:14,394 - app - INFO - Starting application on port 8000
+2025-07-12 06:44:48,935 - app - INFO - Starting application on port 8000
+2025-07-12 06:48:13,109 - app - INFO - Starting application on port 8000
+2025-07-12 06:48:24,362 - app - INFO - Received request to create new query
+2025-07-12 06:48:24,375 - app - INFO - Created new query with ID: b422d73a-e071-4a39-bc54-ff6225e6f851
+2025-07-12 06:48:29,412 - app - INFO - Logging out user: ilham
+2025-07-12 06:48:29,412 - app - INFO - User logged out successfully
+2025-07-12 06:54:13,243 - app - INFO - Logging out user: ilham
+2025-07-12 06:54:13,243 - app - INFO - User logged out successfully
+2025-07-12 06:54:32,880 - app - INFO - Starting application on port 8000
+2025-07-12 06:55:06,517 - app - INFO - Logging out user: ilham
+2025-07-12 06:55:06,518 - app - INFO - User logged out successfully
+2025-07-12 06:55:19,808 - app - INFO - Received request to create new query
+2025-07-12 06:55:19,819 - app - INFO - Created new query with ID: fe26c905-3605-4cd8-92d6-751ba439e4b6
+2025-07-12 06:55:25,940 - app - INFO - Received request to delete chat ID: b422d73a-e071-4a39-bc54-ff6225e6f851
+2025-07-12 06:55:25,953 - app - INFO - Successfully deleted chat ID: b422d73a-e071-4a39-bc54-ff6225e6f851
+2025-07-12 06:56:27,729 - app - INFO - Logging out user: ilham
+2025-07-12 06:56:27,729 - app - INFO - User logged out successfully
+2025-07-12 06:57:13,476 - app - ERROR - Exception on /login [GET]
+Traceback (most recent call last):
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1486, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1484, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1469, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/app.py", line 1445, in login
+    form = LoginForm()  # You should create a Flask-WTF form for better handling
+           ^^^^^^^^^
+NameError: name 'LoginForm' is not defined
+2025-07-12 06:57:15,792 - app - ERROR - Exception on /login [GET]
+Traceback (most recent call last):
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1486, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1484, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1469, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/app.py", line 1445, in login
+    form = LoginForm()  # You should create a Flask-WTF form for better handling
+           ^^^^^^^^^
+NameError: name 'LoginForm' is not defined
+2025-07-12 06:57:53,610 - app - INFO - Starting application on port 8000
+2025-07-12 07:03:17,476 - app - INFO - Starting application on port 8000
+2025-07-12 07:03:29,719 - app - INFO - Received request to create new query
+2025-07-12 07:03:29,730 - app - INFO - Created new query with ID: 45c851f9-63c1-43f6-84e4-267041e09148
+2025-07-12 07:08:47,666 - app - INFO - Starting application on port 8000
+2025-07-12 07:08:58,517 - app - INFO - Logging out user: ilham
+2025-07-12 07:08:58,517 - app - INFO - User logged out successfully
+2025-07-12 07:09:31,048 - app - INFO - Received request to create new query
+2025-07-12 07:09:31,060 - app - INFO - Created new query with ID: 602bfe99-a936-41af-b661-98863ded87a7
+2025-07-12 07:10:28,321 - app - INFO - Received request to create new query
+2025-07-12 07:10:28,330 - app - INFO - Created new query with ID: 370ccb0a-0c09-468f-804f-81ed265d7948
+2025-07-12 07:11:17,997 - app - INFO - Starting application on port 8000
+2025-07-12 07:11:26,289 - app - INFO - Logging out user: ilham
+2025-07-12 07:11:26,289 - app - INFO - User logged out successfully
+2025-07-12 07:13:02,864 - app - INFO - Received request to delete chat ID: 370ccb0a-0c09-468f-804f-81ed265d7948
+2025-07-12 07:13:02,879 - app - INFO - Successfully deleted chat ID: 370ccb0a-0c09-468f-804f-81ed265d7948
+2025-07-12 07:13:05,408 - app - INFO - Received request to delete chat ID: 602bfe99-a936-41af-b661-98863ded87a7
+2025-07-12 07:13:05,418 - app - INFO - Successfully deleted chat ID: 602bfe99-a936-41af-b661-98863ded87a7
+2025-07-12 07:13:07,781 - app - INFO - Received request to delete chat ID: 45c851f9-63c1-43f6-84e4-267041e09148
+2025-07-12 07:13:07,790 - app - INFO - Successfully deleted chat ID: 45c851f9-63c1-43f6-84e4-267041e09148
+2025-07-12 07:13:10,476 - app - INFO - Received request to delete chat ID: fe26c905-3605-4cd8-92d6-751ba439e4b6
+2025-07-12 07:13:10,486 - app - INFO - Successfully deleted chat ID: fe26c905-3605-4cd8-92d6-751ba439e4b6
+2025-07-12 07:13:12,937 - app - INFO - Received request to delete chat ID: e7d76b15-4da8-4a3d-ae90-09aaa473ade6
+2025-07-12 07:13:12,946 - app - INFO - Successfully deleted chat ID: e7d76b15-4da8-4a3d-ae90-09aaa473ade6
+2025-07-12 07:13:20,157 - app - INFO - Received request to create new query
+2025-07-12 07:13:20,204 - app - INFO - Created new query with ID: 82b6b520-3789-4e5b-a885-fd71b9f816fc
+2025-07-12 07:15:05,325 - app - INFO - Starting application on port 8000
+2025-07-12 07:15:17,297 - app - INFO - Logging out user: ilham
+2025-07-12 07:15:17,297 - app - INFO - User logged out successfully
+2025-07-12 07:15:22,171 - app - INFO - Logging out user: ilham
+2025-07-12 07:15:22,172 - app - INFO - User logged out successfully
+2025-07-12 07:16:28,970 - app - INFO - Starting application on port 8000
+2025-07-12 07:16:36,212 - app - INFO - Logging out user: ilham
+2025-07-12 07:16:36,212 - app - INFO - User logged out successfully
+2025-07-12 07:17:06,097 - app - INFO - Starting application on port 8000
+2025-07-12 07:18:05,013 - app - INFO - Starting application on port 8000
+2025-07-12 07:18:23,945 - app - INFO - Logging out user: ilham
+2025-07-12 07:18:23,945 - app - INFO - User logged out successfully
+2025-07-12 07:18:44,735 - app - INFO - Received request to create new query
+2025-07-12 07:18:44,747 - app - INFO - Created new query with ID: a3220f13-d890-46f7-ac1f-01d4d4d98799
+2025-07-12 07:33:53,858 - app - INFO - Starting application on port 8000
+2025-07-12 07:35:01,193 - app - INFO - Starting application on port 8000
+2025-07-12 07:35:39,615 - app - INFO - Starting application on port 8000
+2025-07-12 07:46:50,298 - app - INFO - Received request to create new query
+2025-07-12 07:46:50,311 - app - INFO - Created new query with ID: d9f6c381-237b-45f5-a0f3-1cce49365d75
+2025-07-12 07:47:40,740 - app - INFO - Received request to create new query
+2025-07-12 07:47:40,753 - app - INFO - Created new query with ID: 21bc7272-cc20-4d66-b84d-17531a6289e7
+2025-07-12 07:48:00,823 - app - ERROR - DOCX extraction failed for /home/administrator/document-iq/extracted_files/1/Tender Bulletin 01 13.02.2025/1. Response to TB 01 - GT25100700.docx: 'Paragraph' object has no attribute 'tables'
+2025-07-12 07:48:54,556 - app - INFO - Received request to delete chat ID: 21bc7272-cc20-4d66-b84d-17531a6289e7
+2025-07-12 07:48:54,570 - app - INFO - Successfully deleted chat ID: 21bc7272-cc20-4d66-b84d-17531a6289e7
+2025-07-12 07:49:02,632 - app - INFO - Received request to delete chat ID: d9f6c381-237b-45f5-a0f3-1cce49365d75
+2025-07-12 07:49:02,694 - app - INFO - Successfully deleted chat ID: d9f6c381-237b-45f5-a0f3-1cce49365d75
+2025-07-12 07:49:05,265 - app - INFO - Received request to delete chat ID: a3220f13-d890-46f7-ac1f-01d4d4d98799
+2025-07-12 07:49:05,274 - app - INFO - Successfully deleted chat ID: a3220f13-d890-46f7-ac1f-01d4d4d98799
+2025-07-12 07:49:07,739 - app - INFO - Received request to delete chat ID: 82b6b520-3789-4e5b-a885-fd71b9f816fc
+2025-07-12 07:49:07,748 - app - INFO - Successfully deleted chat ID: 82b6b520-3789-4e5b-a885-fd71b9f816fc
+2025-07-12 07:49:09,628 - app - INFO - Logging out user: ilham
+2025-07-12 07:49:09,629 - app - INFO - User logged out successfully
+2025-07-12 07:49:51,947 - app - INFO - Received request to create new query
+2025-07-12 07:49:51,956 - app - INFO - Created new query with ID: 7de4a776-6f56-47c2-bcb9-55b4190ac888
+2025-07-12 08:12:49,936 - app - INFO - Received request to create new query
+2025-07-12 08:12:49,946 - app - INFO - Created new query with ID: 3a26edc0-3746-4568-88ac-63b4641723d6
+2025-07-12 08:16:12,474 - app - ERROR - DOCX extraction failed for /home/administrator/document-iq/extracted_files/1/115. QatarEnergy - RFQ_GT25100700 -REHABILITATION OF 4 LPG TANKS, MESAIEED OPERATIONS/01 Tender Documents/Appendix F Drawings/T-1, T-10, T-11, T-12  Drawings/Final list of drawings.docx: 'Paragraph' object has no attribute 'tables'
+2025-07-12 08:25:29,911 - app - INFO - Starting application on port 8000
+2025-07-12 08:26:10,887 - app - INFO - Logging out user: ilham
+2025-07-12 08:26:10,887 - app - INFO - User logged out successfully
+2025-07-12 08:26:31,256 - app - INFO - Received request to create new query
+2025-07-12 08:26:31,269 - app - INFO - Created new query with ID: 7b175086-e6ac-4451-9d30-0f31386aff68
+2025-07-12 08:31:06,728 - app - INFO - Starting application on port 8000
+2025-07-12 08:31:16,695 - app - INFO - Logging out user: ilham
+2025-07-12 08:31:16,696 - app - INFO - User logged out successfully
+2025-07-12 08:31:45,277 - app - INFO - Starting application on port 8000
+2025-07-12 08:32:32,900 - app - INFO - Starting application on port 8000
+2025-07-12 08:32:59,570 - app - INFO - Received request to create new query
+2025-07-12 08:32:59,582 - app - INFO - Created new query with ID: 94532671-59e1-4d21-8208-b449797db381
+2025-07-12 10:06:37,160 - app - INFO - Received request to delete chat ID: 3a26edc0-3746-4568-88ac-63b4641723d6
+2025-07-12 10:06:37,178 - app - INFO - Successfully deleted chat ID: 3a26edc0-3746-4568-88ac-63b4641723d6
+2025-07-12 10:06:40,226 - app - INFO - Received request to delete chat ID: 7de4a776-6f56-47c2-bcb9-55b4190ac888
+2025-07-12 10:06:40,236 - app - INFO - Successfully deleted chat ID: 7de4a776-6f56-47c2-bcb9-55b4190ac888
+2025-07-12 10:11:22,613 - app - INFO - Received request to delete chat ID: 7b175086-e6ac-4451-9d30-0f31386aff68
+2025-07-12 10:11:22,623 - app - INFO - Successfully deleted chat ID: 7b175086-e6ac-4451-9d30-0f31386aff68
+2025-07-12 10:13:38,309 - app - INFO - Logging out user: ilham
+2025-07-12 10:13:38,309 - app - INFO - User logged out successfully
+2025-07-12 10:30:09,169 - app - INFO - Received request to create new query
+2025-07-12 10:30:09,182 - app - INFO - Created new query with ID: 387b2466-0c46-4cb7-80a0-3561bea58ce1
+2025-07-12 10:30:42,899 - app - ERROR - Empty response generated despite having content
+2025-07-12 10:31:34,008 - app - INFO - Logging out user: ilham
+2025-07-12 10:31:34,008 - app - INFO - User logged out successfully
+2025-07-12 10:31:37,270 - app - INFO - Received request to delete chat ID: 387b2466-0c46-4cb7-80a0-3561bea58ce1
+2025-07-12 10:31:37,280 - app - INFO - Successfully deleted chat ID: 387b2466-0c46-4cb7-80a0-3561bea58ce1
+2025-07-12 10:31:50,374 - app - INFO - Received request to create new query
+2025-07-12 10:31:50,384 - app - INFO - Created new query with ID: f0b0f373-46ec-4bad-bd69-f084e1aeaef3
+2025-07-12 10:31:56,637 - app - INFO - Received request to delete chat ID: 94532671-59e1-4d21-8208-b449797db381
+2025-07-12 10:31:56,647 - app - INFO - Successfully deleted chat ID: 94532671-59e1-4d21-8208-b449797db381
+2025-07-12 10:36:01,947 - app - INFO - Received request to create new query
+2025-07-12 10:36:01,955 - app - INFO - Created new query with ID: 955c7523-bee0-4d81-b4bf-67fde1d3c758
+2025-07-12 10:37:14,192 - app - ERROR - Empty response generated despite having content
+2025-07-12 10:37:32,416 - app - ERROR - Empty response generated despite having content
+2025-07-12 10:37:58,157 - app - ERROR - Empty response generated despite having content
+2025-07-12 10:40:49,549 - app - ERROR - Empty response generated despite having content
+2025-07-12 10:41:10,129 - app - ERROR - Empty response generated despite having content
+2025-07-12 10:42:56,646 - app - ERROR - File not found: /home/administrator/document-iq/extracted_files/No file available (resolved from No file available)
+2025-07-12 10:42:56,649 - app - ERROR - Extract folder contents: ['1', '2', 'anonymous']
+2025-07-12 10:44:21,031 - app - INFO - Received request to delete chat ID: 955c7523-bee0-4d81-b4bf-67fde1d3c758
+2025-07-12 10:44:21,041 - app - INFO - Successfully deleted chat ID: 955c7523-bee0-4d81-b4bf-67fde1d3c758
+2025-07-12 11:01:04,981 - app - INFO - Starting application on port 8000
+2025-07-12 12:50:57,531 - app - INFO - Starting application on port 8000
+2025-07-12 13:06:37,931 - app - INFO - Starting application on port 8000
+2025-07-12 13:53:00,018 - app - INFO - Starting application on port 8000
+2025-07-12 13:53:16,086 - app - INFO - Logging out user: ilham
+2025-07-12 13:53:16,086 - app - INFO - User logged out successfully
+2025-07-12 13:56:33,456 - app - INFO - Starting application on port 8000
+2025-07-12 13:59:21,445 - app - ERROR - Failed to process Hashnate_Team_Skillset.pdf.zip: name 'ThreadPoolExecutor' is not defined
+2025-07-12 13:59:35,920 - app - ERROR - Failed to process Invoice_1.pdf: name 'ThreadPoolExecutor' is not defined
+2025-07-12 14:01:50,758 - app - ERROR - Failed to process Hashnate_Team_Skillset.pdf.zip: name 'ThreadPoolExecutor' is not defined
+2025-07-12 14:03:33,296 - app - INFO - Starting application on port 8000
+2025-07-12 14:03:50,581 - app - ERROR - Failed to process Hashnate_Team_Skillset.pdf.zip: name 'as_completed' is not defined
+2025-07-12 14:04:52,977 - app - INFO - Starting application on port 8000
+2025-07-12 14:05:09,753 - app - ERROR - Failed to process Hashnate Team Skillset.pdf: Working outside of application context.
+
+This typically means that you attempted to use functionality that needed
+the current application. To solve this, set up an application context
+with app.app_context(). See the documentation for more information.
+2025-07-12 14:20:34,296 - app - INFO - Starting application on port 8000
+2025-07-12 14:20:48,577 - app - ERROR - Failed to process Hashnate Team Skillset.pdf: DocumentProcessor.process_document() got an unexpected keyword argument 'user_id'
+2025-07-12 14:26:20,441 - app - INFO - Starting application on port 8000
+2025-07-12 14:26:56,562 - app - ERROR - Failed to process Hashnate Team Skillset.pdf: Working outside of application context.
+
+This typically means that you attempted to use functionality that needed
+the current application. To solve this, set up an application context
+with app.app_context(). See the documentation for more information.
+2025-07-12 14:29:22,951 - app - INFO - Starting application on port 8000
+2025-07-12 14:29:37,390 - app - ERROR - Upload error: 'DocumentProcessor' object has no attribute 'load_vector_store'
+2025-07-12 14:31:02,646 - app - INFO - Starting application on port 8000
+2025-07-12 14:31:14,191 - app - ERROR - Failed to process Hashnate_Team_Skillset.pdf.zip: 'DocumentProcessor' object has no attribute '_estimate_pages'
+2025-07-12 14:33:23,861 - app - INFO - Starting application on port 8000
+2025-07-12 14:33:47,761 - app - INFO - Received request to create new query
+2025-07-12 14:33:47,773 - app - INFO - Created new query with ID: a549842f-141d-44c0-8a56-799a432cf16b
+2025-07-12 14:34:39,239 - app - INFO - Starting application on port 8000
+2025-07-12 14:34:53,763 - app - INFO - Received request to create new query
+2025-07-12 14:34:53,771 - app - INFO - Created new query with ID: 0f006f11-3775-4071-98fd-c3410e17b18e
+2025-07-12 14:34:54,846 - app - ERROR - Error in chat: 415 Unsupported Media Type: Did not attempt to load JSON data because the request Content-Type was not 'application/json'.
+2025-07-12 14:42:01,240 - app - INFO - Starting application on port 8000
+2025-07-12 14:42:51,748 - app - INFO - Starting application on port 8000
+2025-07-12 14:48:57,931 - app - INFO - Starting application on port 8000
+2025-07-12 14:49:26,065 - app - INFO - Starting application on port 8000
+2025-07-12 14:50:27,095 - app - INFO - Logging out user: ilham
+2025-07-12 14:50:27,096 - app - INFO - User logged out successfully
+2025-07-12 14:51:11,665 - app - INFO - Starting application on port 8000
+2025-07-12 14:51:32,960 - app - INFO - Starting application on port 8000
+2025-07-12 14:52:28,831 - app - INFO - Starting application on port 8000
+2025-07-12 14:53:28,222 - app - INFO - Starting application on port 8000
+2025-07-12 14:56:08,725 - app - INFO - Logging out user: ilham
+2025-07-12 14:56:08,725 - app - INFO - User logged out successfully
+2025-07-12 14:57:57,698 - app - INFO - Starting application on port 8000
+2025-07-12 14:58:10,499 - app - INFO - Received request to create new query
+2025-07-12 14:58:10,513 - app - INFO - Created new query with ID: c89d427a-a267-48ec-bbe9-e4f5ee6a8346
+2025-07-12 14:58:11,097 - app - ERROR - Error in chat: 415 Unsupported Media Type: Did not attempt to load JSON data because the request Content-Type was not 'application/json'.
+2025-07-12 14:58:39,547 - app - ERROR - DOCX extraction failed for /home/administrator/document-iq/extracted_files/1/PanvelIQ_-_Project_Plan.docx: 'Paragraph' object has no attribute 'tables'
+2025-07-12 14:58:40,167 - app - INFO - Received request to create new query
+2025-07-12 14:58:40,177 - app - INFO - Created new query with ID: 4016cd9b-414a-4b5f-b152-85a52972e027
+2025-07-12 14:58:40,715 - app - ERROR - Error in chat: 415 Unsupported Media Type: Did not attempt to load JSON data because the request Content-Type was not 'application/json'.
+2025-07-12 16:06:28,696 - app - INFO - Received request to create new query
+2025-07-12 16:06:28,709 - app - INFO - Created new query with ID: a3236ade-ff67-466b-a850-83978525c6d8
+2025-07-12 16:06:29,381 - app - ERROR - Error in chat: 415 Unsupported Media Type: Did not attempt to load JSON data because the request Content-Type was not 'application/json'.
+2025-07-12 16:17:55,463 - app - INFO - Starting application on port 8000
+2025-07-12 16:34:58,681 - app - INFO - Starting application on port 8000
+2025-07-12 16:36:51,922 - app - INFO - Received request to create new query
+2025-07-12 16:36:51,935 - app - INFO - Created new query with ID: f88a670f-10b7-461f-ac81-2ba03e780e15
+2025-07-12 16:37:59,369 - app - INFO - Starting application on port 8000
+2025-07-12 16:38:17,977 - app - INFO - Received request to create new query
+2025-07-12 16:38:17,991 - app - INFO - Created new query with ID: 70452f37-cb3c-48cf-8b51-812d35418ffd
+2025-07-12 16:39:10,092 - app - INFO - Received request to create new query
+2025-07-12 16:39:10,102 - app - INFO - Created new query with ID: d98d8fb2-7e67-47a2-a8ff-a8395fec249b
+2025-07-12 16:51:05,068 - app - INFO - Starting application on port 8000
+2025-07-12 16:51:20,886 - app - INFO - Received request to create new query
+2025-07-12 16:51:20,900 - app - INFO - Created new query with ID: d8b890b9-159a-4b97-9097-50aad53040bf
+2025-07-12 16:59:56,290 - app - INFO - Starting application on port 8000
+2025-07-12 17:00:11,268 - app - INFO - Received request to create new query
+2025-07-12 17:00:11,281 - app - INFO - Created new query with ID: f8545639-c15b-4629-9f9d-983f260f995a
+2025-07-12 17:07:53,395 - app - INFO - Starting application on port 8000
+2025-07-12 17:08:16,793 - app - INFO - Received request to create new query
+2025-07-12 17:08:16,806 - app - INFO - Created new query with ID: c1838ff0-656f-41fc-aeb7-cc6d3dee4657
+2025-07-12 17:12:55,418 - app - INFO - Received request to create new query
+2025-07-12 17:12:55,427 - app - INFO - Created new query with ID: c6b54c76-d7fc-451a-b165-0a16ced1bca7
+2025-07-12 17:17:30,595 - app - INFO - Received request to create new query
+2025-07-12 17:17:30,604 - app - INFO - Created new query with ID: d4c9f61f-0eb4-49b5-a1aa-ebbb6190b0bd
+2025-07-12 17:23:00,723 - app - INFO - Starting application on port 8000
+2025-07-12 17:23:16,605 - app - INFO - Received request to create new query
+2025-07-12 17:23:16,619 - app - INFO - Successfully created new chat with ID: c2216f3d-ea90-49af-8629-d9a535231149
+2025-07-12 17:24:33,965 - app - INFO - Logging out user: ilham
+2025-07-12 17:24:33,965 - app - INFO - User logged out successfully
+2025-07-12 17:25:02,172 - app - INFO - Received request to create new query
+2025-07-12 17:25:02,181 - app - INFO - Successfully created new chat with ID: 9696d38a-3158-41de-b977-86087f6f7cbd
+2025-07-12 17:27:31,567 - app - INFO - Starting application on port 8000
+2025-07-12 17:27:47,603 - app - INFO - Received request to create new query
+2025-07-12 17:27:47,616 - app - INFO - Created new query with ID: 9854f719-b746-4677-a235-46e434e0dd09
+2025-07-12 17:27:48,237 - app - ERROR - Error in chat: 415 Unsupported Media Type: Did not attempt to load JSON data because the request Content-Type was not 'application/json'.
+2025-07-12 17:31:00,140 - app - INFO - Starting application on port 8000
+2025-07-12 17:32:37,671 - app - ERROR - DOCX extraction failed for /home/administrator/document-iq/extracted_files/1/Tender Bulletin 01 13.02.2025/1. Response to TB 01 - GT25100700.docx: 'Paragraph' object has no attribute 'tables'
+2025-07-12 17:32:43,050 - app - INFO - Received request to create new query
+2025-07-12 17:32:43,119 - app - INFO - Created new query with ID: 17d2fecf-ee82-4ba0-9c85-ac44743c1da5
+2025-07-12 17:32:44,043 - app - ERROR - Error in chat: 415 Unsupported Media Type: Did not attempt to load JSON data because the request Content-Type was not 'application/json'.
+2025-07-12 17:40:40,129 - app - INFO - Starting application on port 8000
+2025-07-12 17:41:02,850 - app - ERROR - Upload error: 'DocumentProcessor' object has no attribute 'load_vector_store'
+2025-07-12 17:46:28,465 - app - ERROR - Upload error: 'DocumentProcessor' object has no attribute 'load_vector_store'
+2025-07-12 17:48:05,420 - app - INFO - Starting application on port 8000
+2025-07-12 17:48:19,725 - app - INFO - Created new vector store
+2025-07-12 17:48:19,726 - app - INFO - Saved vector store with 0 vectors
+2025-07-12 17:48:20,628 - app - INFO - Received request to create new query
+2025-07-12 17:48:20,643 - app - INFO - Created new query with ID: 7bdf7005-e990-4161-bd91-878c7ebbd527
+2025-07-12 17:48:21,599 - app - ERROR - Error in chat: 415 Unsupported Media Type: Did not attempt to load JSON data because the request Content-Type was not 'application/json'.
+2025-07-12 17:54:40,730 - app - INFO - Loaded existing vector store with 0 vectors
+2025-07-12 17:54:40,731 - app - INFO - Saved vector store with 0 vectors
+2025-07-12 17:54:42,350 - app - INFO - Received request to create new query
+2025-07-12 17:54:42,360 - app - INFO - Created new query with ID: d555560b-abb7-4235-9507-cb50f81406d8
+2025-07-12 17:54:43,426 - app - ERROR - Error in chat: 415 Unsupported Media Type: Did not attempt to load JSON data because the request Content-Type was not 'application/json'.
+2025-07-12 17:55:29,411 - app - ERROR - Error in chat: 415 Unsupported Media Type: Did not attempt to load JSON data because the request Content-Type was not 'application/json'.
+2025-07-12 17:59:52,048 - app - INFO - Starting application on port 8000
+2025-07-12 18:00:17,204 - app - INFO - Loaded existing vector store with 0 vectors
+2025-07-12 18:00:17,205 - app - INFO - Saved vector store with 0 vectors
+2025-07-12 18:00:17,837 - app - INFO - Received request to create new query
+2025-07-12 18:00:17,852 - app - INFO - Created new query with ID: 75c7efed-1d6e-4288-b3f8-656e51a7ce32
+2025-07-12 18:00:18,458 - app - ERROR - Exception on /chat/75c7efed-1d6e-4288-b3f8-656e51a7ce32 [GET]
+Traceback (most recent call last):
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1486, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1484, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1469, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask_login/utils.py", line 290, in decorated_view
+    return current_app.ensure_sync(func)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/app.py", line 1685, in chat
+    return render_template(
+           ^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/templating.py", line 151, in render_template
+    return _render(app, template, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/templating.py", line 132, in _render
+    rv = template.render(context)
+         ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/jinja2/environment.py", line 1295, in render
+    self.environment.handle_exception()
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/home/administrator/document-iq/templates/chat.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "/home/administrator/document-iq/templates/base.html", line 99, in top-level template code
+    {% block content %}{% endblock %}
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/templates/chat.html", line 10, in block 'content'
+    {% for id, chat in chats.items() %}
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/jinja2/environment.py", line 490, in getattr
+    return getattr(obj, attribute)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+jinja2.exceptions.UndefinedError: 'chats' is undefined
+2025-07-12 18:06:02,001 - app - INFO - Starting application on port 8000
+2025-07-12 18:06:09,330 - app - ERROR - Exception on /chat/75c7efed-1d6e-4288-b3f8-656e51a7ce32 [GET]
+Traceback (most recent call last):
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1486, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1484, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1469, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask_login/utils.py", line 290, in decorated_view
+    return current_app.ensure_sync(func)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/app.py", line 1696, in chat
+    uploaded_files=get_uploaded_files(current_user.id)  # You'll need to implement this
+                   ^^^^^^^^^^^^^^^^^^
+NameError: name 'get_uploaded_files' is not defined
+2025-07-12 18:06:17,841 - app - ERROR - Exception on /chat/75c7efed-1d6e-4288-b3f8-656e51a7ce32 [GET]
+Traceback (most recent call last):
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1486, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1484, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1469, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask_login/utils.py", line 290, in decorated_view
+    return current_app.ensure_sync(func)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/app.py", line 1696, in chat
+    uploaded_files=get_uploaded_files(current_user.id)  # You'll need to implement this
+                   ^^^^^^^^^^^^^^^^^^
+NameError: name 'get_uploaded_files' is not defined
+2025-07-12 18:10:45,296 - app - INFO - Starting application on port 8000
+2025-07-12 18:11:09,319 - app - INFO - Loaded existing vector store with 0 vectors
+2025-07-12 18:11:09,320 - app - INFO - Saved vector store with 0 vectors
+2025-07-12 18:11:10,043 - app - INFO - Received request to create new query
+2025-07-12 18:11:10,058 - app - INFO - Created new query with ID: 07ca22fe-ad81-4d5b-ac94-22ea341816c0
+2025-07-12 18:11:10,704 - app - ERROR - Exception on /chat/07ca22fe-ad81-4d5b-ac94-22ea341816c0 [GET]
+Traceback (most recent call last):
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1486, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1484, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1469, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask_login/utils.py", line 290, in decorated_view
+    return current_app.ensure_sync(func)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/app.py", line 1690, in chat
+    return render_template(
+           ^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/templating.py", line 151, in render_template
+    return _render(app, template, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/templating.py", line 132, in _render
+    rv = template.render(context)
+         ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/jinja2/environment.py", line 1295, in render
+    self.environment.handle_exception()
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/home/administrator/document-iq/templates/chat.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "/home/administrator/document-iq/templates/base.html", line 99, in top-level template code
+    {% block content %}{% endblock %}
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/templates/chat.html", line 27, in block 'content'
+    {% for message in conversation.messages %}
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/jinja2/environment.py", line 490, in getattr
+    return getattr(obj, attribute)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+jinja2.exceptions.UndefinedError: 'conversation' is undefined
+2025-07-12 18:13:08,846 - app - INFO - Starting application on port 8000
+2025-07-12 18:16:59,288 - app - INFO - Starting application on port 8000
+2025-07-12 18:17:10,774 - app - INFO - Loaded existing vector store with 0 vectors
+2025-07-12 18:17:10,774 - app - INFO - Saved vector store with 0 vectors
+2025-07-12 18:17:11,368 - app - INFO - Received request to create new query
+2025-07-12 18:17:11,677 - app - INFO - Created new query with ID: 8dab2912-d9bd-44be-b73d-88eb658d9282
+2025-07-12 18:17:12,554 - app - ERROR - Exception on /chat/8dab2912-d9bd-44be-b73d-88eb658d9282 [GET]
+Traceback (most recent call last):
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1486, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1484, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1469, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask_login/utils.py", line 290, in decorated_view
+    return current_app.ensure_sync(func)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/app.py", line 1690, in chat
+    return render_template(
+           ^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/templating.py", line 150, in render_template
+    template = app.jinja_env.get_or_select_template(template_name_or_list)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/jinja2/environment.py", line 1087, in get_or_select_template
+    return self.get_template(template_name_or_list, parent, globals)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/jinja2/environment.py", line 1016, in get_template
+    return self._load_template(name, globals)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/jinja2/environment.py", line 975, in _load_template
+    template = self.loader.load(self, name, self.make_globals(globals))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/jinja2/loaders.py", line 138, in load
+    code = environment.compile(source, name, filename)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/jinja2/environment.py", line 771, in compile
+    self.handle_exception(source=source_hint)
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/home/administrator/document-iq/templates/chat.html", line 60, in template
+    <span>{{ source|basename }}</span>
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+jinja2.exceptions.TemplateAssertionError: No filter named 'basename'.
+2025-07-12 18:42:18,895 - app - INFO - Starting application on port 8000
+2025-07-12 18:42:26,407 - app - ERROR - Exception on /chat/8dab2912-d9bd-44be-b73d-88eb658d9282 [GET]
+Traceback (most recent call last):
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1486, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1484, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1469, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask_login/utils.py", line 290, in decorated_view
+    return current_app.ensure_sync(func)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/app.py", line 1690, in chat
+    return render_template(
+           ^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/templating.py", line 151, in render_template
+    return _render(app, template, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/templating.py", line 132, in _render
+    rv = template.render(context)
+         ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/jinja2/environment.py", line 1295, in render
+    self.environment.handle_exception()
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/home/administrator/document-iq/templates/chat.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "/home/administrator/document-iq/templates/base.html", line 99, in top-level template code
+    {% block content %}{% endblock %}
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/templates/chat.html", line 27, in block 'content'
+    {% for message in conversation.messages|default([]) %}
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/jinja2/environment.py", line 490, in getattr
+    return getattr(obj, attribute)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+jinja2.exceptions.UndefinedError: 'conversation' is undefined
+2025-07-12 18:42:39,611 - app - INFO - Loaded existing vector store with 0 vectors
+2025-07-12 18:42:39,611 - app - INFO - Saved vector store with 0 vectors
+2025-07-12 18:42:41,463 - app - INFO - Received request to create new query
+2025-07-12 18:42:41,476 - app - INFO - Created new query with ID: 3d32be88-d5ce-4979-898b-4e79e39d5aa1
+2025-07-12 18:42:44,061 - app - ERROR - Exception on /chat/3d32be88-d5ce-4979-898b-4e79e39d5aa1 [GET]
+Traceback (most recent call last):
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1486, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1484, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1469, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask_login/utils.py", line 290, in decorated_view
+    return current_app.ensure_sync(func)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/app.py", line 1690, in chat
+    return render_template(
+           ^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/templating.py", line 151, in render_template
+    return _render(app, template, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/templating.py", line 132, in _render
+    rv = template.render(context)
+         ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/jinja2/environment.py", line 1295, in render
+    self.environment.handle_exception()
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/home/administrator/document-iq/templates/chat.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "/home/administrator/document-iq/templates/base.html", line 99, in top-level template code
+    {% block content %}{% endblock %}
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/templates/chat.html", line 27, in block 'content'
+    {% for message in conversation.messages|default([]) %}
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/jinja2/environment.py", line 490, in getattr
+    return getattr(obj, attribute)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+jinja2.exceptions.UndefinedError: 'conversation' is undefined
+2025-07-12 18:50:32,425 - app - INFO - Starting application on port 8000
+2025-07-12 18:50:58,887 - app - INFO - Loaded existing vector store with 0 vectors
+2025-07-12 18:50:58,888 - app - INFO - Saved vector store with 0 vectors
+2025-07-12 18:50:59,653 - app - INFO - Received request to create new query
+2025-07-12 18:50:59,667 - app - INFO - Created new query with ID: 501544d0-e94e-459c-94fe-40af563bb2d1
+2025-07-12 18:51:16,523 - app - INFO - Loaded existing vector store with 0 vectors
+2025-07-12 18:51:16,523 - app - ERROR - Error in chat: 'DocumentProcessor' object has no attribute 'search_documents'
+2025-07-12 18:52:00,123 - app - INFO - Received request to delete chat ID: 3d32be88-d5ce-4979-898b-4e79e39d5aa1
+2025-07-12 18:52:00,135 - app - INFO - Successfully deleted chat ID: 3d32be88-d5ce-4979-898b-4e79e39d5aa1
+2025-07-12 18:52:03,670 - app - INFO - Received request to delete chat ID: 8dab2912-d9bd-44be-b73d-88eb658d9282
+2025-07-12 18:52:03,680 - app - INFO - Successfully deleted chat ID: 8dab2912-d9bd-44be-b73d-88eb658d9282
+2025-07-12 18:52:06,911 - app - INFO - Received request to delete chat ID: 75c7efed-1d6e-4288-b3f8-656e51a7ce32
+2025-07-12 18:52:06,921 - app - INFO - Successfully deleted chat ID: 75c7efed-1d6e-4288-b3f8-656e51a7ce32
+2025-07-12 18:52:09,850 - app - INFO - Received request to delete chat ID: 07ca22fe-ad81-4d5b-ac94-22ea341816c0
+2025-07-12 18:52:09,860 - app - INFO - Successfully deleted chat ID: 07ca22fe-ad81-4d5b-ac94-22ea341816c0
+2025-07-12 18:52:14,633 - app - INFO - Received request to delete chat ID: a549842f-141d-44c0-8a56-799a432cf16b
+2025-07-12 18:52:14,642 - app - INFO - Successfully deleted chat ID: a549842f-141d-44c0-8a56-799a432cf16b
+2025-07-12 18:52:17,531 - app - INFO - Received request to delete chat ID: d8b890b9-159a-4b97-9097-50aad53040bf
+2025-07-12 18:52:17,541 - app - INFO - Successfully deleted chat ID: d8b890b9-159a-4b97-9097-50aad53040bf
+2025-07-12 18:53:58,452 - app - INFO - Received request to delete chat ID: 9854f719-b746-4677-a235-46e434e0dd09
+2025-07-12 18:53:58,463 - app - INFO - Successfully deleted chat ID: 9854f719-b746-4677-a235-46e434e0dd09
+2025-07-12 18:54:02,171 - app - INFO - Received request to delete chat ID: d555560b-abb7-4235-9507-cb50f81406d8
+2025-07-12 18:54:02,181 - app - INFO - Successfully deleted chat ID: d555560b-abb7-4235-9507-cb50f81406d8
+2025-07-12 18:54:05,012 - app - INFO - Received request to delete chat ID: 7bdf7005-e990-4161-bd91-878c7ebbd527
+2025-07-12 18:54:05,021 - app - INFO - Successfully deleted chat ID: 7bdf7005-e990-4161-bd91-878c7ebbd527
+2025-07-12 18:54:08,250 - app - INFO - Received request to delete chat ID: 17d2fecf-ee82-4ba0-9c85-ac44743c1da5
+2025-07-12 18:54:08,260 - app - INFO - Successfully deleted chat ID: 17d2fecf-ee82-4ba0-9c85-ac44743c1da5
+2025-07-12 18:54:11,370 - app - INFO - Received request to delete chat ID: c2216f3d-ea90-49af-8629-d9a535231149
+2025-07-12 18:54:11,380 - app - INFO - Successfully deleted chat ID: c2216f3d-ea90-49af-8629-d9a535231149
+2025-07-12 18:54:14,211 - app - INFO - Received request to delete chat ID: c6b54c76-d7fc-451a-b165-0a16ced1bca7
+2025-07-12 18:54:14,225 - app - INFO - Successfully deleted chat ID: c6b54c76-d7fc-451a-b165-0a16ced1bca7
+2025-07-12 18:54:18,751 - app - INFO - Received request to delete chat ID: d4c9f61f-0eb4-49b5-a1aa-ebbb6190b0bd
+2025-07-12 18:54:18,760 - app - INFO - Successfully deleted chat ID: d4c9f61f-0eb4-49b5-a1aa-ebbb6190b0bd
+2025-07-12 18:58:30,012 - app - INFO - Received request to delete chat ID: f8545639-c15b-4629-9f9d-983f260f995a
+2025-07-12 18:58:30,023 - app - INFO - Successfully deleted chat ID: f8545639-c15b-4629-9f9d-983f260f995a
+2025-07-12 18:58:32,852 - app - INFO - Received request to delete chat ID: c1838ff0-656f-41fc-aeb7-cc6d3dee4657
+2025-07-12 18:58:32,862 - app - INFO - Successfully deleted chat ID: c1838ff0-656f-41fc-aeb7-cc6d3dee4657
+2025-07-12 18:58:38,621 - app - INFO - Received request to delete chat ID: d98d8fb2-7e67-47a2-a8ff-a8395fec249b
+2025-07-12 18:58:38,631 - app - INFO - Successfully deleted chat ID: d98d8fb2-7e67-47a2-a8ff-a8395fec249b
+2025-07-12 18:58:42,482 - app - INFO - Received request to delete chat ID: 70452f37-cb3c-48cf-8b51-812d35418ffd
+2025-07-12 18:58:42,492 - app - INFO - Successfully deleted chat ID: 70452f37-cb3c-48cf-8b51-812d35418ffd
+2025-07-12 19:03:05,071 - app - INFO - Received request to delete chat ID: 0f006f11-3775-4071-98fd-c3410e17b18e
+2025-07-12 19:03:05,082 - app - INFO - Successfully deleted chat ID: 0f006f11-3775-4071-98fd-c3410e17b18e
+2025-07-12 19:03:09,456 - app - INFO - Received request to delete chat ID: c89d427a-a267-48ec-bbe9-e4f5ee6a8346
+2025-07-12 19:03:09,465 - app - INFO - Successfully deleted chat ID: c89d427a-a267-48ec-bbe9-e4f5ee6a8346
+2025-07-12 19:03:12,456 - app - INFO - Received request to delete chat ID: 9696d38a-3158-41de-b977-86087f6f7cbd
+2025-07-12 19:03:12,466 - app - INFO - Successfully deleted chat ID: 9696d38a-3158-41de-b977-86087f6f7cbd
+2025-07-12 19:03:16,941 - app - INFO - Received request to delete chat ID: a3236ade-ff67-466b-a850-83978525c6d8
+2025-07-12 19:03:16,951 - app - INFO - Successfully deleted chat ID: a3236ade-ff67-466b-a850-83978525c6d8
+2025-07-12 19:03:20,576 - app - INFO - Received request to delete chat ID: 4016cd9b-414a-4b5f-b152-85a52972e027
+2025-07-12 19:03:20,586 - app - INFO - Successfully deleted chat ID: 4016cd9b-414a-4b5f-b152-85a52972e027
+2025-07-12 19:03:23,271 - app - INFO - Received request to delete chat ID: f88a670f-10b7-461f-ac81-2ba03e780e15
+2025-07-12 19:03:23,281 - app - INFO - Successfully deleted chat ID: f88a670f-10b7-461f-ac81-2ba03e780e15
+2025-07-12 19:03:57,934 - app - INFO - Loaded existing vector store with 0 vectors
+2025-07-12 19:03:57,934 - app - ERROR - Error in chat: 'DocumentProcessor' object has no attribute 'search_documents'
+2025-07-12 19:15:34,820 - app - INFO - Starting application on port 8000
+2025-07-12 19:15:49,680 - app - INFO - Loaded existing vector store with 0 vectors
+2025-07-12 19:15:49,681 - app - INFO - Saved vector store with 0 vectors
+2025-07-12 19:15:50,404 - app - INFO - Received request to create new query
+2025-07-12 19:15:50,419 - app - INFO - Created new query with ID: 68f6c3ab-a166-463a-8bc7-0b0de781d0e1
+2025-07-12 19:16:03,034 - app - INFO - Loaded existing vector store with 0 vectors
+2025-07-12 19:17:38,764 - app - INFO - Loaded existing vector store with 0 vectors
+2025-07-12 19:20:10,859 - app - INFO - Loaded existing vector store with 0 vectors
+2025-07-12 19:20:10,913 - app - ERROR - DOCX extraction failed for /home/administrator/document-iq/extracted_files/1/PanvelIQ_-_Project_Plan.docx: 'Paragraph' object has no attribute 'tables'
+2025-07-12 19:20:10,913 - app - ERROR - Failed to extract text from /home/administrator/document-iq/extracted_files/1/PanvelIQ_-_Project_Plan.docx
+2025-07-12 19:20:10,914 - app - INFO - Saved vector store with 0 vectors
+2025-07-12 19:20:11,584 - app - INFO - Received request to create new query
+2025-07-12 19:20:11,597 - app - INFO - Created new query with ID: 6d59effd-a9d2-4d8a-9780-2614a93ab7c0
+2025-07-12 19:20:26,311 - app - INFO - Loaded existing vector store with 0 vectors
+2025-07-12 19:21:38,783 - app - INFO - Received request to delete chat ID: 68f6c3ab-a166-463a-8bc7-0b0de781d0e1
+2025-07-12 19:21:38,795 - app - INFO - Successfully deleted chat ID: 68f6c3ab-a166-463a-8bc7-0b0de781d0e1
+2025-07-12 19:21:42,540 - app - INFO - Received request to delete chat ID: 501544d0-e94e-459c-94fe-40af563bb2d1
+2025-07-12 19:21:42,550 - app - INFO - Successfully deleted chat ID: 501544d0-e94e-459c-94fe-40af563bb2d1
+2025-07-12 19:23:06,973 - app - INFO - Loaded existing vector store with 0 vectors
+2025-07-12 19:23:07,289 - app - INFO - Processed document /home/administrator/document-iq/extracted_files/1/FORM_18_-DAVIS.pdf into 2 chunks
+2025-07-12 19:23:07,290 - app - INFO - Saved vector store with 2 vectors
+2025-07-12 19:23:07,983 - app - INFO - Received request to create new query
+2025-07-12 19:23:07,993 - app - INFO - Created new query with ID: 182ada11-84fe-4e84-96ff-7d343ba924a7
+2025-07-12 19:23:18,954 - app - INFO - Loaded existing vector store with 2 vectors
+2025-07-12 19:24:39,856 - app - INFO - Loaded existing vector store with 2 vectors
+2025-07-12 19:25:06,045 - app - INFO - Loaded existing vector store with 2 vectors
+2025-07-12 19:27:47,247 - app - INFO - Starting application on port 8000
+2025-07-12 19:28:31,077 - app - INFO - Loaded existing vector store with 2 vectors
+2025-07-12 19:30:46,735 - app - INFO - Loaded existing vector store with 2 vectors
+2025-07-12 19:30:58,779 - app - INFO - Loaded existing vector store with 2 vectors
+2025-07-12 19:35:02,858 - app - INFO - Starting application on port 8000
+2025-07-12 19:35:19,282 - app - INFO - Loaded existing vector store with 2 vectors
+2025-07-12 19:35:19,283 - app - INFO - Saved vector store with 2 vectors
+2025-07-12 19:35:19,954 - app - INFO - Received request to create new query
+2025-07-12 19:35:19,967 - app - INFO - Created new query with ID: 1841f5a8-eccd-43a5-a16f-bc6cfadf4553
+2025-07-12 19:36:54,931 - app - INFO - Starting application on port 8000
+2025-07-12 19:37:08,553 - app - INFO - Loaded existing vector store with 2 vectors
+2025-07-12 19:37:08,553 - app - INFO - Saved vector store with 2 vectors
+2025-07-12 19:37:09,413 - app - INFO - Received request to create new query
+2025-07-12 19:37:09,426 - app - INFO - Created new query with ID: 580719b5-d432-4e3f-bca5-828040f48f6e
+2025-07-12 19:37:39,883 - app - INFO - Starting application on port 8000
+2025-07-12 19:37:53,580 - app - INFO - Loaded existing vector store with 2 vectors
+2025-07-12 19:37:53,580 - app - INFO - Saved vector store with 2 vectors
+2025-07-12 19:37:54,373 - app - INFO - Received request to create new query
+2025-07-12 19:37:54,386 - app - INFO - Created new query with ID: 8b92c34b-4098-4f8d-b7ba-7b1254250de5
+2025-07-12 19:38:33,921 - app - INFO - Starting application on port 8000
+2025-07-12 19:39:51,362 - app - INFO - Loaded existing vector store with 2 vectors
+2025-07-12 19:39:51,751 - app - INFO - Processed document /home/administrator/document-iq/extracted_files/1/Itinerary.pdf into 3 chunks
+2025-07-12 19:39:51,751 - app - INFO - Saved vector store with 5 vectors
+2025-07-12 19:39:52,469 - app - INFO - Received request to create new query
+2025-07-12 19:39:52,481 - app - INFO - Created new query with ID: 265d9d64-3902-43ad-9416-09b3c1b15ec5
+2025-07-12 19:39:59,863 - app - INFO - Loaded existing vector store with 5 vectors
+2025-07-12 19:40:30,306 - app - INFO - Loaded existing vector store with 5 vectors
+2025-07-13 00:30:31,248 - app - INFO - Starting application on port 8000
+2025-07-13 00:32:53,808 - app - INFO - Loaded existing vector store with 5 vectors
+2025-07-13 00:32:53,809 - app - INFO - Saved vector store with 5 vectors
+2025-07-13 00:32:54,925 - app - INFO - Received request to create new query
+2025-07-13 00:32:54,940 - app - INFO - Created new query with ID: 7cd2b793-7c8b-4d44-bb99-3f287c9495e2
+2025-07-13 00:34:42,836 - app - INFO - Received request to delete chat ID: 580719b5-d432-4e3f-bca5-828040f48f6e
+2025-07-13 00:34:42,848 - app - INFO - Successfully deleted chat ID: 580719b5-d432-4e3f-bca5-828040f48f6e
+2025-07-13 00:34:50,726 - app - INFO - Received request to delete chat ID: 8b92c34b-4098-4f8d-b7ba-7b1254250de5
+2025-07-13 00:34:50,737 - app - INFO - Successfully deleted chat ID: 8b92c34b-4098-4f8d-b7ba-7b1254250de5
+2025-07-13 00:34:54,395 - app - INFO - Received request to delete chat ID: 6d59effd-a9d2-4d8a-9780-2614a93ab7c0
+2025-07-13 00:34:54,405 - app - INFO - Successfully deleted chat ID: 6d59effd-a9d2-4d8a-9780-2614a93ab7c0
+2025-07-13 00:34:58,066 - app - INFO - Received request to delete chat ID: 1841f5a8-eccd-43a5-a16f-bc6cfadf4553
+2025-07-13 00:34:58,077 - app - INFO - Successfully deleted chat ID: 1841f5a8-eccd-43a5-a16f-bc6cfadf4553
+2025-07-13 00:35:01,256 - app - INFO - Received request to delete chat ID: 265d9d64-3902-43ad-9416-09b3c1b15ec5
+2025-07-13 00:35:01,265 - app - INFO - Successfully deleted chat ID: 265d9d64-3902-43ad-9416-09b3c1b15ec5
+2025-07-13 00:35:04,596 - app - INFO - Received request to delete chat ID: 182ada11-84fe-4e84-96ff-7d343ba924a7
+2025-07-13 00:35:04,610 - app - INFO - Successfully deleted chat ID: 182ada11-84fe-4e84-96ff-7d343ba924a7
+2025-07-13 00:35:11,459 - app - INFO - Loaded existing vector store with 5 vectors
+2025-07-13 01:03:20,783 - app - INFO - Starting application on port 8000
+2025-07-13 01:04:03,318 - app - INFO - Loaded existing vector store with 5 vectors
+2025-07-13 01:04:03,320 - app - INFO - Saved vector store with 5 vectors
+2025-07-13 01:04:04,192 - app - INFO - Received request to create new query
+2025-07-13 01:04:04,211 - app - INFO - Created new query with ID: 49d75e5e-476b-43a4-94cb-d51a2e61b528
+2025-07-13 01:04:04,822 - app - ERROR - Exception on /chat/49d75e5e-476b-43a4-94cb-d51a2e61b528 [GET]
+Traceback (most recent call last):
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1487, in full_dispatch_request
+    return self.finalize_request(rv)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1506, in finalize_request
+    response = self.make_response(rv)
+               ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1801, in make_response
+    raise TypeError(
+TypeError: The view function for 'chat' did not return a valid response. The function either returned None or ended without a return statement.
+2025-07-13 01:06:29,260 - app - INFO - Starting application on port 8000
+2025-07-13 01:06:54,528 - app - INFO - Loaded existing vector store with 5 vectors
+2025-07-13 01:06:54,529 - app - INFO - Saved vector store with 5 vectors
+2025-07-13 01:06:55,259 - app - INFO - Received request to create new query
+2025-07-13 01:06:55,273 - app - INFO - Created new query with ID: 0a112776-5fa3-475c-a56a-6e13dee71d25
+2025-07-13 01:07:15,754 - app - INFO - Loaded existing vector store with 5 vectors
+2025-07-13 01:08:23,318 - app - ERROR - File not found: /home/administrator/document-iq/extracted_files/Itinerary.pdf (resolved from Itinerary.pdf)
+2025-07-13 01:08:23,318 - app - ERROR - Extract folder contents: ['1', '2', 'anonymous']
+2025-07-13 01:08:29,188 - app - ERROR - File not found: /home/administrator/document-iq/extracted_files/FORM_18_-DAVIS.pdf (resolved from FORM_18_-DAVIS.pdf)
+2025-07-13 01:08:29,188 - app - ERROR - Extract folder contents: ['1', '2', 'anonymous']
+2025-07-13 01:08:43,665 - app - ERROR - File not found: /home/administrator/document-iq/extracted_files/Itinerary.pdf (resolved from Itinerary.pdf)
+2025-07-13 01:08:43,666 - app - ERROR - Extract folder contents: ['1', '2', 'anonymous']
+2025-07-13 01:09:28,269 - app - INFO - Loaded existing vector store with 5 vectors
+2025-07-13 01:10:22,650 - app - ERROR - File not found: /home/administrator/document-iq/extracted_files/FORM_18_-DAVIS.pdf (resolved from FORM_18_-DAVIS.pdf)
+2025-07-13 01:10:22,651 - app - ERROR - Extract folder contents: ['1', '2', 'anonymous']
+2025-07-13 01:10:43,229 - app - INFO - Loaded existing vector store with 5 vectors
+2025-07-13 01:11:13,458 - app - ERROR - File not found: /home/administrator/document-iq/extracted_files/FORM_18_-DAVIS.pdf (resolved from FORM_18_-DAVIS.pdf)
+2025-07-13 01:11:13,458 - app - ERROR - Extract folder contents: ['1', '2', 'anonymous']
+2025-07-13 01:11:40,177 - app - ERROR - File not found: /home/administrator/document-iq/extracted_files/FORM_18_-DAVIS.pdf (resolved from FORM_18_-DAVIS.pdf)
+2025-07-13 01:11:40,178 - app - ERROR - Extract folder contents: ['1', '2', 'anonymous']
+2025-07-13 01:11:52,137 - app - ERROR - File not found: /home/administrator/document-iq/extracted_files/FORM_18_-DAVIS.pdf (resolved from FORM_18_-DAVIS.pdf)
+2025-07-13 01:11:52,138 - app - ERROR - Extract folder contents: ['1', '2', 'anonymous']
+2025-07-13 01:30:08,096 - app - INFO - Loaded existing vector store with 5 vectors
+2025-07-13 01:31:36,064 - app - INFO - Loaded existing vector store with 5 vectors
+2025-07-13 01:32:17,381 - app - INFO - Loaded existing vector store with 5 vectors
+2025-07-13 01:32:17,636 - app - INFO - Processed document /home/administrator/document-iq/extracted_files/1/Purchase_Order_-_To_HASHNATE_CALIM_TECHNOLOGY_PANVEL_IQ_07.07.2025-Accepted.pdf into 10 chunks
+2025-07-13 01:32:17,636 - app - INFO - Saved vector store with 15 vectors
+2025-07-13 01:32:18,476 - app - INFO - Received request to create new query
+2025-07-13 01:32:18,487 - app - INFO - Created new query with ID: cdf7d716-c813-41f7-b231-576b5069c92f
+2025-07-13 01:33:17,756 - app - INFO - Loaded existing vector store with 15 vectors
+2025-07-13 01:33:45,923 - app - ERROR - File not found: /home/administrator/document-iq/extracted_files/Purchase_Order_-_To_HASHNATE_CALIM_TECHNOLOGY_PANVEL_IQ_07.07.2025-Accepted.pdf (resolved from Purchase_Order_-_To_HASHNATE_CALIM_TECHNOLOGY_PANVEL_IQ_07.07.2025-Accepted.pdf)
+2025-07-13 01:33:45,924 - app - ERROR - Extract folder contents: ['1', '2', 'anonymous']
+2025-07-13 01:34:08,152 - app - ERROR - File not found: /home/administrator/document-iq/extracted_files/Purchase_Order_-_To_HASHNATE_CALIM_TECHNOLOGY_PANVEL_IQ_07.07.2025-Accepted.pdf (resolved from Purchase_Order_-_To_HASHNATE_CALIM_TECHNOLOGY_PANVEL_IQ_07.07.2025-Accepted.pdf)
+2025-07-13 01:34:08,152 - app - ERROR - Extract folder contents: ['1', '2', 'anonymous']
+2025-07-13 01:34:11,318 - app - ERROR - File not found: /home/administrator/document-iq/extracted_files/Purchase_Order_-_To_HASHNATE_CALIM_TECHNOLOGY_PANVEL_IQ_07.07.2025-Accepted.pdf (resolved from Purchase_Order_-_To_HASHNATE_CALIM_TECHNOLOGY_PANVEL_IQ_07.07.2025-Accepted.pdf)
+2025-07-13 01:34:11,318 - app - ERROR - Extract folder contents: ['1', '2', 'anonymous']
+2025-07-13 01:34:13,989 - app - ERROR - File not found: /home/administrator/document-iq/extracted_files/Purchase_Order_-_To_HASHNATE_CALIM_TECHNOLOGY_PANVEL_IQ_07.07.2025-Accepted.pdf (resolved from Purchase_Order_-_To_HASHNATE_CALIM_TECHNOLOGY_PANVEL_IQ_07.07.2025-Accepted.pdf)
+2025-07-13 01:34:13,989 - app - ERROR - Extract folder contents: ['1', '2', 'anonymous']
+2025-07-13 01:34:16,447 - app - ERROR - File not found: /home/administrator/document-iq/extracted_files/Purchase_Order_-_To_HASHNATE_CALIM_TECHNOLOGY_PANVEL_IQ_07.07.2025-Accepted.pdf (resolved from Purchase_Order_-_To_HASHNATE_CALIM_TECHNOLOGY_PANVEL_IQ_07.07.2025-Accepted.pdf)
+2025-07-13 01:34:16,447 - app - ERROR - Extract folder contents: ['1', '2', 'anonymous']
+2025-07-13 01:34:41,054 - app - INFO - Loaded existing vector store with 15 vectors
+2025-07-13 01:38:05,767 - app - ERROR - File not found: /home/administrator/document-iq/extracted_files/Purchase_Order_-_To_HASHNATE_CALIM_TECHNOLOGY_PANVEL_IQ_07.07.2025-Accepted.pdf (resolved from Purchase_Order_-_To_HASHNATE_CALIM_TECHNOLOGY_PANVEL_IQ_07.07.2025-Accepted.pdf)
+2025-07-13 01:38:05,767 - app - ERROR - Extract folder contents: ['1', '2', 'anonymous']
+2025-07-13 01:38:10,368 - app - ERROR - File not found: /home/administrator/document-iq/extracted_files/Purchase_Order_-_To_HASHNATE_CALIM_TECHNOLOGY_PANVEL_IQ_07.07.2025-Accepted.pdf (resolved from Purchase_Order_-_To_HASHNATE_CALIM_TECHNOLOGY_PANVEL_IQ_07.07.2025-Accepted.pdf)
+2025-07-13 01:38:10,368 - app - ERROR - Extract folder contents: ['1', '2', 'anonymous']
+2025-07-13 01:47:32,034 - app - ERROR - File extraction failed: Overlapped entries: '2010 - App- A -SOW and Specifications/1020 CORP-QAL-STD-004 CORP STD FOR QTY.pdf' (possible zip bomb)
+2025-07-13 01:47:33,159 - app - INFO - Loaded existing vector store with 15 vectors
+2025-07-13 01:47:33,160 - app - INFO - Saved vector store with 15 vectors
+2025-07-13 01:47:33,933 - app - INFO - Received request to create new query
+2025-07-13 01:47:33,943 - app - INFO - Created new query with ID: 63581886-471a-4201-a547-cd4b16f3ce61
+2025-07-13 01:48:15,542 - app - INFO - Loaded existing vector store with 15 vectors
+2025-07-13 01:50:03,446 - app - INFO - Logging out user: ilham
+2025-07-13 01:50:03,446 - app - INFO - User logged out successfully
+2025-07-13 01:51:19,049 - app - INFO - Loaded existing vector store with 15 vectors
+2025-07-13 01:51:19,049 - app - INFO - Saved vector store with 15 vectors
+2025-07-13 01:51:19,762 - app - INFO - Received request to create new query
+2025-07-13 01:51:19,773 - app - INFO - Created new query with ID: 3f760d49-f03d-4e1d-beb1-06d9ecb2ceb4
+2025-07-13 01:51:46,945 - app - INFO - Loaded existing vector store with 15 vectors
+2025-07-13 01:54:03,081 - app - INFO - Logging out user: safeek
+2025-07-13 01:54:03,081 - app - INFO - User logged out successfully
+2025-07-13 01:54:32,358 - app - INFO - Loaded existing vector store with 15 vectors
+2025-07-13 01:54:32,359 - app - INFO - Saved vector store with 15 vectors
+2025-07-13 01:54:33,192 - app - INFO - Received request to create new query
+2025-07-13 01:54:33,203 - app - INFO - Created new query with ID: f93e4b5e-912a-417a-a25c-13bed7e9be99
+2025-07-13 01:54:48,799 - app - INFO - Loaded existing vector store with 15 vectors
+2025-07-13 01:55:49,931 - app - ERROR - File not found: /home/administrator/document-iq/extracted_files/Purchase_Order_-_To_HASHNATE_CALIM_TECHNOLOGY_PANVEL_IQ_07.07.2025-Accepted.pdf (resolved from Purchase_Order_-_To_HASHNATE_CALIM_TECHNOLOGY_PANVEL_IQ_07.07.2025-Accepted.pdf)
+2025-07-13 01:55:49,932 - app - ERROR - Extract folder contents: ['1', '2', 'anonymous']
+2025-07-13 01:55:52,730 - app - ERROR - File not found: /home/administrator/document-iq/extracted_files/Purchase_Order_-_To_HASHNATE_CALIM_TECHNOLOGY_PANVEL_IQ_07.07.2025-Accepted.pdf (resolved from Purchase_Order_-_To_HASHNATE_CALIM_TECHNOLOGY_PANVEL_IQ_07.07.2025-Accepted.pdf)
+2025-07-13 01:55:52,731 - app - ERROR - Extract folder contents: ['1', '2', 'anonymous']
+2025-07-13 01:55:55,929 - app - ERROR - File not found: /home/administrator/document-iq/extracted_files/Purchase_Order_-_To_HASHNATE_CALIM_TECHNOLOGY_PANVEL_IQ_07.07.2025-Accepted.pdf (resolved from Purchase_Order_-_To_HASHNATE_CALIM_TECHNOLOGY_PANVEL_IQ_07.07.2025-Accepted.pdf)
+2025-07-13 01:55:55,930 - app - ERROR - Extract folder contents: ['1', '2', 'anonymous']
+2025-07-13 02:17:00,841 - app - ERROR - File not found: /home/administrator/document-iq/extracted_files/Purchase_Order_-_To_HASHNATE_CALIM_TECHNOLOGY_PANVEL_IQ_07.07.2025-Accepted.pdf (resolved from Purchase_Order_-_To_HASHNATE_CALIM_TECHNOLOGY_PANVEL_IQ_07.07.2025-Accepted.pdf)
+2025-07-13 02:17:00,842 - app - ERROR - Extract folder contents: ['1', '2', 'anonymous']
+2025-07-13 02:17:06,896 - app - INFO - Received request to delete chat ID: 0a112776-5fa3-475c-a56a-6e13dee71d25
+2025-07-13 02:17:06,908 - app - INFO - Successfully deleted chat ID: 0a112776-5fa3-475c-a56a-6e13dee71d25
+2025-07-13 02:17:10,171 - app - INFO - Received request to delete chat ID: 49d75e5e-476b-43a4-94cb-d51a2e61b528
+2025-07-13 02:17:10,181 - app - INFO - Successfully deleted chat ID: 49d75e5e-476b-43a4-94cb-d51a2e61b528
+2025-07-13 02:34:35,681 - app - INFO - Starting application on port 8000
+2025-07-13 02:35:08,162 - app - INFO - Received request to delete chat ID: f93e4b5e-912a-417a-a25c-13bed7e9be99
+2025-07-13 02:35:08,177 - app - INFO - Successfully deleted chat ID: f93e4b5e-912a-417a-a25c-13bed7e9be99
+2025-07-13 02:35:11,253 - app - INFO - Received request to delete chat ID: 63581886-471a-4201-a547-cd4b16f3ce61
+2025-07-13 02:35:11,264 - app - INFO - Successfully deleted chat ID: 63581886-471a-4201-a547-cd4b16f3ce61
+2025-07-13 02:35:15,406 - app - INFO - Received request to delete chat ID: cdf7d716-c813-41f7-b231-576b5069c92f
+2025-07-13 02:35:15,416 - app - INFO - Successfully deleted chat ID: cdf7d716-c813-41f7-b231-576b5069c92f
+2025-07-13 02:35:18,481 - app - INFO - Received request to delete chat ID: 7cd2b793-7c8b-4d44-bb99-3f287c9495e2
+2025-07-13 02:35:18,491 - app - INFO - Successfully deleted chat ID: 7cd2b793-7c8b-4d44-bb99-3f287c9495e2
+2025-07-13 02:37:01,136 - app - INFO - Loaded existing vector store with 15 vectors
+2025-07-13 02:37:01,136 - app - INFO - Saved vector store with 15 vectors
+2025-07-13 02:37:03,378 - app - INFO - Received request to create new query
+2025-07-13 02:37:03,390 - app - INFO - Created new query with ID: 2a671e75-fef3-4bd4-8729-c23729421bd5
+2025-07-13 02:37:45,486 - app - INFO - Loaded existing vector store with 15 vectors
+2025-07-13 03:46:12,212 - app - INFO - Loaded existing vector store with 15 vectors
+2025-07-13 03:46:12,213 - app - INFO - Saved vector store with 15 vectors
+2025-07-13 03:46:12,769 - app - INFO - Received request to create new query
+2025-07-13 03:46:12,779 - app - INFO - Created new query with ID: 8c06f628-b99b-4971-b203-340d1be7b340
+2025-07-13 03:46:21,962 - app - INFO - Loaded existing vector store with 15 vectors
+2025-07-13 03:50:59,953 - app - INFO - Starting application on port 8000
+2025-07-13 03:51:50,115 - app - INFO - Loaded existing vector store with 15 vectors
+2025-07-13 03:51:50,116 - app - INFO - Saved vector store with 15 vectors
+2025-07-13 03:51:50,665 - app - INFO - Received request to create new query
+2025-07-13 03:51:50,682 - app - INFO - Created new query with ID: 7bb7b577-00de-4d06-b431-cf538f77c1f6
+2025-07-13 03:51:57,196 - app - INFO - Loaded existing vector store with 15 vectors
+2025-07-13 03:54:04,762 - app - INFO - Received request to delete chat ID: 8c06f628-b99b-4971-b203-340d1be7b340
+2025-07-13 03:54:04,776 - app - INFO - Successfully deleted chat ID: 8c06f628-b99b-4971-b203-340d1be7b340
+2025-07-13 05:07:09,419 - app - INFO - Starting application on port 8000
+2025-07-13 05:07:23,559 - app - INFO - Loaded existing vector store with 15 vectors
+2025-07-13 05:07:23,560 - app - INFO - Saved vector store with 15 vectors
+2025-07-13 05:07:23,561 - app - ERROR - Upload error: Could not build url for endpoint 'new_chat'. Did you mean 'chat' instead?
+2025-07-13 05:08:34,772 - app - INFO - Starting application on port 8000
+2025-07-13 05:09:34,573 - app - INFO - Loaded existing vector store with 15 vectors
+2025-07-13 05:09:34,574 - app - INFO - Saved vector store with 15 vectors
+2025-07-13 05:09:35,170 - app - INFO - Received request to create new query
+2025-07-13 05:09:35,187 - app - INFO - Created new query with ID: 1c3bd7df-c5a8-4738-a143-5729378aeddc
+2025-07-13 05:09:58,837 - app - INFO - Starting application on port 8000
+2025-07-13 05:10:10,607 - app - INFO - Loaded existing vector store with 15 vectors
+2025-07-13 05:10:10,608 - app - INFO - Saved vector store with 15 vectors
+2025-07-13 05:10:11,159 - app - INFO - Received request to create new query
+2025-07-13 05:10:11,175 - app - INFO - Created new query with ID: 6ab4363c-9a91-4da0-9a91-080d8bd9a36e
+2025-07-13 05:10:51,147 - app - INFO - Loaded existing vector store with 15 vectors
+2025-07-13 05:10:51,147 - app - INFO - Saved vector store with 15 vectors
+2025-07-13 05:10:51,692 - app - INFO - Received request to create new query
+2025-07-13 05:10:51,702 - app - INFO - Created new query with ID: 8484fc77-1420-4e56-8fcb-1fc954146d40
+2025-07-13 05:25:09,150 - app - INFO - Starting application on port 8000
+2025-07-13 05:25:28,319 - app - INFO - Loaded existing vector store with 15 vectors
+2025-07-13 05:25:28,320 - app - INFO - Saved vector store with 15 vectors
+2025-07-13 05:25:28,855 - app - INFO - Received request to create new query
+2025-07-13 05:25:28,870 - app - INFO - Created new query with ID: 0d41c0bf-6c12-4b1b-9010-977708cac3c0
+2025-07-13 05:25:29,144 - app - ERROR - Error in chat route: 'InstrumentedList' object has no attribute 'order_by'
+2025-07-13 05:27:21,505 - app - INFO - Starting application on port 8000
+2025-07-13 05:28:36,497 - app - INFO - Loaded existing vector store with 15 vectors
+2025-07-13 05:28:36,498 - app - INFO - Saved vector store with 15 vectors
+2025-07-13 05:28:37,118 - app - INFO - Received request to create new query
+2025-07-13 05:28:37,132 - app - INFO - Created new query with ID: c4da2816-ad43-45d4-95f7-772525ce8770
+2025-07-13 05:29:22,926 - app - INFO - Starting application on port 8000
+2025-07-13 05:29:51,387 - app - INFO - Loaded existing vector store with 15 vectors
+2025-07-13 05:29:51,387 - app - INFO - Saved vector store with 15 vectors
+2025-07-13 05:29:51,981 - app - INFO - Received request to create new query
+2025-07-13 05:29:51,994 - app - INFO - Created new query with ID: 6954e039-2502-4366-a784-3ef247d8370a
+2025-07-13 05:30:15,728 - app - INFO - Starting application on port 8000
+2025-07-13 05:30:29,697 - app - INFO - Loaded existing vector store with 15 vectors
+2025-07-13 05:30:29,698 - app - INFO - Saved vector store with 15 vectors
+2025-07-13 05:30:30,233 - app - INFO - Received request to create new query
+2025-07-13 05:30:30,246 - app - INFO - Created new query with ID: bc925344-6aa0-4769-9686-efe1e3d54e22
+2025-07-13 05:30:30,783 - app - ERROR - Error in chat route: Encountered unknown tag 'endblock'.
+2025-07-13 05:30:44,975 - app - INFO - Loaded existing vector store with 15 vectors
+2025-07-13 05:30:44,976 - app - INFO - Saved vector store with 15 vectors
+2025-07-13 05:30:45,559 - app - INFO - Received request to create new query
+2025-07-13 05:30:45,569 - app - INFO - Created new query with ID: b60f1f10-648a-4749-8bd8-412e93e5bcc0
+2025-07-13 05:30:45,854 - app - ERROR - Error in chat route: Encountered unknown tag 'endblock'.
+2025-07-13 05:31:40,598 - app - INFO - Starting application on port 8000
+2025-07-13 05:31:51,040 - app - INFO - Loaded existing vector store with 15 vectors
+2025-07-13 05:31:51,041 - app - INFO - Saved vector store with 15 vectors
+2025-07-13 05:31:51,583 - app - INFO - Received request to create new query
+2025-07-13 05:31:51,596 - app - INFO - Created new query with ID: e724944a-43fa-4d5e-a740-4a5ed382112c
+2025-07-13 05:32:59,589 - app - INFO - Starting application on port 8000
+2025-07-13 05:33:12,970 - app - INFO - Loaded existing vector store with 15 vectors
+2025-07-13 05:33:12,970 - app - INFO - Saved vector store with 15 vectors
+2025-07-13 05:33:13,519 - app - INFO - Received request to create new query
+2025-07-13 05:33:13,532 - app - INFO - Created new query with ID: 633954c0-6adc-4316-b809-1d3f0bddce33
+2025-07-13 05:33:13,819 - app - ERROR - Error in chat route: Encountered unknown tag 'endblock'.
+2025-07-13 05:34:23,732 - app - INFO - Starting application on port 8000
+2025-07-13 05:34:33,958 - app - INFO - Loaded existing vector store with 15 vectors
+2025-07-13 05:34:33,959 - app - INFO - Saved vector store with 15 vectors
+2025-07-13 05:34:34,509 - app - INFO - Received request to create new query
+2025-07-13 05:34:34,917 - app - INFO - Created new query with ID: d319d921-594e-419d-8d15-f459ec549779
+2025-07-13 05:35:30,368 - app - INFO - Starting application on port 8000
+2025-07-13 05:36:09,733 - app - INFO - Loaded existing vector store with 15 vectors
+2025-07-13 05:36:09,734 - app - INFO - Saved vector store with 15 vectors
+2025-07-13 05:36:10,338 - app - INFO - Received request to create new query
+2025-07-13 05:36:10,352 - app - INFO - Created new query with ID: d4cb7440-3266-4ae9-8508-7371b84dc9d4
+2025-07-13 05:37:27,750 - app - INFO - Starting application on port 8000
+2025-07-13 05:37:49,880 - app - INFO - Loaded existing vector store with 15 vectors
+2025-07-13 05:37:49,881 - app - INFO - Saved vector store with 15 vectors
+2025-07-13 05:37:50,422 - app - INFO - Received request to create new query
+2025-07-13 05:37:50,435 - app - INFO - Created new query with ID: 815b4153-b72f-4513-b2e4-723541e03a8f
+2025-07-13 05:39:11,698 - app - INFO - Loaded existing vector store with 15 vectors
+2025-07-13 05:39:12,364 - app - INFO - Processed document /home/administrator/document-iq/extracted_files/1/AuditPro_-_Comprehensive_Audit_Management_Software.pdf into 6 chunks
+2025-07-13 05:39:12,364 - app - INFO - Saved vector store with 21 vectors
+2025-07-13 05:39:12,910 - app - INFO - Received request to create new query
+2025-07-13 05:39:12,920 - app - INFO - Created new query with ID: b5bcfdc5-ddcf-4e06-8d8e-995ec328da6f
+2025-07-13 05:41:22,267 - app - INFO - Starting application on port 8000
+2025-07-13 05:41:33,412 - app - INFO - Loaded existing vector store with 21 vectors
+2025-07-13 05:41:33,413 - app - INFO - Saved vector store with 21 vectors
+2025-07-13 05:41:33,966 - app - INFO - Received request to create new query
+2025-07-13 05:41:33,979 - app - INFO - Created new query with ID: dbce019a-cc57-43dc-9815-3c913c726a96
+2025-07-13 05:45:46,247 - app - INFO - Starting application on port 8000
+2025-07-13 05:45:57,615 - app - INFO - Loaded existing vector store with 21 vectors
+2025-07-13 05:45:57,616 - app - INFO - Saved vector store with 21 vectors
+2025-07-13 05:45:58,219 - app - INFO - Received request to create new query
+2025-07-13 05:45:58,233 - app - INFO - Created new query with ID: 80f44feb-94a2-4bc6-8947-769ccfa1c6a2
+2025-07-13 05:48:43,592 - app - INFO - Starting application on port 8000
+2025-07-13 05:49:05,156 - app - INFO - Loaded existing vector store with 21 vectors
+2025-07-13 05:49:05,157 - app - INFO - Saved vector store with 21 vectors
+2025-07-13 05:49:05,723 - app - INFO - Received request to create new query
+2025-07-13 05:49:05,736 - app - INFO - Created new query with ID: 56d42942-dfaa-4add-a9f0-7c2b21ba7f92
+2025-07-13 05:51:30,924 - app - INFO - Logging out user: ilham
+2025-07-13 05:51:30,924 - app - INFO - User logged out successfully
+2025-07-13 05:51:59,007 - app - INFO - Loaded existing vector store with 21 vectors
+2025-07-13 05:51:59,007 - app - INFO - Saved vector store with 21 vectors
+2025-07-13 05:51:59,545 - app - INFO - Received request to create new query
+2025-07-13 05:51:59,555 - app - INFO - Created new query with ID: bc96ace1-3f3c-4ee9-ba8d-53a841879246
+2025-07-13 06:01:52,835 - app - INFO - Starting application on port 8000
+2025-07-13 06:02:09,168 - app - INFO - Loaded existing vector store with 21 vectors
+2025-07-13 06:02:09,169 - app - INFO - Saved vector store with 21 vectors
+2025-07-13 06:02:09,705 - app - INFO - Received request to create new query
+2025-07-13 06:02:09,718 - app - INFO - Created new query with ID: ed9bde3e-f966-4f5a-8d9a-65c267d1af4f
+2025-07-13 06:02:10,017 - app - ERROR - Error in chat route: 'csrf_token' is undefined
+2025-07-13 06:02:34,851 - app - INFO - Starting application on port 8000
+2025-07-13 06:03:13,335 - app - INFO - Loaded existing vector store with 21 vectors
+2025-07-13 06:03:13,336 - app - INFO - Saved vector store with 21 vectors
+2025-07-13 06:03:14,073 - app - INFO - Received request to create new query
+2025-07-13 06:03:14,087 - app - INFO - Created new query with ID: 49a88b45-6eae-478d-9c9b-13d73ce586d7
+2025-07-13 06:03:54,493 - app - INFO - Starting application on port 8000
+2025-07-13 06:04:44,992 - app - INFO - Loaded existing vector store with 21 vectors
+2025-07-13 06:04:44,993 - app - INFO - Saved vector store with 21 vectors
+2025-07-13 06:04:45,546 - app - INFO - Received request to create new query
+2025-07-13 06:04:45,560 - app - INFO - Created new query with ID: 24caa5d3-5463-4073-9aea-fdf745105b37
+2025-07-13 06:06:17,038 - app - INFO - Starting application on port 8000
+2025-07-13 06:06:57,084 - app - INFO - Starting application on port 8000
+2025-07-13 06:07:59,758 - app - INFO - Starting application on port 8000
+2025-07-13 06:09:04,947 - app - INFO - Loaded existing vector store with 21 vectors
+2025-07-13 06:09:04,948 - app - INFO - Saved vector store with 21 vectors
+2025-07-13 06:09:05,582 - app - INFO - Received request to create new query
+2025-07-13 06:09:05,596 - app - INFO - Created new query with ID: 1152ef51-2835-402d-b18e-b7bdfb8bb990
+2025-07-13 06:09:05,894 - app - ERROR - Error in chat route: 'chats' is undefined
+2025-07-13 06:09:10,635 - app - INFO - Logging out user: safeek
+2025-07-13 06:09:10,635 - app - INFO - User logged out successfully
+2025-07-13 06:09:37,103 - app - INFO - Loaded existing vector store with 21 vectors
+2025-07-13 06:09:37,104 - app - INFO - Saved vector store with 21 vectors
+2025-07-13 06:09:37,664 - app - INFO - Received request to create new query
+2025-07-13 06:09:37,675 - app - INFO - Created new query with ID: 9cb66f09-e89b-440d-a603-04cf6335e268
+2025-07-13 06:09:37,946 - app - ERROR - Error in chat route: 'chats' is undefined
+2025-07-13 06:21:02,342 - app - INFO - Starting application on port 8000
+2025-07-13 06:21:30,732 - app - INFO - Loaded existing vector store with 21 vectors
+2025-07-13 06:21:30,733 - app - INFO - Saved vector store with 21 vectors
+2025-07-13 06:21:31,270 - app - INFO - Received request to create new query
+2025-07-13 06:21:31,284 - app - INFO - Created new query with ID: 3dcd73b9-815f-44c6-b28e-7ffc84f30c39
+2025-07-13 06:22:18,450 - app - INFO - Starting application on port 8000
+2025-07-13 06:22:28,576 - app - INFO - Loaded existing vector store with 21 vectors
+2025-07-13 06:22:28,577 - app - INFO - Saved vector store with 21 vectors
+2025-07-13 06:22:29,106 - app - INFO - Received request to create new query
+2025-07-13 06:22:29,116 - app - INFO - Created new query with ID: 871eb76d-acc5-4b84-b153-5c959efab633
+2025-07-13 06:22:34,666 - app - INFO - Loaded existing vector store with 21 vectors
+2025-07-13 06:22:52,503 - app - INFO - Received request to delete chat ID: 871eb76d-acc5-4b84-b153-5c959efab633
+2025-07-13 06:22:52,515 - app - INFO - Successfully deleted chat ID: 871eb76d-acc5-4b84-b153-5c959efab633
