@@ -52,6 +52,8 @@ import hashlib
 
 from functools import partial
 
+from flask_session import Session
+
 
 # Load environment variables
 load_dotenv()
@@ -76,6 +78,14 @@ app.config['FATORA_WEBHOOK_SECRET'] = os.getenv('FATORA_WEBHOOK_SECRET')
 # app.config['SESSION_COOKIE_HTTPONLY'] = False
 # app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
+
+
+app.secret_key = '823trwegfiaweyuft78ewtfiwgef'
+app.config['SESSION_TYPE'] = 'filesystem'
+app.config['SESSION_FILE_DIR'] = '/tmp/flask_sessions'
+app.config['SESSION_PERMANENT'] = False
+Session(app)
+
 
 
 class SubscriptionPlan:
@@ -292,31 +302,35 @@ migrate = Migrate(app, db)
 
 class DocumentProcessor:
     def __init__(self, user_id=None):
+        logger.debug(f"Initializing DocumentProcessor for user {user_id}")
         self.user_id = user_id
         self.embedder = SentenceTransformer(app.config['EMBEDDING_MODEL'])
+        logger.debug(f"Loaded embedding model: {app.config['EMBEDDING_MODEL']}")
         self.embedder.batch_size = app.config['EMBEDDING_BATCH_SIZE']
         
         self.text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=app.config['CHUNK_SIZE'],
             chunk_overlap=app.config['CHUNK_OVERLAP'],
-            separators=["\n\n", "\n", " ", ""]  # Split by paragraphs, lines, then words
+            separators=["\n\n", "\n", " ", ""]
         )
         
         self.vector_store = None
         self._initialize_vector_store()
         self.executor = ThreadPoolExecutor(max_workers=app.config['MAX_PARALLEL_PROCESSES'])
+        logger.debug(f"Initialized with {app.config['MAX_PARALLEL_PROCESSES']} parallel workers")
 
     def _initialize_vector_store(self):
         """Initialize or load the FAISS vector store"""
+        logger.debug("Initializing vector store")
         os.makedirs(app.config['VECTOR_STORE_PATH'], exist_ok=True)
         index_file = os.path.join(app.config['VECTOR_STORE_PATH'], 'index.faiss')
         
         if os.path.exists(index_file):
             try:
                 self.vector_store = faiss.read_index(index_file)
-                app.logger.info(f"Loaded existing vector store with {self.vector_store.ntotal} vectors")
+                logger.info(f"Loaded existing vector store with {self.vector_store.ntotal} vectors")
             except Exception as e:
-                app.logger.error(f"Failed to load vector store: {str(e)}")
+                logger.error(f"Failed to load vector store: {str(e)}", exc_info=True)
                 self._create_new_index()
         else:
             self._create_new_index()
@@ -324,220 +338,160 @@ class DocumentProcessor:
     def _create_new_index(self):
         """Create a new FAISS index"""
         dim = self.embedder.get_sentence_embedding_dimension()
+        logger.debug(f"Creating new FAISS index with dimension {dim}")
         self.vector_store = faiss.IndexFlatL2(dim)
-        app.logger.info("Created new vector store")
+        logger.info("Created new vector store")
 
     def save_vector_store(self):
-        """Save the vector store to disk"""
-        if self.vector_store:
-            index_file = os.path.join(app.config['VECTOR_STORE_PATH'], 'index.faiss')
-            try:
-                faiss.write_index(self.vector_store, index_file)
-                app.logger.info(f"Saved vector store with {self.vector_store.ntotal} vectors")
-            except Exception as e:
-                app.logger.error(f"Failed to save vector store: {str(e)}")
+        """Save the vector store to disk with detailed debugging"""
+        if not self.vector_store:
+            logger.warning("Attempted to save when vector_store is None")
+            return
 
-    def process_documents_parallel(self, file_paths):
-        """Process multiple documents in parallel with progress tracking"""
-        results = []
-        total_files = len(file_paths)
-    
-        # Update progress at start
-        update_progress(0, total_files, "Initializing document processing...")
-    
-        process_func = partial(self._process_single_document_wrapper, user_id=self.user_id)
-    
-        with self.executor:
-            futures = {self.executor.submit(process_func, fp): fp for fp in file_paths}
-        
-            for i, future in enumerate(as_completed(futures)):
-                file_path = futures[future]
-                try:
-                    result = future.result()
-                    if result:
-                        results.append(result)
-                    
-                    # Update progress after each file
-                    update_progress(i+1, total_files, f"Processed {os.path.basename(file_path)}")
-                
-                except Exception as e:
-                    app.logger.error(f"Error processing {file_path}: {str(e)}")
-                    update_progress(i+1, total_files, f"Error processing {os.path.basename(file_path)}", error=str(e))
-    
-        self.save_vector_store()
-        return results
-    
-    
-    def _process_single_document_wrapper(self, file_path, user_id=None):
-        """Wrapper for parallel processing"""
-        with app.app_context():
-            return self.process_document(file_path, user_id)
-
-    def process_document(self, file_path, user_id=None):
-        """Full document processing pipeline for a single file"""
         try:
-            # File validation
-            if not os.path.exists(file_path):
-                app.logger.error(f"File not found: {file_path}")
-                return None
+            # Ensure directory exists
+            os.makedirs(app.config['VECTOR_STORE_PATH'], exist_ok=True)
+            logger.debug(f"Ensured directory exists: {app.config['VECTOR_STORE_PATH']}")
 
-            file_hash = get_file_hash(file_path)
-            if not file_hash:
-                app.logger.error(f"Failed to generate hash for {file_path}")
-                return None
+            index_file = os.path.join(app.config['VECTOR_STORE_PATH'], 'index.faiss')
+            logger.debug(f"Preparing to save vector store to: {index_file}")
+            logger.debug(f"Vector store contains {self.vector_store.ntotal} vectors")
 
-            # Check for existing document
-            existing_doc = Document.query.filter_by(file_hash=file_hash, user_id=user_id).first()
-            if existing_doc:
-                app.logger.info(f"Document already processed: {file_path}")
-                return existing_doc
+            # Verify write permissions
+            if os.path.exists(index_file):
+                logger.debug("Existing index file found, checking write permissions")
+                if not os.access(index_file, os.W_OK):
+                    logger.error(f"No write permissions for: {index_file}")
+                    raise PermissionError(f"Cannot write to {index_file}")
 
-            # Text extraction
-            text = read_file(file_path, user_id)
-            if not text:
-                app.logger.error(f"Failed to extract text from {file_path}")
-                return None
+            # Save with performance timing
+            start_time = time.time()
+            faiss.write_index(self.vector_store, index_file)
+            elapsed = time.time() - start_time
 
-            # Text preprocessing
-            text = self._preprocess_text(text)
-            chunks = self.text_splitter.split_text(text)
-            if not chunks:
-                app.logger.error(f"No chunks generated from {file_path}")
-                return None
+            logger.info(f"Successfully saved vector store with {self.vector_store.ntotal} vectors")
+            logger.debug(f"Save operation took {elapsed:.2f} seconds")
+            logger.debug(f"File size: {os.path.getsize(index_file)/1024/1024:.2f} MB")
 
-            # Embedding generation
-            embeddings = self._generate_embeddings(chunks)
-            if len(embeddings) != len(chunks):
-                app.logger.error(f"Embedding count mismatch for {file_path}")
-                return None
-
-            # Database storage
-            doc = self._store_document(file_path, file_hash, user_id)
-            self._store_chunks(doc, chunks, embeddings, file_path)
-
-            app.logger.info(f"Processed document {file_path} into {len(chunks)} chunks")
-            return doc
+            # Verify the saved file
+            if os.path.exists(index_file):
+                logger.debug("Verifying saved index file")
+                try:
+                    test_index = faiss.read_index(index_file)
+                    if test_index.ntotal == self.vector_store.ntotal:
+                        logger.debug("Index verification successful")
+                    else:
+                        logger.error(f"Index verification failed: expected {self.vector_store.ntotal} vectors, got {test_index.ntotal}")
+                except Exception as verify_error:
+                    logger.error(f"Index verification failed: {str(verify_error)}")
+            else:
+                logger.error("Saved index file not found after write operation")
 
         except Exception as e:
-            db.session.rollback()
-            app.logger.error(f"Error processing document {file_path}: {str(e)}", exc_info=True)
-            return None
+            logger.error(f"Failed to save vector store: {str(e)}", exc_info=True)
+            # Additional error specific handling
+            if isinstance(e, IOError):
+                logger.error("IOError - Check disk space and permissions")
+            elif isinstance(e, RuntimeError):
+                logger.error("FAISS runtime error - Possible index corruption")
+            # Re-raise if you want the error to propagate
+            # raise
 
-    def _preprocess_text(self, text):
-        """Clean and normalize text before chunking"""
-        text = text.replace('\r\n', '\n').replace('\r', '\n')
-        text = re.sub(r'\n{3,}', '\n\n', text)
-        text = re.sub(r'[^\x00-\x7F]+', ' ', text)  # Remove non-ASCII characters
-        return text.strip()
+    def search_documents(self, query, user_id=None, top_k=None, consider_recency=True):
+        """Search for relevant document chunks or return most recent documents based on query"""
+        logger.debug(f"Starting search for query: '{query[:50]}...' (user_id: {user_id})")
 
-    def _generate_embeddings(self, chunks):
-        """Generate embeddings with batch processing and fallback"""
-        embeddings = []
-        for i in range(0, len(chunks), self.embedder.batch_size):
-            batch = chunks[i:i + self.embedder.batch_size]
-            try:
-                batch_embeddings = self.embedder.encode(
-                    batch,
-                    show_progress_bar=False,
-                    convert_to_numpy=True,
-                    normalize_embeddings=True
-                )
-                embeddings.extend(batch_embeddings)
-            except Exception as e:
-                app.logger.error(f"Batch embedding failed, falling back to single: {str(e)}")
-                for chunk in batch:
-                    try:
-                        embedding = self.embedder.encode(chunk)
-                        embeddings.append(embedding)
-                    except:
-                        embeddings.append(np.zeros(self.embedder.get_sentence_embedding_dimension()))
-        return embeddings
-
-    def _store_document(self, file_path, file_hash, user_id):
-        """Create document record in database"""
-        doc = Document(
-            user_id=user_id,
-            file_path=file_path,
-            file_hash=file_hash,
-            file_type=os.path.splitext(file_path)[1].lower(),
-            document_metadata={
-                'size': os.path.getsize(file_path),
-                'modified': os.path.getmtime(file_path),
-                'original_filename': os.path.basename(file_path)
-            }
-        )
-        db.session.add(doc)
-        db.session.flush()  # Get ID before commit
-        return doc
-
-    def _store_chunks(self, doc, chunks, embeddings, file_path):
-        """Store chunks and their embeddings"""
-        for i, (chunk, embedding) in enumerate(zip(chunks, embeddings)):
-            # Add to vector store
-            vector_id = self.vector_store.ntotal
-            self.vector_store.add(np.array([embedding], dtype=np.float32))
-
-            # Store chunk metadata
-            chunk_record = DocumentChunk(
-                document_id=doc.id,
-                chunk_text=chunk,
-                chunk_hash=hashlib.md5(chunk.encode()).hexdigest(),
-                chunk_metadata={
-                    'document_path': file_path,
-                    'chunk_index': i,
-                    'page': self._estimate_page_number(i, len(chunks)),
-                    'section': self._extract_section_header(chunk)
-                },
-                vector_id=str(vector_id)
-            )
-            db.session.add(chunk_record)
-        
-        db.session.commit()
-
-    def _estimate_page_number(self, chunk_index, total_chunks):
-        """Estimate page number based on chunk position"""
-        chunks_per_page = max(1, total_chunks // 20)  # Target ~20 pages per document
-        return (chunk_index // chunks_per_page) + 1
-
-    def _extract_section_header(self, chunk):
-        """Extract section header from chunk if present"""
-        header_match = re.search(r'^(#+\s+.+?$|^[A-Z][A-Z0-9_ -]{10,}$)', chunk, re.MULTILINE)
-        return header_match.group(1).strip() if header_match else None
-
-    def search_documents(self, query, user_id=None, top_k=None):
-        """Search for relevant document chunks from current session only"""
+        # Set default top_k if not provided
         top_k = top_k or app.config['SIMILARITY_TOP_K']
-    
+        logger.debug(f"Search configuration - top_k: {top_k}")
+
         try:
-            # Get current session files
+            # Check for recency override condition
+            if "latest uploaded file" in query.lower() and consider_recency:
+                logger.info("Recency override triggered - fetching most recent documents")
+                recent_docs = Document.query.filter_by(user_id=user_id)\
+                               .order_by(Document.processed_at.desc())\
+                               .limit(top_k)\
+                               .all()
+
+                results = [{
+                    'document': {
+                        'id': doc.id,
+                        'path': doc.document_metadata.get('original_filename', '')
+                    },
+                    'score': 1.0
+                } for doc in recent_docs]
+
+                logger.info(f"Returning {len(results)} recent documents based on query intent")
+                return results
+
+            # Get current session files (relative paths)
             current_files = session.get('current_upload_files', [])
-            if not current_files:
-                return []
+            logger.debug(f"Found {len(current_files)} files in session")
+
+            current_files_full = [
+                os.path.join(app.config['EXTRACT_FOLDER'], f) 
+                for f in current_files
+            ] if current_files else None
 
             # Generate query embedding
-            query_embedding = self.embedder.encode([query])
-            query_embedding = np.array(query_embedding, dtype=np.float32)
-    
-            #  Search vector store
-            distances, indices = self.vector_store.search(query_embedding, top_k)
-    
-            # Retrieve chunks from database
+            logger.debug("Generating query embedding...")
+            start_time = time.time()
+
+            try:
+                query_embedding = self.embedder.encode([query])
+                query_embedding = np.array(query_embedding, dtype=np.float32)
+                embed_time = time.time() - start_time
+                logger.debug(f"Embedding generated in {embed_time:.3f}s - shape: {query_embedding.shape}")
+            except Exception as e:
+                logger.error(f"Embedding generation failed: {str(e)}")
+                return []
+
+            # Search vector store
+            if not self.vector_store:
+                logger.error("Vector store not initialized!")
+                return []
+
+            logger.debug(f"Searching vector store with {self.vector_store.ntotal} vectors...")
+            start_time = time.time()
+
+            try:
+                distances, indices = self.vector_store.search(query_embedding, top_k)
+                search_time = time.time() - start_time
+                logger.debug(f"Search completed in {search_time:.3f}s - found {len(indices[0])} candidates")
+            except Exception as e:
+                logger.error(f"Vector search failed: {str(e)}")
+                return []
+
+         # Process results
             results = []
-            for idx, distance in zip(indices[0], distances[0]):
-                chunk = DocumentChunk.query.filter_by(vector_id=str(idx)).first()
-                if chunk:
-                    # Verify document ownership and current session
-                    document = Document.query.get(chunk.document_id)
-                    if not document or document.user_id != user_id:
+            logger.debug(f"Processing {len(indices[0])} candidate chunks...")
+
+            for i, (idx, distance) in enumerate(zip(indices[0], distances[0])):
+                try:
+                    logger.debug(f"Processing candidate #{i+1} - index: {idx}, distance: {distance:.3f}")
+                    chunk = DocumentChunk.query.filter_by(vector_id=str(idx)).first()
+                    if not chunk:
+                        logger.debug(f"No chunk found for vector_id {idx} - skipping")
                         continue
-                
-                    # Check if document is in current session files
+
+                    document = Document.query.get(chunk.document_id)
+                    if not document:
+                        logger.debug(f"No document found for chunk {chunk.id} - skipping")
+                        continue
+
+                    if document.user_id != user_id:
+                        logger.debug(f"Document {document.id} owned by different user (expected {user_id}, got {document.user_id}) - skipping")
+                        continue
+
                     doc_filename = document.document_metadata.get('original_filename', '')
                     doc_path = os.path.join(app.config['EXTRACT_FOLDER'], str(user_id), doc_filename)
-                    if doc_path not in current_files:
+
+                    if current_files_full is not None and doc_path not in current_files_full:
+                        logger.debug(f"Document {doc_filename} not in current session - skipping")
                         continue
-                
-                    results.append({
+
+                    result_entry = {
                         'chunk': chunk.chunk_text,
                         'score': float(1 - distance),
                         'metadata': {
@@ -548,24 +502,385 @@ class DocumentProcessor:
                         'document': {
                             'id': chunk.document_id,
                             'path': doc_filename
-                     }
-                    })
-    
-            # Sort by relevance
+                        }
+                    }
+                    results.append(result_entry)
+                    logger.debug(f"Added result from document {doc_filename} (score: {result_entry['score']:.3f})")
+
+                except Exception as e:
+                    logger.error(f"Error processing candidate #{i+1}: {str(e)}")
+                    continue
+
             results.sort(key=lambda x: x['score'], reverse=True)
+
+            if results:
+                logger.info(f"Search successful - returning {len(results)} results (top score: {results[0]['score']:.3f})")
+            else:
+             logger.warning("Search completed but no valid results found")
+
             return results
-    
+
         except Exception as e:
-            app.logger.error(f"Error searching documents: {str(e)}")
+            logger.critical(f"Search failed: {str(e)}", exc_info=True)
             return []
+    
+    def _preprocess_text(self, text):
+        """Clean and normalize text before chunking with detailed debugging"""
+        if not text or not isinstance(text, str):
+            logger.warning(f"Invalid text input: {type(text)}")
+            return ""
 
+        original_length = len(text)
+        logger.debug(f"Starting text preprocessing (length: {original_length} chars)")
 
-    def __del__(self):
-        """Cleanup executor when instance is destroyed"""
-        if hasattr(self, 'executor'):
-            self.executor.shutdown(wait=False)
+        try:
+            # Normalize line endings
+            text = text.replace('\r\n', '\n').replace('\r', '\n')
+            logger.debug("Normalized line endings")
+
+            # Reduce multiple newlines
+            text = re.sub(r'\n{3,}', '\n\n', text)
+            newline_reductions = original_length - len(text)
+            logger.debug(f"Reduced excessive newlines ({newline_reductions} changes)")
+
+            # Handle Unicode characters (more sophisticated approach)
+            def replace_non_ascii(match):
+                char = match.group()
+                logger.debug(f"Replacing non-ASCII character: {char} (ord: {ord(char)})")
+                return ' '
+
+            text = re.sub(r'[^\x00-\x7F]', replace_non_ascii, text)
+        
+            # Additional cleaning steps
+            text = re.sub(r'\t', ' ', text)  # Replace tabs with spaces
+            text = re.sub(r' +', ' ', text)  # Collapse multiple spaces
+            text = text.strip()
+        
+            logger.debug(f"Text preprocessing complete. Final length: {len(text)} chars "
+                    f"({100*len(text)/original_length:.1f}% of original)")
+        
+            return text
+
+        except Exception as e:
+            logger.error(f"Text preprocessing failed: {str(e)}", exc_info=True)
+            # Fallback to basic cleaning
+            return text.replace('\r\n', '\n').replace('\r', '\n').strip()
+    
+    def process_documents_parallel(self, file_paths):
+        results = []
+        for file_path in file_paths:
+            try:
+                # Process and verify
+                doc = self.process_document(file_path, self.user_id)
+                if not doc:
+                    raise Exception("Document processing returned None")
+                
+                # Verify chunks were stored
+                chunks = DocumentChunk.query.filter_by(document_id=doc.id).count()
+                if chunks == 0:
+                    raise Exception("No chunks stored for document")
+                
+                results.append({
+                    'file': file_path,
+                    'chunks': chunks,
+                    'success': True
+                })
+            except Exception as e:
+                logger.error(f"Failed to process {file_path}: {str(e)}")
+                results.append({
+                    'file': file_path,
+                    'error': str(e),
+                    'success': False
+                })
+    
+        self.save_vector_store()
+        return results
+
+    def _process_single_document_wrapper(self, file_path, user_id=None):
+        """Wrapper for parallel processing"""
+        logger.debug(f"Starting document wrapper for: {file_path}")
+        try:
+            with app.app_context():
+                logger.debug(f"App context acquired for processing: {file_path}")
             
+                # Verify file exists before processing
+                if not os.path.exists(file_path):
+                    logger.error(f"File not found in wrapper: {file_path}")
+                    return None
+                
+                logger.debug(f"File size: {os.path.getsize(file_path)} bytes")
             
+                # Process the document
+                result = self.process_document(file_path, user_id)
+            
+                if result:
+                    logger.debug(f"Successfully processed document: {file_path}")
+                else:
+                    logger.warning(f"Document processing returned None for: {file_path}")
+                
+                return result
+            
+        except Exception as e:
+            logger.error(f"Error in document wrapper for {file_path}: {str(e)}", exc_info=True)
+            return None
+    def _generate_embeddings(self, chunks):
+        """Generate embeddings with robust error handling and performance tracking"""
+        embeddings = []
+        if not chunks:
+            logger.warning("Empty chunks list provided for embedding")
+            return embeddings
+
+        embedding_dim = self.embedder.get_sentence_embedding_dimension()
+        logger.debug(f"Starting embedding generation for {len(chunks)} chunks (dim={embedding_dim})")
+
+        total_chunks = len(chunks)
+        processed_chunks = 0
+        batch_errors = 0
+        single_errors = 0
+
+        for i in range(0, len(chunks), self.embedder.batch_size):
+            batch = chunks[i:i + self.embedder.batch_size]
+            batch_num = (i // self.embedder.batch_size) + 1
+            logger.debug(f"Processing batch {batch_num} with {len(batch)} chunks")
+
+            try:
+                # Time batch processing
+                start_time = time.time()
+                batch_embeddings = self.embedder.encode(
+                    batch,
+                    show_progress_bar=False,
+                    convert_to_numpy=True,
+                    normalize_embeddings=True
+                )
+                embeddings.extend(batch_embeddings)
+                processed_chunks += len(batch)
+                duration = time.time() - start_time
+                logger.debug(f"Batch {batch_num} processed in {duration:.2f}s "
+                            f"({len(batch)/duration:.1f} chunks/s)")
+            except Exception as e:
+                batch_errors += 1
+                logger.error(f"Batch embedding failed (batch {batch_num}): {str(e)}")
+                logger.debug("Falling back to single chunk processing")
+
+                # Fallback to single chunk processing
+                for chunk in batch:
+                    try:
+                        start_time = time.time()
+                        embedding = self.embedder.encode(chunk)
+                        embeddings.append(embedding)
+                        processed_chunks += 1
+                        duration = time.time() - start_time
+                        logger.debug(f"Single chunk processed in {duration:.3f}s")
+                    except Exception as single_e:
+                        single_errors += 1
+                        logger.error(f"Single chunk embedding failed: {str(single_e)}")
+                        logger.debug("Using zero vector as fallback")
+                        embeddings.append(np.zeros(embedding_dim))
+
+        # Final validation
+        if len(embeddings) != total_chunks:
+            logger.error(f"Embedding count mismatch! Expected {total_chunks}, got {len(embeddings)}")
+        if batch_errors or single_errors:
+            logger.warning(f"Completed with {batch_errors} batch errors and {single_errors} single errors")
+
+        return embeddings
+
+    def _store_document(self, file_path, file_hash, user_id):
+        """Create document record with enhanced metadata"""
+        try:
+            if not os.path.exists(file_path):
+                raise FileNotFoundError(f"File not found: {file_path}")
+
+            file_stats = os.stat(file_path)
+            doc_metadata = {
+                'size': file_stats.st_size,
+                'modified': datetime.fromtimestamp(file_stats.st_mtime).isoformat(),
+                'created': datetime.fromtimestamp(file_stats.st_ctime).isoformat(),
+                'original_filename': os.path.basename(file_path),
+                'file_type': os.path.splitext(file_path)[1].lower(),
+                'processing_time': datetime.utcnow().isoformat()
+            }
+
+            doc = Document(
+                user_id=user_id,
+                file_path=file_path,
+                file_hash=file_hash,
+                file_type=doc_metadata['file_type'],
+                document_metadata=doc_metadata,
+                processed_at=datetime.utcnow()  # Add this line
+            )
+
+            db.session.add(doc)
+            db.session.flush()
+            logger.debug(f"Created document record ID {doc.id} for {file_path}")
+            return doc
+
+        except Exception as e:
+            logger.error(f"Failed to create document record: {str(e)}")
+            db.session.rollback()
+            raise
+
+    def _store_chunks(self, doc, chunks, embeddings, file_path):
+        """Store chunks with transaction safety and validation"""
+        if len(chunks) != len(embeddings):
+            raise ValueError(f"Mismatched chunks ({len(chunks)}) and embeddings ({len(embeddings)})")
+
+        try:
+            total_chunks = len(chunks)
+            logger.info(f"Storing {total_chunks} chunks for document {doc.id}")
+
+            for i, (chunk, embedding) in enumerate(zip(chunks, embeddings)):
+                if not chunk or not isinstance(chunk, str):
+                    logger.warning(f"Invalid chunk at index {i} - skipping")
+                    continue
+
+                try:
+                    # Convert embedding to numpy if needed
+                    if not isinstance(embedding, np.ndarray):
+                        embedding = np.array(embedding, dtype=np.float32)
+
+                    self.vector_store.add(embedding.reshape(1, -1))
+                    vector_id = self.vector_store.ntotal - 1
+
+                    # Create metadata
+                    chunk_metadata = {
+                        'document_id': doc.id,
+                        'chunk_index': i,
+                        'page': self._estimate_page_number(i, total_chunks),
+                        'section': self._extract_section_header(chunk),
+                        'file_path': file_path
+                    }
+
+                    # Store chunk
+                    doc_chunk = DocumentChunk(
+                        document_id=doc.id,
+                        chunk_text=chunk,
+                        chunk_hash=hashlib.md5(chunk.encode()).hexdigest(),
+                        chunk_metadata=chunk_metadata,
+                        vector_id=str(vector_id)
+                    )
+
+                    db.session.add(doc_chunk)
+                    logger.debug(f"Added chunk {i} to session")
+
+                except Exception as e:
+                    logger.error(f"Failed to store chunk {i} for doc {doc.id}: {str(e)}")
+                    continue
+
+            db.session.commit()
+            logger.info(f"Successfully stored {len(chunks)} chunks for document {doc.id}")
+
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Error storing chunks for document {doc.id}: {str(e)}", exc_info=True)
+            raise
+
+    def _estimate_page_number(self, chunk_index, total_chunks):
+        """Estimate page number based on chunk position with robust error handling"""
+        try:
+            # Handle edge cases
+            if total_chunks <= 0:
+                return 1
+            
+            # Calculate chunks per page (minimum 1, target ~20 pages)
+            chunks_per_page = max(1, total_chunks // 20)
+            page_num = (chunk_index // chunks_per_page) + 1
+        
+            # Only log progress if we have enough chunks
+            if total_chunks >= 10 and chunk_index % (total_chunks // 10) == 0:
+                logger.debug(f"Estimated page {page_num} for chunk {chunk_index}/{total_chunks}")
+        
+            return page_num
+        
+        except Exception as e:
+            logger.error(f"Page estimation failed for chunk {chunk_index}/{total_chunks}: {str(e)}")
+            return 1  # Safe fallback
+    
+    def _extract_section_header(self, chunk):
+        """Enhanced section header extraction"""
+        try:
+            # Try Markdown-style headers first
+            markdown_header = re.search(r'^(#{1,6}\s+(.+?)\s*$', chunk, re.MULTILINE)
+            if markdown_header:
+                return markdown_header.group(2).strip()
+
+            # Try ALLCAPS headings
+            allcaps_header = re.search(r'^([A-Z][A-Z0-9_ -]{10,})\s*$', chunk, re.MULTILINE)
+            if allcaps_header:
+                return allcaps_header.group(1).strip()
+
+            # Try underlined headings
+            underlined_header = re.search(r'^(.+?)\n[-=]{3,}\s*$', chunk, re.MULTILINE)
+            if underlined_header:
+                return underlined_header.group(1).strip()
+
+            return None
+        except Exception as e:
+            logger.debug(f"Header extraction failed: {str(e)}")
+            return None
+        
+    def process_document(self, file_path, user_id=None):
+        """Full document processing pipeline for a single file"""
+        logger.debug(f"Processing document: {file_path}")
+        try:
+            # File validation
+            if not os.path.exists(file_path):
+                logger.error(f"File not found: {file_path}")
+                return None
+
+            file_hash = get_file_hash(file_path)
+            if not file_hash:
+                logger.error(f"Failed to generate hash for {file_path}")
+                return None
+
+            # Check for existing document - only skip if it has chunks
+            existing_doc = Document.query.filter_by(file_hash=file_hash, user_id=user_id).first()
+            if existing_doc:
+                chunk_count = DocumentChunk.query.filter_by(document_id=existing_doc.id).count()
+                if chunk_count > 0:
+                    logger.info(f"Document already processed with {chunk_count} chunks: {file_path}")
+                    return existing_doc
+                else:
+                    logger.warning(f"Document exists but has no chunks. Reprocessing: {file_path}")
+                    db.session.delete(existing_doc)
+                    db.session.commit()
+
+            # Text extraction
+            logger.debug(f"Extracting text from {file_path}")
+            text = read_file(file_path, user_id)
+            if not text:
+                logger.error(f"Failed to extract text from {file_path}")
+                return None
+
+            # Text preprocessing
+            logger.debug(f"Preprocessing text from {file_path}")
+            text = self._preprocess_text(text)
+            chunks = self.text_splitter.split_text(text)
+            logger.debug(f"Split into {len(chunks)} chunks")
+            
+            if not chunks:
+                logger.error(f"No chunks generated from {file_path}")
+                return None
+
+            # Embedding generation
+            logger.debug(f"Generating embeddings for {len(chunks)} chunks")
+            embeddings = self._generate_embeddings(chunks)
+            if len(embeddings) != len(chunks):
+                logger.error(f"Embedding count mismatch for {file_path} (expected {len(chunks)}, got {len(embeddings)})")
+                return None
+
+            # Document storage
+            logger.debug(f"Storing document in database: {file_path}")
+            doc = self._store_document(file_path, file_hash, user_id)
+            self._store_chunks(doc, chunks, embeddings, file_path)
+
+            logger.info(f"Processed document {file_path} into {len(chunks)} chunks")
+            return doc
+
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Error processing document {file_path}: {str(e)}", exc_info=True)
+            return None
 # Initialize database
 with app.app_context():
     db.create_all()
@@ -633,6 +948,7 @@ os.makedirs(app.config['EXTRACT_FOLDER'], exist_ok=True)
 os.makedirs(app.config['CACHE_FOLDER'], exist_ok=True)
 
 
+
 # Configure logging
 handler = RotatingFileHandler(
     app.config['LOG_FILE'],
@@ -644,6 +960,31 @@ formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(messag
 handler.setFormatter(formatter)
 app.logger.addHandler(handler)
 logging.getLogger().setLevel(app.config['LOG_LEVEL'])
+
+
+
+# Configure logging with more detailed format
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        RotatingFileHandler(
+            app.config['LOG_FILE'],
+            maxBytes=10 * 1024 * 1024,  # 10MB
+            backupCount=3
+        ),
+        logging.StreamHandler()  # Also log to console
+    ]
+)
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
+# Add this to log all SQL queries in development
+if os.getenv('FLASK_DEBUG') == 'true':
+    logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
+
+
+
 
 # In-memory storage for conversations
 conversations = {}
@@ -923,54 +1264,64 @@ def read_html(file_path):
 # Helper function to read files with user-specific caching
 def read_file(file_path, user_id=None):
     """Completely rewritten file reading with guaranteed caching"""
+    logger.debug(f"Attempting to read file: {file_path} for user {user_id}")
     if not os.path.exists(file_path):
-        app.logger.error(f"File not found: {file_path}")
+        logger.error(f"File not found: {file_path}")
         return None
 
     try:
         # Generate reliable file hash
         file_hash = get_file_hash(file_path)
         if not file_hash:
+            logger.error(f"Failed to generate hash for {file_path}")
             return None
 
-        # DEBUG: Log cache check
-        app.logger.debug(f"Checking cache for {file_path} (hash: {file_hash}, user: {user_id})")
+        logger.debug(f"File hash: {file_hash}")
 
         # Check cache with direct database verification
         cached = FileCache.query.filter_by(file_hash=file_hash).first()
         if cached:
-            app.logger.debug(f"Cache HIT for {file_path}")
+            logger.debug(f"Cache HIT for {file_path}")
             return cached.content
 
-        app.logger.debug(f"Cache MISS for {file_path}")
+        logger.debug(f"Cache MISS for {file_path}")
 
         # Read file content based on type
         text = None
         ext = os.path.splitext(file_path)[1].lower()
+        logger.debug(f"File extension: {ext}")
         
         if ext == '.pdf':
+            logger.debug("Processing PDF file")
             text = read_pdf(file_path)
         elif ext == '.docx':
+            logger.debug("Processing DOCX file")
             text = read_docx(file_path)
         elif ext in ('.md', '.markdown'):
+            logger.debug("Processing Markdown file")
             text = read_markdown(file_path)
         elif ext == '.csv':
+            logger.debug("Processing CSV file")
             text = read_csv(file_path)
         elif ext == '.json':
+            logger.debug("Processing JSON file")
             with open(file_path, 'r', encoding='utf-8') as f:
                 text = json.dumps(json.load(f), indent=2)
         elif ext == '.xml':
+            logger.debug("Processing XML file")
             text = read_xml(file_path)
         elif ext == '.html':
+            logger.debug("Processing HTML file")
             text = read_html(file_path)
         elif ext == '.txt':
+            logger.debug("Processing text file")
             text = read_text_file(file_path)
 
         if not text or not text.strip():
+            logger.warning(f"No text extracted from {file_path}")
             return None
 
-        # DEBUG: Before caching
-        app.logger.debug(f"Attempting to cache {file_path} (size: {len(text)} chars)")
+        logger.debug(f"Extracted {len(text)} characters from {file_path}")
 
         # Create new cache entry with transaction safety
         try:
@@ -994,10 +1345,10 @@ def read_file(file_path, user_id=None):
             if not new_cache.id:
                 raise Exception("Cache entry not persisted")
                 
-            app.logger.debug(f"Successfully cached {file_path} with ID {new_cache.id}")
+            logger.debug(f"Successfully cached {file_path} with ID {new_cache.id}")
             
         except Exception as e:
-            app.logger.error(f"Failed to cache {file_path}: {str(e)}")
+            logger.error(f"Failed to cache {file_path}: {str(e)}", exc_info=True)
             db.session.rollback()
             # Even if caching fails, still return the text
             return text
@@ -1005,13 +1356,17 @@ def read_file(file_path, user_id=None):
         return text
 
     except Exception as e:
-        app.logger.error(f"Fatal error in read_file: {str(e)}")
+        logger.error(f"Fatal error in read_file: {str(e)}", exc_info=True)
         return None
-
+    
 @app.route('/upload', methods=['POST'])
 @login_required
 def upload_files():
+    """Handle file uploads with ZIP extraction and session tracking"""
+    logger.debug("Upload endpoint called by user %s", current_user.id)
+    
     if not current_user.is_subscribed and not current_user.is_admin:
+        logger.warning("User %s attempted upload without subscription", current_user.id)
         return jsonify({'error': 'Subscription required'}), 403
         
     try:
@@ -1020,65 +1375,133 @@ def upload_files():
         user_upload_dir = os.path.join(app.config['UPLOAD_FOLDER'], user_id)
         user_extract_dir = os.path.join(app.config['EXTRACT_FOLDER'], user_id)
         
+        logger.debug("Creating directories:\nUpload: %s\nExtract: %s", 
+                     user_upload_dir, user_extract_dir)
+        
         os.makedirs(user_upload_dir, exist_ok=True)
         os.makedirs(user_extract_dir, exist_ok=True)
         
         # Clean directories
+        logger.debug("Cleaning directories")
         clean_directory(user_upload_dir)
         clean_directory(user_extract_dir)
         
         if 'files' not in request.files:
+            logger.error("No files in request")
             return jsonify({'error': 'No files uploaded'}), 400
             
         files = request.files.getlist('files')
         saved_files = []
-        file_paths = []
+        extracted_files = []  # Track all successfully extracted files
+        
+        logger.info("Processing %d uploaded files", len(files))
         
         for file in files:
             if file.filename == '':
+                logger.debug("Skipping empty filename")
                 continue
                 
             filename = secure_filename(file.filename)
             is_zip = filename.lower().endswith('.zip')
+            logger.debug("Processing file: %s (ZIP: %s)", filename, is_zip)
             
             try:
                 if is_zip:
+                    # Handle ZIP file
                     zip_path = os.path.join(user_upload_dir, filename)
+                    logger.debug("Saving ZIP to: %s", zip_path)
+                    
+                    # Save the ZIP file
                     file.save(zip_path)
-                    extract_zip_parallel(zip_path, user_extract_dir)
-                    saved_files.append(filename)
+                    
+                    # Verify ZIP integrity
+                    if not zipfile.is_zipfile(zip_path):
+                        logger.error("Invalid ZIP file: %s", zip_path)
+                        os.remove(zip_path)
+                        continue
+                        
+                    # Extract contents
+                    logger.debug("Extracting ZIP to: %s", user_extract_dir)
+                    try:
+                        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+                            zip_files = zip_ref.namelist()
+                            logger.debug("ZIP contains %d files", len(zip_files))
+                            
+                            allowed_files = [
+                                f for f in zip_files 
+                                if allowed_file(f) 
+                                and not f.startswith('__MACOSX/')
+                                and not f.endswith('/')  # Skip directories
+                            ]
+                            logger.debug("%d allowed files in ZIP", len(allowed_files))
+                            
+                            if not allowed_files:
+                                logger.warning("No allowed files in ZIP")
+                                continue
+                            
+                            extracted_files.extend([
+                                os.path.join(user_extract_dir, f) 
+                                for f in allowed_files
+                            ])
+                            
+                            if not extract_zip_parallel(zip_path, user_extract_dir):
+                                logger.error("Failed to extract ZIP: %s", zip_path)
+                                continue
+                                
+                        saved_files.append(filename)
+                    except Exception as zip_error:
+                        logger.error("ZIP extraction failed: %s", str(zip_error), exc_info=True)
+                        continue
+                        
                 else:
+                    # Handle regular files
                     if not allowed_file(filename):
+                        logger.warning("File type not allowed: %s", filename)
                         continue
                         
                     file_path = os.path.join(user_extract_dir, filename)
-                    file.save(file_path)
-                    file_paths.append(file_path)
-                    saved_files.append(filename)
+                    logger.debug("Saving file to: %s", file_path)
                     
+                    try:
+                        file.save(file_path)
+                        extracted_files.append(file_path)
+                        saved_files.append(filename)
+                    except Exception as save_error:
+                        logger.error("File save failed: %s", str(save_error), exc_info=True)
+                        continue
+                        
             except Exception as e:
-                app.logger.error(f'Failed to process {filename}: {str(e)}')
+                logger.error("File processing error: %s", str(e), exc_info=True)
                 continue
                 
         if not saved_files:
+            logger.error("No valid files processed")
             return jsonify({'error': 'No valid files were uploaded'}), 400
-            
-        # Store uploaded files in session
-        session['current_upload_files'] = file_paths
-            
-        # Process documents in parallel (CPU bound)
+
+        # Store RELATIVE paths in session (relative to EXTRACT_FOLDER)
+        session['current_upload_files'] = [
+            os.path.relpath(f, app.config['EXTRACT_FOLDER']) 
+            for f in extracted_files
+        ]
+        session.modified = True  # Explicitly mark session as modified
+        logger.info("Stored %d files in session", len(session['current_upload_files']))
+        logger.debug("Session files: %s", session['current_upload_files'])
+        
+        # Process documents
+        logger.info("Starting document processing for %d files", len(extracted_files))
         processor = DocumentProcessor(user_id=current_user.id)
-        processor.process_documents_parallel(file_paths)
+        processor.process_documents_parallel(extracted_files)
                 
         return jsonify({
-            'message': f'{len(saved_files)} files processed',
+            'message': f'{len(saved_files)} files processed successfully',
+            'files': saved_files,
             'redirect': url_for('new_chat')
         })
-    except Exception as e:
-        app.logger.error(f'Upload error: {str(e)}')
-        return jsonify({'error': str(e)}), 500
-
         
+    except Exception as e:
+        logger.critical("Upload failed: %s", str(e), exc_info=True)
+        return jsonify({'error': 'Server error during upload'}), 500
+     
 
 def get_file_hash_with_verification(file_path):
     """Generate file hash with verification"""
@@ -1877,26 +2300,31 @@ def new_chat():
 @app.route('/chat/<chat_id>', methods=['GET', 'POST'])
 @login_required
 def chat(chat_id):
+    logger.debug(f"Chat endpoint called for chat_id: {chat_id}")
     try:
         # Verify the chat belongs to the current user
         conversation = Conversation.query.filter_by(
             id=chat_id,
             user_id=current_user.id
         ).first_or_404()
+        logger.debug(f"Found conversation: {conversation.title}")
 
         if request.method == 'GET':
-            # Handle GET request (initial page load)
+            logger.debug("Handling GET request")
             messages = Message.query.filter_by(
                 conversation_id=chat_id
             ).order_by(Message.timestamp.asc()).all()
+            logger.debug(f"Loaded {len(messages)} messages")
 
             # Get all conversations for the sidebar
             user_conversations = Conversation.query.filter_by(
                 user_id=current_user.id
             ).order_by(Conversation.updated_at.desc()).all()
+            logger.debug(f"Loaded {len(user_conversations)} user conversations")
 
             # Get uploaded files
             uploaded_files = get_uploaded_files(current_user.id)
+            logger.debug(f"Found {len(uploaded_files)} uploaded files")
 
             return render_template(
                 'chat.html',
@@ -1909,10 +2337,11 @@ def chat(chat_id):
             )
 
         elif request.method == 'POST':
-            # Handle POST request (chat interaction)
+            logger.debug("Handling POST request")
             def generate_response():
                 try:
                     if not request.is_json:
+                        logger.error("Request is not JSON")
                         yield json.dumps({
                             'status': 'error',
                             'message': 'Content-Type must be application/json'
@@ -1921,8 +2350,10 @@ def chat(chat_id):
 
                     data = request.get_json()
                     question = data.get('question', '').strip()
+                    logger.debug(f"Received question: {question}")
                     
                     if not question:
+                        logger.error("Empty question received")
                         yield json.dumps({'status': 'error', 'message': 'Please enter a question'})
                         return
 
@@ -1934,12 +2365,14 @@ def chat(chat_id):
                         timestamp=datetime.now(timezone.utc))
                     db.session.add(user_msg)
                     db.session.commit()
+                    logger.debug("Saved user message to database")
 
                     # Update conversation title if it's the first message
                     if conversation.title == 'New Query':
                         short_title = question[:50] + '...' if len(question) > 50 else question
                         conversation.title = short_title
                         db.session.commit()
+                        logger.debug(f"Updated conversation title to: {short_title}")
                         yield json.dumps({
                             'status': 'title_update',
                             'chat_id': chat_id,
@@ -1947,12 +2380,16 @@ def chat(chat_id):
                         }) + "\n"
 
                     # Initialize processor
+                    logger.debug("Initializing DocumentProcessor")
                     processor = DocumentProcessor(user_id=current_user.id)
                     
                     # Get relevant chunks
+                    logger.debug("Searching documents for relevant chunks")
                     chunks = processor.search_documents(question, current_user.id)
+                    logger.debug(f"Found {len(chunks)} relevant chunks")
                     
                     if not chunks:
+                        logger.warning("No relevant chunks found")
                         yield json.dumps({
                             'status': 'error',
                             'message': 'No relevant information found in documents'
@@ -1963,23 +2400,27 @@ def chat(chat_id):
                     context = ""
                     sources = []
                     for chunk in chunks:
-                        context += f"[Document: {chunk['metadata']['document_path']}, Page ~{chunk['metadata']['page']}]\n"
+                        context += f"[Document: {chunk['document']['path']}, Page ~{chunk.get('page', 1)}]\n"
                         context += f"{chunk['chunk']}\n\n"
                         sources.append({
-                            'path': chunk['metadata']['document_path'],
-                            'page': chunk['metadata']['page'],
+                            'path': chunk['document']['path'],
+                            'page': chunk.get('page', 1),
                             'text': chunk['chunk'][:200] + '...'  # Preview
                         })
+                    logger.debug("Built context from chunks")
 
                     # Stream response from Ollama
                     yield json.dumps({'status': 'stream_start'}) + "\n"
 
                     prompt = build_rag_prompt(context, question)
+                    logger.debug(f"Generated prompt with {len(prompt)} characters")
                     full_answer = ""
                     
                     for chunk in get_ollama_response_stream(prompt):
                         yield json.dumps({'status': 'stream_chunk', 'content': chunk}) + "\n"
                         full_answer += chunk
+
+                    logger.debug(f"Received full answer with {len(full_answer)} characters")
 
                     # Save assistant response with sources
                     assistant_msg = Message(
@@ -1993,6 +2434,7 @@ def chat(chat_id):
                     # Update conversation timestamp
                     conversation.updated_at = datetime.now(timezone.utc)
                     db.session.commit()
+                    logger.debug("Saved assistant message to database")
 
                     yield json.dumps({
                         'status': 'stream_end',
@@ -2000,7 +2442,7 @@ def chat(chat_id):
                     }) + "\n"
 
                 except Exception as e:
-                    app.logger.error(f"Error in chat: {str(e)}")
+                    logger.error(f"Error in chat: {str(e)}", exc_info=True)
                     yield json.dumps({
                         'status': 'error',
                         'message': f"Error processing your request: {str(e)}"
@@ -2009,13 +2451,13 @@ def chat(chat_id):
             return Response(stream_with_context(generate_response()), mimetype='application/x-ndjson')
 
     except Exception as e:
-        app.logger.error(f"Error in chat route: {str(e)}")
+        logger.error(f"Error in chat route: {str(e)}", exc_info=True)
         if request.method == 'GET':
             flash('Error loading chat', 'error')
             return redirect(url_for('index'))
         else:
             return jsonify({'error': str(e)}), 500
-            
+              
 
 def get_uploaded_files(user_id):
     """Get list of uploaded files for a user"""
