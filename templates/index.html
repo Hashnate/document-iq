@@ -1,55 +1,612 @@
-{% extends "base.html" %}
+{% extends "base.html" %} {% block content %}
+<div class="main-container">
 
-{% block content %}
-<div class="upload-container">
-    <div class="upload-card">
-        <i class="bi bi-cloud-arrow-up upload-icon"></i>
-        <h2 class="upload-title">Upload Your Documents</h2>
+    <!-- Right Column - Welcome Message -->
+    <div class="welcome-column">
+        <div class="welcome-card">
+            <h1>Welcome to <span class="gradient-text">DOCUMENT IQ</span>!</h1>
+            <p class="welcome-description">
+                A next-generation, AI-powered platform that transforms how organizations interact with unstructured documents. Your one stop shop for an intelligent knowledge engine, enabling users to ask natural language questions and receive accurate, context-aware
+                answers derived from large volume document repositories—instantly and securely.
+            </p>
 
-        <div class="file-upload-area">
-            <i class="bi bi-file-earmark-zip" style="font-size: 2rem;"></i>
-            <h5 id="upload-instruction">Drag & drop files here</h5>
-            <p class="text-muted" id="file-name">or click to browse <br><b>Single File (Zip or Regular files)
-                    <br>Multiple Files including Folders (Zip Files Only)</b></p>
-        </div>
+            <div class="features-section">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="bi bi-lightning-charge"></i>
+                    </div>
+                    <div class="feature-content">
+                        <h3>AI-Powered Analysis</h3>
+                        <p>Advanced machine learning extracts insights from your documents automatically</p>
+                    </div>
+                </div>
 
-        <div class="supported-files mt-4">
-            <div class="supported-files-title">Supported File Types Inside ZIP:</div>
-            <div class="supported-files-badges">
-                <span class="badge">PDF</span>
-                <span class="badge">DOCX</span>
-                <span class="badge">TXT</span>
-                <span class="badge">CSV</span>
-                <span class="badge">Markdown</span>
-                <span class="badge">JSON</span>
-                <span class="badge">XML</span>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="bi bi-search"></i>
+                    </div>
+                    <div class="feature-content">
+                        <h3>Natural Language Search</h3>
+                        <p>Ask questions in plain English and get precise answers from your documents</p>
+                    </div>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="bi bi-shield-lock"></i>
+                    </div>
+                    <div class="feature-content">
+                        <h3>Secure Processing</h3>
+                        <p>Enterprise-grade security protects your sensitive documents</p>
+                    </div>
+                </div>
             </div>
+
         </div>
-        <br>
-        <p class="upload-description">
-            Note: Unprotect password protected Files/Documents prior to Upload
-        </p>
+    </div>
 
-        <div class="progress-container">
-            <div class="progress-bar">
-                <div class="progress"></div>
+    <!-- Left Column - Upload Panel -->
+    <div class="upload-column">
+        <div class="upload-card">
+            <div class="upload-header">
+                <!-- <div class="upload-icon">
+                    <i class="bi bi-cloud-arrow-up"></i>
+                </div> -->
+                <h2 class="upload-title">Upload Your Documents</h2>
+                <p class="upload-subtitle">Get started in seconds with your first document upload</p>
             </div>
-            <div class="progress-info">
-                <span class="progress-text">Ready to upload</span>
-                <span class="progress-percent">0%</span>
+
+            <div class="file-upload-area" id="dropZone">
+                <div class="upload-cloud">
+                    <i class="bi bi-cloud-arrow-up"></i>
+                </div>
+                <h5 id="upload-instruction">Drag & drop files here</h5>
+                <p class="text-muted" id="file-name">or click to browse<br>Supports single or multiple files</p>
+                <div class="upload-cta">
+                    <button class="browse-btn">Browse Files</button>
+                </div>
             </div>
+
+            <div class="supported-files">
+                <div class="supported-files-title">Supported File Types:</div>
+                <div class="supported-files-badges">
+                    <span class="badge"><i class="bi bi-filetype-pdf"></i> PDF</span>
+                    <span class="badge"><i class="bi bi-filetype-docx"></i> DOCX</span>
+                    <span class="badge"><i class="bi bi-filetype-txt"></i> TXT</span>
+                    <span class="badge"><i class="bi bi-filetype-csv"></i> CSV</span>
+                    <span class="badge"><i class="bi bi-filetype-zip"></i> ZIP</span>
+                </div>
+            </div>
+
+            <div class="upload-tips">
+                <div class="tip">
+                    <i class="bi bi-lightbulb"></i>
+                    <span>For best results, upload documents with clear text structure</span>
+                </div>
+                <div class="tip">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <span>Remove passwords from protected files before uploading</span>
+                </div>
+            </div>
+
+            <div class="progress-container">
+                <div class="progress-info">
+                    <span class="progress-text">Ready to upload</span>
+                    <span class="progress-percent">0%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress"></div>
+                </div>
+            </div>
+
+            <div class="file-list"></div>
+            <p class="error-message"></p>
         </div>
-
-        <div class="file-list"></div>
-        <p class="error-message"></p>
-
-        <!-- Subscription Modal (will be populated dynamically) -->
-        <div id="subscriptionModal" class="modal" style="display: none;"></div>
     </div>
 </div>
 
+<!-- Subscription Modal -->
+<div id="subscriptionModal" class="modal" style="display: none;"></div>
+
 <style>
+    /* Modern color scheme with gradients */
+    
+     :root {
+        --primary-color: #4361ee;
+        --secondary-color: #3a0ca3;
+        --accent-color: #7209b7;
+        --light-accent: #f72585;
+        --text-color: #2b2d42;
+        --light-text: #8d99ae;
+        --background-light: #f8f9fa;
+        --card-bg: #ffffff;
+        --success-color: #4cc9f0;
+        --warning-color: #f8961e;
+        --error-color: #f94144;
+    }
+    /* Gradient text effect */
+    
+    .gradient-text {
+        background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        display: inline-block;
+    }
+    /* Smooth animations */
+    
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes pulse {
+        0% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.05);
+        }
+        100% {
+            transform: scale(1);
+        }
+    }
+    /* Main layout with gradient background */
+    
+    body {
+        background: linear-gradient(135deg, var(--background-light) 0%, #e9ecef 100%);
+        min-height: 100vh;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        color: var(--text-color);
+        line-height: 1.6;
+    }
+    
+    .main-container {
+        display: flex;
+        min-height: calc(100vh - 60px);
+        padding: 30px;
+        gap: 40px;
+        max-width: 1400px;
+        margin: 0 auto;
+        align-items: flex-start;
+        animation: fadeIn 0.5s ease-out;
+    }
+    /* Welcome column styling */
+    
+    .welcome-column {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .welcome-card {
+        background-color: var(--card-bg);
+        border-radius: 20px;
+        padding: 40px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .welcome-card h1 {
+        color: var(--text-color);
+        margin-bottom: 20px;
+        font-size: 2.5rem;
+        font-weight: 700;
+        line-height: 1.2;
+    }
+    
+    .welcome-description {
+        font-size: 1.1rem;
+        line-height: 1.7;
+        margin-bottom: 30px;
+        color: var(--light-text);
+    }
+    /* Feature cards */
+    
+    .features-section {
+        margin-top: 40px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+    
+    .feature-card {
+        display: flex;
+        align-items: flex-start;
+        gap: 20px;
+        padding: 20px;
+        border-radius: 12px;
+        background: var(--card-bg);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+        border-left: 4px solid transparent;
+    }
+    
+    .feature-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        border-left: 4px solid var(--primary-color);
+    }
+    
+    .feature-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+        background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+        flex-shrink: 0;
+    }
+    
+    .feature-content h3 {
+        color: var(--text-color);
+        margin-bottom: 8px;
+        font-size: 1.2rem;
+        font-weight: 600;
+    }
+    
+    .feature-content p {
+        color: var(--light-text);
+        margin: 0;
+        font-size: 0.95rem;
+    }
+    /* Testimonial section */
+    
+    .testimonial {
+        margin-top: 40px;
+        padding: 25px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, rgba(67, 97, 238, 0.1) 0%, rgba(114, 9, 183, 0.1) 100%);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .testimonial::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: linear-gradient(to bottom, var(--primary-color), var(--accent-color));
+    }
+    
+    .quote-icon {
+        font-size: 3rem;
+        color: rgba(67, 97, 238, 0.1);
+        position: absolute;
+        top: 10px;
+        right: 20px;
+        line-height: 1;
+    }
+    
+    .quote {
+        font-style: italic;
+        position: relative;
+        z-index: 1;
+        margin-bottom: 20px;
+    }
+    
+    .author {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    
+    .author-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        flex-shrink: 0;
+    }
+    
+    .author-name {
+        font-weight: 600;
+    }
+    
+    .author-title {
+        font-size: 0.8rem;
+        color: var(--light-text);
+    }
+    /* Upload column styling */
+    
+    .upload-column {
+        flex: 0 1 500px;
+        position: sticky;
+        top: 30px;
+    }
+    
+    .upload-card {
+        background-color: var(--card-bg);
+        border-radius: 20px;
+        padding: 30px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: transform 0.3s ease;
+    }
+    
+    .upload-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .upload-header {
+        text-align: center;
+        margin-bottom: 25px;
+    }
+    
+    .upload-icon {
+        width: 60px;
+        height: 60px;
+        margin: 0 auto 15px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        color: white;
+        background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+    }
+    
+    .upload-title {
+        color: var(--text-color);
+        margin-bottom: 5px;
+        font-size: 1.8rem;
+        font-weight: 700;
+    }
+    
+    .upload-subtitle {
+        color: var(--light-text);
+        font-size: 0.95rem;
+    }
+    /* File upload area */
+    
+    .file-upload-area {
+        min-height: 220px;
+        border: 2px dashed rgba(67, 97, 238, 0.3);
+        border-radius: 15px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        padding: 30px;
+        transition: all 0.3s ease;
+        margin-bottom: 20px;
+        background-color: rgba(67, 97, 238, 0.03);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .file-upload-area::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(67, 97, 238, 0.1) 0%, transparent 70%);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    
+    .file-upload-area:hover {
+        border-color: var(--primary-color);
+        background-color: rgba(67, 97, 238, 0.05);
+    }
+    
+    .file-upload-area:hover::before {
+        opacity: 1;
+    }
+    
+    .file-upload-area.active {
+        border-color: var(--primary-color);
+        background-color: rgba(67, 97, 238, 0.08);
+        animation: pulse 1.5s infinite;
+    }
+    
+    .upload-cloud {
+        font-size: 2.5rem;
+        color: var(--primary-color);
+        margin-bottom: 15px;
+    }
+    
+    #upload-instruction {
+        margin: 10px 0 5px;
+        color: var(--text-color);
+        font-weight: 600;
+    }
+    
+    #file-name {
+        text-align: center;
+        color: var(--light-text);
+        line-height: 1.5;
+        margin-bottom: 15px;
+        font-size: 0.9rem;
+    }
+    
+    .upload-cta {
+        margin-top: 10px;
+    }
+    
+    .browse-btn {
+        padding: 10px 25px;
+        border-radius: 30px;
+        border: none;
+        background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+        color: white;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(67, 97, 238, 0.3);
+    }
+    
+    .browse-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(67, 97, 238, 0.4);
+    }
+    /* Supported files */
+    
+    .supported-files {
+        margin-top: 20px;
+    }
+    
+    .supported-files-title {
+        color: var(--light-text);
+        margin-bottom: 10px;
+        font-size: 0.9rem;
+        text-align: center;
+    }
+    
+    .supported-files-badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: center;
+    }
+    
+    .badge {
+        background-color: rgba(67, 97, 238, 0.1);
+        color: var(--primary-color);
+        padding: 8px 15px;
+        border-radius: 30px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    
+    .badge i {
+        font-size: 1rem;
+    }
+    /* Upload tips */
+    
+    .upload-tips {
+        margin-top: 25px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .tip {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 0.85rem;
+        color: var(--light-text);
+    }
+    
+    .tip i {
+        color: var(--primary-color);
+    }
+    /* Progress bar */
+    
+    .progress-container {
+        margin-top: 25px;
+        display: none;
+    }
+    
+    .progress-info {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+    }
+    
+    .progress-text {
+        font-size: 0.9rem;
+        color: var(--light-text);
+    }
+    
+    .progress-percent {
+        font-size: 0.9rem;
+        color: var(--primary-color);
+        font-weight: 600;
+    }
+    
+    .progress-bar {
+        height: 8px;
+        background-color: rgba(67, 97, 238, 0.1);
+        border-radius: 4px;
+        overflow: hidden;
+    }
+    
+    .progress {
+        height: 100%;
+        background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+        width: 0%;
+        transition: width 0.3s ease;
+    }
+    /* File list */
+    
+    .file-list {
+        margin-top: 20px;
+        max-height: 200px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .file-item {
+        display: flex;
+        align-items: center;
+        padding: 12px 15px;
+        border-radius: 8px;
+        background-color: rgba(67, 97, 238, 0.05);
+        transition: all 0.2s ease;
+    }
+    
+    .file-item:hover {
+        background-color: rgba(67, 97, 238, 0.1);
+    }
+    
+    .file-icon {
+        margin-right: 12px;
+        color: var(--primary-color);
+    }
+    
+    .file-name {
+        flex: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin-right: 10px;
+        font-size: 0.9rem;
+    }
+    
+    .file-size {
+        color: var(--light-text);
+        font-size: 0.8rem;
+    }
+    
+    .error-message {
+        color: var(--error-color);
+        margin-top: 15px;
+        font-size: 0.9rem;
+        display: none;
+        text-align: center;
+        padding: 10px;
+        background-color: rgba(249, 65, 68, 0.1);
+        border-radius: 6px;
+    }
     /* Modal styles */
+    
     .modal {
         display: none;
         position: fixed;
@@ -59,63 +616,142 @@
         width: 100%;
         height: 100%;
         background-color: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(5px);
     }
-
+    
     .modal-content {
-        background-color: #fff;
+        background-color: var(--card-bg);
         margin: 15% auto;
-        padding: 20px;
-        border-radius: 8px;
-        width: 400px;
+        padding: 30px;
+        border-radius: 15px;
+        width: 450px;
         max-width: 90%;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
         position: relative;
+        animation: fadeIn 0.3s ease-out;
     }
-
+    
+    .close-modal {
+        position: absolute;
+        right: 20px;
+        top: 15px;
+        font-size: 24px;
+        cursor: pointer;
+        color: var(--light-text);
+        transition: color 0.2s ease;
+    }
+    
+    .close-modal:hover {
+        color: var(--text-color);
+    }
+    
     .modal-actions {
         display: flex;
         justify-content: flex-end;
-        gap: 10px;
-        margin-top: 20px;
+        gap: 12px;
+        margin-top: 25px;
     }
-
-    .modal-actions .btn {
-        padding: 8px 16px;
-        border-radius: 4px;
+    
+    .btn {
+        padding: 12px 24px;
+        border-radius: 30px;
         cursor: pointer;
         border: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
     }
-
+    
     .btn-primary {
-        background-color: var(--primary-color);
+        background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
         color: white;
+        box-shadow: 0 4px 15px rgba(67, 97, 238, 0.3);
     }
-
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(67, 97, 238, 0.4);
+    }
+    
     .btn-trial {
-        background-color: #2196F3;
+        background: linear-gradient(135deg, var(--success-color), #38b000);
         color: white;
+        box-shadow: 0 4px 15px rgba(76, 201, 240, 0.3);
     }
-
-    .file-upload-area {
-        min-height: 150px;
-        border: 2px dashed #ccc;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        padding: 20px;
+    
+    .btn-trial:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(76, 201, 240, 0.4);
     }
-
-    .file-upload-area.active {
-        border-color: #4CAF50;
-        background-color: #f8f9fa;
+    
+    .btn-secondary {
+        background-color: rgba(141, 153, 174, 0.1);
+        color: var(--text-color);
+    }
+    
+    .btn-secondary:hover {
+        background-color: rgba(141, 153, 174, 0.2);
+    }
+    /* Responsive styles */
+    
+    @media (max-width: 1200px) {
+        .main-container {
+            flex-direction: column;
+            gap: 30px;
+        }
+        .upload-column {
+            position: static;
+            flex: 1;
+            width: 100%;
+        }
+        .welcome-column {
+            width: 100%;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .main-container {
+            padding: 20px;
+        }
+        .welcome-card,
+        .upload-card {
+            padding: 25px;
+        }
+        .upload-title {
+            font-size: 1.6rem;
+        }
+        .feature-card {
+            flex-direction: column;
+            gap: 15px;
+        }
+        .supported-files-badges {
+            justify-content: flex-start;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .welcome-card h1 {
+            font-size: 2rem;
+        }
+        .upload-card {
+            padding: 20px;
+        }
+        .file-upload-area {
+            min-height: 180px;
+            padding: 20px;
+        }
+        .modal-actions {
+            flex-direction: column;
+        }
+        .btn {
+            width: 100%;
+        }
     }
 </style>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const uploadArea = document.querySelector('.file-upload-area');
+    document.addEventListener('DOMContentLoaded', function() {
+        const uploadArea = document.getElementById('dropZone');
+        const browseBtn = document.querySelector('.browse-btn');
         const fileInput = document.createElement('input');
         fileInput.type = 'file';
         fileInput.multiple = true;
@@ -157,7 +793,9 @@
                 return await response.json();
             } catch (error) {
                 console.error('Subscription check failed:', error);
-                return { allow_uploads: false };
+                return {
+                    allow_uploads: false
+                };
             }
         }
 
@@ -263,10 +901,10 @@
                 const fileItem = document.createElement('div');
                 fileItem.className = 'file-item';
                 fileItem.innerHTML = `
-                <span class="file-icon">📄</span>
-                <span class="file-name">${file.filepath || file.name}</span>
-                <span class="file-size">${formatFileSize(file.size)}</span>
-            `;
+                    <span class="file-icon">📄</span>
+                    <span class="file-name">${file.filepath || file.name}</span>
+                    <span class="file-size">${formatFileSize(file.size)}</span>
+                `;
                 fileList.appendChild(fileItem);
             });
 
@@ -276,7 +914,7 @@
             progressPercent.textContent = '0%';
 
             const totalSize = files.reduce((sum, file) => sum + file.size, 0);
-            progressText.textContent = `Preparing to upload ${files.length} files (${formatFileSize(totalSize)})`;
+            progressText.textContent = `Preparing ${files.length} files (${formatFileSize(totalSize)})`;
 
             // Prepare form data
             const formData = new FormData();
@@ -288,7 +926,7 @@
             const xhr = new XMLHttpRequest();
             xhr.open('POST', '/upload', true);
 
-            xhr.upload.onprogress = function (e) {
+            xhr.upload.onprogress = function(e) {
                 if (e.lengthComputable) {
                     const percent = Math.round((e.loaded / e.total) * 100);
                     progressBar.style.width = percent + '%';
@@ -297,7 +935,7 @@
                 }
             };
 
-            xhr.onload = function () {
+            xhr.onload = function() {
                 if (xhr.status === 200) {
                     const response = JSON.parse(xhr.responseText);
                     if (response.redirect) {
@@ -313,7 +951,7 @@
                 }
             };
 
-            xhr.onerror = function () {
+            xhr.onerror = function() {
                 showError('Network error during upload');
             };
 
@@ -327,13 +965,6 @@
             const closeSpan = document.createElement('span');
             closeSpan.className = 'close-modal';
             closeSpan.innerHTML = '&times;';
-            closeSpan.style.cssText = `
-            position: absolute;
-            right: 15px;
-            top: 10px;
-            font-size: 24px;
-            cursor: pointer;
-        `;
             closeSpan.addEventListener('click', () => modal.style.display = 'none');
 
             const title = document.createElement('h3');
@@ -352,10 +983,6 @@
 
             const modalActions = document.createElement('div');
             modalActions.className = 'modal-actions';
-            modalActions.style.display = 'flex';
-            modalActions.style.justifyContent = 'flex-end';
-            modalActions.style.gap = '10px';
-            modalActions.style.marginTop = '20px';
 
             const upgradeButton = document.createElement('button');
             upgradeButton.className = 'btn btn-primary';
@@ -368,7 +995,7 @@
                 const trialButton = document.createElement('button');
                 trialButton.className = 'btn btn-trial';
                 trialButton.textContent = 'Start Free Trial';
-                trialButton.addEventListener('click', async () => {
+                trialButton.addEventListener('click', async() => {
                     try {
                         const response = await fetch('/start_trial', {
                             method: 'POST',
@@ -420,12 +1047,12 @@
         function showError(message) {
             errorMessage.textContent = message;
             errorMessage.style.display = 'block';
-            errorMessage.style.color = '#ff4444';
             setTimeout(() => errorMessage.style.display = 'none', 5000);
         }
 
         // Event listeners
         uploadArea.addEventListener('click', () => fileInput.click());
+        browseBtn.addEventListener('click', () => fileInput.click());
         fileInput.addEventListener('change', () => handleFiles(fileInput.files));
 
         uploadArea.addEventListener('dragover', (e) => {
@@ -437,7 +1064,7 @@
             uploadArea.classList.remove('active');
         });
 
-        uploadArea.addEventListener('drop', async (e) => {
+        uploadArea.addEventListener('drop', async(e) => {
             e.preventDefault();
             uploadArea.classList.remove('active');
             const items = Array.from(e.dataTransfer.items);
@@ -467,6 +1094,5 @@
             }
         });
     });
-
 </script>
 {% endblock %}

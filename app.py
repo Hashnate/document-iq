@@ -7,8 +7,8 @@ import requests
 import uuid
 import json
 import time
-from datetime import datetime, timezone
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, Response, stream_with_context,session
+from datetime import datetime, timezone, timedelta
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, Response, stream_with_context, session
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.utils import secure_filename
@@ -26,142 +26,161 @@ from bs4 import BeautifulSoup
 import csv
 import xml.etree.ElementTree as ET
 from flask import send_file
-
-import stripe
-from datetime import timedelta
-from sqlalchemy import func
 from flask_migrate import Migrate
-
-# from flask_wtf.csrf import CSRFProtect
 from werkzeug.middleware.proxy_fix import ProxyFix
-
-
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from sentence_transformers import SentenceTransformer
-import faiss
-import numpy as np
-
-import requests
-
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from sentence_transformers import SentenceTransformer
-import faiss
-import numpy as np
-import hashlib
-
-from functools import partial
-
 from flask_session import Session
 
+# GPU-optimized imports
+import torch
+import numpy as np
+from sentence_transformers import SentenceTransformer
+import faiss
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from sqlalchemy import text, func
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from functools import partial
 
 # Load environment variables
 load_dotenv()
 
-
+# GPU environment optimization
+os.environ['TOKENIZERS_PARALLELISM'] = 'true'
+os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
 # Initialize Flask app
 app = Flask(__name__)
-# csrf = CSRFProtect(app)
+
+# Enhanced Configuration for RTX A6000
+class Config:
+    SECRET_KEY = os.getenv('SECRET_KEY', 'dev-secret-key')
+    UPLOAD_FOLDER = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'uploads')
+    EXTRACT_FOLDER = os.path.join(os.getcwd(), 'extracted_files')
+    CACHE_FOLDER = os.path.join(os.getcwd(), 'file_cache')
+    ALLOWED_EXTENSIONS = {'txt', 'pdf', 'docx', 'md', 'csv', 'json', 'xml', 'html'}
+    MAX_CONTENT_LENGTH = 1000 * 1024 * 1024  # 1GB
+    OLLAMA_URL = os.getenv('OLLAMA_URL', 'http://127.0.0.1:11434/api/generate')
+    OLLAMA_MODEL = os.getenv('OLLAMA_MODEL', 'llama3:70b-instruct-q4_K_M')
+    OLLAMA_TIMEOUT = 600
+    MAX_FILE_SIZE = 500 * 1024 * 1024  # 500MB per file
+    MAX_RETRIES = 3
+    LOG_FILE = os.path.join(os.getcwd(), 'app.log')
+    LOG_LEVEL = logging.INFO
+    MAX_CONTEXT_LENGTH = 1000000  # 1M characters
+    STREAM_TIMEOUT = 500
+    CACHE_EXPIRATION_SECONDS = 3600
+    PDF_EXTRACTION_METHOD = 'pdfminer'
+
+    # GPU-optimized RAG configuration
+    EMBEDDING_MODEL = "sentence-transformers/all-mpnet-base-v2"  # Better model for GPU
+    CHUNK_SIZE = 512  # Optimal for transformer models
+    CHUNK_OVERLAP = 50  # Reduced for speed
+    SIMILARITY_TOP_K = 10
+    VECTOR_STORE_PATH = os.path.join(os.getcwd(), 'vector_store')
+    MAX_PARALLEL_PROCESSES = 16  # Utilize 36 cores
+    EMBEDDING_BATCH_SIZE = 256  # Utilize 48GB VRAM
+    
+    # Database optimization
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        'pool_size': 20,
+        'pool_recycle': 3600,
+        'pool_pre_ping': True,
+        'max_overflow': 30
+    }
+
+# Apply configuration
+app.config.from_object(Config)
+
+# Session configuration - FIXED
+app.config['SESSION_TYPE'] = 'filesystem'
+app.config['SESSION_FILE_DIR'] = '/tmp/flask_sessions'
+app.config['SESSION_PERMANENT'] = False
+app.config['SESSION_USE_SIGNER'] = True
+app.config['SESSION_KEY_PREFIX'] = 'documentiq:'
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=1)
+app.config['SESSION_COOKIE_NAME'] = 'documentiq_session'
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SECURE'] = False
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
 # Database configuration
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///documentiq.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-key')
 
 # Fatora configuration
 app.config['FATORA_API_KEY'] = os.getenv('FATORA_API_KEY')
 app.config['FATORA_BASE_URL'] = 'https://api.fatora.io/v1'
 app.config['FATORA_WEBHOOK_SECRET'] = os.getenv('FATORA_WEBHOOK_SECRET')
 
-# app.config['SESSION_COOKIE_SECURE'] = True
-# app.config['SESSION_COOKIE_HTTPONLY'] = False
-# app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+# Proxy configuration
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
+# Create session directory
+os.makedirs('/tmp/flask_sessions', exist_ok=True)
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+os.makedirs(app.config['EXTRACT_FOLDER'], exist_ok=True)
+os.makedirs(app.config['CACHE_FOLDER'], exist_ok=True)
 
-app.secret_key = '823trwegfiaweyuft78ewtfiwgef'
-app.config['SESSION_TYPE'] = 'filesystem'
-app.config['SESSION_FILE_DIR'] = '/tmp/flask_sessions'
-app.config['SESSION_PERMANENT'] = False
+# Initialize extensions
+db = SQLAlchemy(app)
+login_manager = LoginManager(app)
+login_manager.login_view = 'login'
+migrate = Migrate(app, db)
+
+# Initialize Session
 Session(app)
 
+# Configure logging
+handler = RotatingFileHandler(
+    app.config['LOG_FILE'],
+    maxBytes=10 * 1024 * 1024,
+    backupCount=3
+)
+handler.setLevel(app.config['LOG_LEVEL'])
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+app.logger.addHandler(handler)
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
+# Subscription Plans
 class SubscriptionPlan:
     BASIC = {
         'id': 'basic',
         'name': 'Basic',
-        'price': 99,  # QAR
-        'features': [
-            '50 documents/month',
-            '10MB max file size',
-            'Basic support'
-        ],
-        'limits': {
-            'max_documents': 50,
-            'max_file_size': 10 * 1024 * 1024,
-            'max_conversations': 10
-        }
+        'price': 99,
+        'features': ['50 documents/month', '10MB max file size', 'Basic support'],
+        'limits': {'max_documents': 50, 'max_file_size': 10 * 1024 * 1024, 'max_conversations': 10}
     }
     
     PRO = {
         'id': 'pro',
         'name': 'Professional',
         'price': 199,
-        'features': [
-            '200 documents/month',
-            '50MB max file size',
-            'Priority support',
-            'Advanced analytics'
-        ],
-        'limits': {
-            'max_documents': 200,
-            'max_file_size': 50 * 1024 * 1024,
-            'max_conversations': 50
-        }
+        'features': ['200 documents/month', '50MB max file size', 'Priority support', 'Advanced analytics'],
+        'limits': {'max_documents': 200, 'max_file_size': 50 * 1024 * 1024, 'max_conversations': 50}
     }
     
     TRIAL = {
         'id': 'trial',
         'name': 'Free Trial',
         'price': 0,
-        'features': [
-            'Unlimited documents for 14 days',
-            '100MB max file size',
-            'All Professional features',
-            'No credit card required'
-        ],
-        'limits': {
-            'max_documents': None,  # Unlimited
-            'max_file_size': 100 * 1024 * 1024,
-            'max_conversations': None,
-            'trial_days': 14
-        }
+        'features': ['Unlimited documents for 14 days', '100MB max file size', 'All Professional features', 'No credit card required'],
+        'limits': {'max_documents': None, 'max_file_size': 100 * 1024 * 1024, 'max_conversations': None, 'trial_days': 14}
     }
 
     @classmethod
     def get_plan(cls, plan_id):
-        plans = {
-            'basic': cls.BASIC,
-            'pro': cls.PRO,
-            'trial': cls.TRIAL
-        }
+        plans = {'basic': cls.BASIC, 'pro': cls.PRO, 'trial': cls.TRIAL}
         return plans.get(plan_id)
-    
-# Initialize extensions
-db = SQLAlchemy(app)
-login_manager = LoginManager(app)
-login_manager.login_view = 'login'
 
-
-# Models
+# Database Models
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(128))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     last_login = db.Column(db.DateTime)
     is_active = db.Column(db.Boolean, default=True)
     is_admin = db.Column(db.Boolean, default=False)
@@ -176,29 +195,34 @@ class User(UserMixin, db.Model):
     cancel_at_period_end = db.Column(db.Boolean, default=False)
     documents_uploaded = db.Column(db.Integer, default=0)
     last_billing_date = db.Column(db.DateTime)
-
     trial_start_date = db.Column(db.DateTime)
     trial_end_date = db.Column(db.DateTime)
     
-    
-
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
     
+    def _make_aware(self, dt):
+        """Convert naive datetime to timezone-aware UTC datetime"""
+        if dt is None:
+            return None
+        if dt.tzinfo is None:
+            return dt.replace(tzinfo=timezone.utc)
+        return dt
+    
     @property
     def is_subscribed(self):
-    # Check active paid subscription
+        now = datetime.now(timezone.utc)
+        
         if self.subscription_status == 'active' and (
             self.current_period_end is None or 
-            self.current_period_end > datetime.utcnow()
+            self._make_aware(self.current_period_end) > now
         ):
             return True
         
-        # Check trial period
-        if self.subscription_plan == 'trial' and self.trial_end_date and self.trial_end_date > datetime.utcnow():
+        if self.subscription_plan == 'trial' and self.trial_end_date and self._make_aware(self.trial_end_date) > now:
             return True
         
         return False
@@ -211,30 +235,37 @@ class User(UserMixin, db.Model):
         if self.is_admin:
             return True
         
-        # Allow unlimited uploads during trial period
         if self.subscription_plan == 'trial' and self.is_subscribed:
             return True
         
         plan = self.plan_details.get('limits', {})
-    
-        # Check file size limit
-        max_size = plan.get('max_file_size', 5 * 1024 * 1024)  # Default 5MB
+        max_size = plan.get('max_file_size', 5 * 1024 * 1024)
         if file_size > max_size:
             return False
         
-        # Check document count if limited
         if plan.get('max_documents') is not None:
             if self.documents_uploaded >= plan['max_documents']:
-                # Check if billing cycle has reset
-                if self.last_billing_date and self.last_billing_date.month == datetime.utcnow().month:
+                if (self.last_billing_date and 
+                    self._make_aware(self.last_billing_date).month == datetime.now(timezone.utc).month):
                     return False
                 else:
-                    # Reset counter for new month
                     self.documents_uploaded = 0
                     db.session.commit()
                 
         return True
-    
+
+    @property
+    def trial_days_remaining(self):
+        """Calculate trial days remaining with timezone-aware handling"""
+        if not self.trial_end_date or self.subscription_plan != 'trial':
+            return 0
+        
+        now = datetime.now(timezone.utc)
+        trial_end = self._make_aware(self.trial_end_date)
+        
+        days_left = (trial_end - now).days
+        return max(0, days_left)
+
 class Payment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
@@ -243,7 +274,7 @@ class Payment(db.Model):
     payment_intent_id = db.Column(db.String(100))
     payment_method = db.Column(db.String(50))
     status = db.Column(db.String(20))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     receipt_url = db.Column(db.String(255))
 
 class BillingHistory(db.Model):
@@ -253,31 +284,31 @@ class BillingHistory(db.Model):
     amount = db.Column(db.Float, nullable=False)
     currency = db.Column(db.String(3), default='QAR')
     status = db.Column(db.String(20))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     invoice_id = db.Column(db.String(100))
 
 class Conversation(db.Model):
     id = db.Column(db.String(36), primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     title = db.Column(db.String(100), nullable=False, default='New Query')
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     messages = db.relationship('Message', backref='conversation', lazy=True, cascade='all, delete-orphan')
 
 class Message(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     conversation_id = db.Column(db.String(36), db.ForeignKey('conversation.id'), nullable=False)
-    role = db.Column(db.String(20), nullable=False)  # 'user' or 'assistant'
+    role = db.Column(db.String(20), nullable=False)
     content = db.Column(db.Text, nullable=False)
-    sources = db.Column(db.JSON)  # Store as JSON array
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    sources = db.Column(db.JSON)
+    timestamp = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
 class FileCache(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     file_hash = db.Column(db.String(32), unique=True, nullable=False)
     content = db.Column(db.Text, nullable=False)
-    file_metadata = db.Column(db.JSON, nullable=False)  # Renamed here
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    file_metadata = db.Column(db.JSON, nullable=False)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
 
 class Document(db.Model):
@@ -286,836 +317,427 @@ class Document(db.Model):
     file_path = db.Column(db.String(512), nullable=False)
     file_hash = db.Column(db.String(64), nullable=False)
     file_type = db.Column(db.String(32), nullable=False)
-    processed_at = db.Column(db.DateTime, default=datetime.utcnow)
-    document_metadata = db.Column(db.JSON, name="metadata")  # Changed from metadata to document_metadata
+    processed_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    document_metadata = db.Column(db.JSON, name="metadata")
 
 class DocumentChunk(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     document_id = db.Column(db.Integer, db.ForeignKey('document.id'), nullable=False)
     chunk_text = db.Column(db.Text, nullable=False)
     chunk_hash = db.Column(db.String(64), nullable=False)
-    chunk_metadata = db.Column(db.JSON, name="metadata")  # Changed from metadata to chunk_metadata
-    vector_id = db.Column(db.String(64))  # Reference to vector store
+    chunk_metadata = db.Column(db.JSON, name="metadata")
+    vector_id = db.Column(db.String(64))
+    document = db.relationship('Document', backref='chunks')
 
-migrate = Migrate(app, db)
-
-
-class DocumentProcessor:
-    def __init__(self, user_id=None):
-        logger.debug(f"Initializing DocumentProcessor for user {user_id}")
-        self.user_id = user_id
-        self.embedder = SentenceTransformer(app.config['EMBEDDING_MODEL'])
-        logger.debug(f"Loaded embedding model: {app.config['EMBEDDING_MODEL']}")
-        self.embedder.batch_size = app.config['EMBEDDING_BATCH_SIZE']
+def migrate_existing_datetimes():
+    """One-time migration to convert naive datetimes to timezone-aware"""
+    try:
+        print("Starting datetime migration...")
         
+        # Update User table
+        users = User.query.all()
+        for user in users:
+            if user.created_at and user.created_at.tzinfo is None:
+                user.created_at = user.created_at.replace(tzinfo=timezone.utc)
+            if user.last_login and user.last_login.tzinfo is None:
+                user.last_login = user.last_login.replace(tzinfo=timezone.utc)
+            if user.current_period_end and user.current_period_end.tzinfo is None:
+                user.current_period_end = user.current_period_end.replace(tzinfo=timezone.utc)
+            if user.last_billing_date and user.last_billing_date.tzinfo is None:
+                user.last_billing_date = user.last_billing_date.replace(tzinfo=timezone.utc)
+            if user.trial_start_date and user.trial_start_date.tzinfo is None:
+                user.trial_start_date = user.trial_start_date.replace(tzinfo=timezone.utc)
+            if user.trial_end_date and user.trial_end_date.tzinfo is None:
+                user.trial_end_date = user.trial_end_date.replace(tzinfo=timezone.utc)
+        
+        # Update other tables
+        for payment in Payment.query.all():
+            if payment.created_at and payment.created_at.tzinfo is None:
+                payment.created_at = payment.created_at.replace(tzinfo=timezone.utc)
+                
+        for billing in BillingHistory.query.all():
+            if billing.created_at and billing.created_at.tzinfo is None:
+                billing.created_at = billing.created_at.replace(tzinfo=timezone.utc)
+                
+        for conv in Conversation.query.all():
+            if conv.created_at and conv.created_at.tzinfo is None:
+                conv.created_at = conv.created_at.replace(tzinfo=timezone.utc)
+            if conv.updated_at and conv.updated_at.tzinfo is None:
+                conv.updated_at = conv.updated_at.replace(tzinfo=timezone.utc)
+                
+        for msg in Message.query.all():
+            if msg.timestamp and msg.timestamp.tzinfo is None:
+                msg.timestamp = msg.timestamp.replace(tzinfo=timezone.utc)
+                
+        for cache in FileCache.query.all():
+            if cache.created_at and cache.created_at.tzinfo is None:
+                cache.created_at = cache.created_at.replace(tzinfo=timezone.utc)
+                
+        for doc in Document.query.all():
+            if doc.processed_at and doc.processed_at.tzinfo is None:
+                doc.processed_at = doc.processed_at.replace(tzinfo=timezone.utc)
+        
+        db.session.commit()
+        print("✅ Database datetime migration completed successfully")
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"❌ Database datetime migration failed: {e}")
+
+# Initialize database
+with app.app_context():
+    db.create_all()
+    
+    # Run migration only if needed (check if you have any existing data)
+    if User.query.count() > 0:
+        migrate_existing_datetimes()
+
+@login_manager.user_loader
+def load_user(user_id):
+    return db.session.get(User, int(user_id))
+
+# GPU-Optimized Document Processor
+class OptimizedDocumentProcessor:
+    def __init__(self, user_id=None):
+        self.user_id = user_id
+        self.logger = logging.getLogger(__name__)
+        self.app = app  # Store app reference for context
+        
+        # GPU Configuration
+        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        self.logger.info(f"Using device: {self.device}")
+        
+        if self.device == 'cuda':
+            gpu_props = torch.cuda.get_device_properties(0)
+            self.logger.info(f"GPU: {gpu_props.name}, Memory: {gpu_props.total_memory / 1e9:.1f}GB")
+            torch.cuda.empty_cache()
+        
+        # Use GPU-optimized model
+        self.embedder = SentenceTransformer(
+            app.config['EMBEDDING_MODEL'], 
+            device=self.device
+        )
+        
+        # Optimize for RTX A6000
+        self.batch_size = app.config['EMBEDDING_BATCH_SIZE'] if self.device == 'cuda' else 32
+        self.max_workers = app.config['MAX_PARALLEL_PROCESSES']
+        
+        # Initialize text splitter
         self.text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=app.config['CHUNK_SIZE'],
             chunk_overlap=app.config['CHUNK_OVERLAP'],
-            separators=["\n\n", "\n", " ", ""]
+            separators=["\n\n", "\n", ". ", " ", ""]
         )
         
-        self.vector_store = None
-        self._initialize_vector_store()
-        self.executor = ThreadPoolExecutor(max_workers=app.config['MAX_PARALLEL_PROCESSES'])
-        logger.debug(f"Initialized with {app.config['MAX_PARALLEL_PROCESSES']} parallel workers")
+        # Initialize GPU vector store
+        self.vector_store = self._create_optimized_index()
+        self.logger.info(f"Initialized processor: batch_size={self.batch_size}, workers={self.max_workers}")
 
-    def _initialize_vector_store(self):
-        """Initialize or load the FAISS vector store"""
-        logger.debug("Initializing vector store")
-        os.makedirs(app.config['VECTOR_STORE_PATH'], exist_ok=True)
-        index_file = os.path.join(app.config['VECTOR_STORE_PATH'], 'index.faiss')
-        
-        if os.path.exists(index_file):
-            try:
-                self.vector_store = faiss.read_index(index_file)
-                logger.info(f"Loaded existing vector store with {self.vector_store.ntotal} vectors")
-            except Exception as e:
-                logger.error(f"Failed to load vector store: {str(e)}", exc_info=True)
-                self._create_new_index()
-        else:
-            self._create_new_index()
-
-    def _create_new_index(self):
-        """Create a new FAISS index"""
-        dim = self.embedder.get_sentence_embedding_dimension()
-        logger.debug(f"Creating new FAISS index with dimension {dim}")
-        self.vector_store = faiss.IndexFlatL2(dim)
-        logger.info("Created new vector store")
-
-    def save_vector_store(self):
-        """Save the vector store to disk with detailed debugging"""
-        if not self.vector_store:
-            logger.warning("Attempted to save when vector_store is None")
-            return
-
+    def _create_optimized_index(self):
+        """Create GPU-accelerated FAISS index"""
         try:
-            # Ensure directory exists
-            os.makedirs(app.config['VECTOR_STORE_PATH'], exist_ok=True)
-            logger.debug(f"Ensured directory exists: {app.config['VECTOR_STORE_PATH']}")
-
-            index_file = os.path.join(app.config['VECTOR_STORE_PATH'], 'index.faiss')
-            logger.debug(f"Preparing to save vector store to: {index_file}")
-            logger.debug(f"Vector store contains {self.vector_store.ntotal} vectors")
-
-            # Verify write permissions
+            dim = self.embedder.get_sentence_embedding_dimension()
+            
+            # Try to load existing index
+            index_file = os.path.join(app.config['VECTOR_STORE_PATH'], 'gpu_index.faiss')
             if os.path.exists(index_file):
-                logger.debug("Existing index file found, checking write permissions")
-                if not os.access(index_file, os.W_OK):
-                    logger.error(f"No write permissions for: {index_file}")
-                    raise PermissionError(f"Cannot write to {index_file}")
-
-            # Save with performance timing
-            start_time = time.time()
-            faiss.write_index(self.vector_store, index_file)
-            elapsed = time.time() - start_time
-
-            logger.info(f"Successfully saved vector store with {self.vector_store.ntotal} vectors")
-            logger.debug(f"Save operation took {elapsed:.2f} seconds")
-            logger.debug(f"File size: {os.path.getsize(index_file)/1024/1024:.2f} MB")
-
-            # Verify the saved file
-            if os.path.exists(index_file):
-                logger.debug("Verifying saved index file")
-                try:
-                    test_index = faiss.read_index(index_file)
-                    if test_index.ntotal == self.vector_store.ntotal:
-                        logger.debug("Index verification successful")
-                    else:
-                        logger.error(f"Index verification failed: expected {self.vector_store.ntotal} vectors, got {test_index.ntotal}")
-                except Exception as verify_error:
-                    logger.error(f"Index verification failed: {str(verify_error)}")
-            else:
-                logger.error("Saved index file not found after write operation")
-
-        except Exception as e:
-            logger.error(f"Failed to save vector store: {str(e)}", exc_info=True)
-            # Additional error specific handling
-            if isinstance(e, IOError):
-                logger.error("IOError - Check disk space and permissions")
-            elif isinstance(e, RuntimeError):
-                logger.error("FAISS runtime error - Possible index corruption")
-            # Re-raise if you want the error to propagate
-            # raise
-
-    def search_documents(self, query, user_id=None, top_k=None, consider_recency=True):
-        """Search for relevant document chunks or return most recent documents based on query"""
-        logger.debug(f"Starting search for query: '{query[:50]}...' (user_id: {user_id})")
-
-        # Set default top_k if not provided
-        top_k = top_k or app.config['SIMILARITY_TOP_K']
-        logger.debug(f"Search configuration - top_k: {top_k}")
-
-        try:
-            # Check for recency override condition
-            if "latest uploaded file" in query.lower() and consider_recency:
-                logger.info("Recency override triggered - fetching most recent documents")
-                recent_docs = Document.query.filter_by(user_id=user_id)\
-                               .order_by(Document.processed_at.desc())\
-                               .limit(top_k)\
-                               .all()
-
-                results = [{
-                    'document': {
-                        'id': doc.id,
-                        'path': doc.document_metadata.get('original_filename', '')
-                    },
-                    'score': 1.0
-                } for doc in recent_docs]
-
-                logger.info(f"Returning {len(results)} recent documents based on query intent")
-                return results
-
-            # Get current session files (relative paths)
-            current_files = session.get('current_upload_files', [])
-            logger.debug(f"Found {len(current_files)} files in session")
-
-            current_files_full = [
-                os.path.join(app.config['EXTRACT_FOLDER'], f) 
-                for f in current_files
-            ] if current_files else None
-
-            # Generate query embedding
-            logger.debug("Generating query embedding...")
-            start_time = time.time()
-
-            try:
-                query_embedding = self.embedder.encode([query])
-                query_embedding = np.array(query_embedding, dtype=np.float32)
-                embed_time = time.time() - start_time
-                logger.debug(f"Embedding generated in {embed_time:.3f}s - shape: {query_embedding.shape}")
-            except Exception as e:
-                logger.error(f"Embedding generation failed: {str(e)}")
-                return []
-
-            # Search vector store
-            if not self.vector_store:
-                logger.error("Vector store not initialized!")
-                return []
-
-            logger.debug(f"Searching vector store with {self.vector_store.ntotal} vectors...")
-            start_time = time.time()
-
-            try:
-                distances, indices = self.vector_store.search(query_embedding, top_k)
-                search_time = time.time() - start_time
-                logger.debug(f"Search completed in {search_time:.3f}s - found {len(indices[0])} candidates")
-            except Exception as e:
-                logger.error(f"Vector search failed: {str(e)}")
-                return []
-
-         # Process results
-            results = []
-            logger.debug(f"Processing {len(indices[0])} candidate chunks...")
-
-            for i, (idx, distance) in enumerate(zip(indices[0], distances[0])):
-                try:
-                    logger.debug(f"Processing candidate #{i+1} - index: {idx}, distance: {distance:.3f}")
-                    chunk = DocumentChunk.query.filter_by(vector_id=str(idx)).first()
-                    if not chunk:
-                        logger.debug(f"No chunk found for vector_id {idx} - skipping")
-                        continue
-
-                    document = Document.query.get(chunk.document_id)
-                    if not document:
-                        logger.debug(f"No document found for chunk {chunk.id} - skipping")
-                        continue
-
-                    if document.user_id != user_id:
-                        logger.debug(f"Document {document.id} owned by different user (expected {user_id}, got {document.user_id}) - skipping")
-                        continue
-
-                    doc_filename = document.document_metadata.get('original_filename', '')
-                    doc_path = os.path.join(app.config['EXTRACT_FOLDER'], str(user_id), doc_filename)
-
-                    if current_files_full is not None and doc_path not in current_files_full:
-                        logger.debug(f"Document {doc_filename} not in current session - skipping")
-                        continue
-
-                    result_entry = {
-                        'chunk': chunk.chunk_text,
-                        'score': float(1 - distance),
-                        'metadata': {
-                            'document_path': doc_filename,
-                            'page': chunk.chunk_metadata.get('page', 1),
-                            'section': chunk.chunk_metadata.get('section', '')
-                        },
-                        'document': {
-                            'id': chunk.document_id,
-                            'path': doc_filename
-                        }
-                    }
-                    results.append(result_entry)
-                    logger.debug(f"Added result from document {doc_filename} (score: {result_entry['score']:.3f})")
-
-                except Exception as e:
-                    logger.error(f"Error processing candidate #{i+1}: {str(e)}")
-                    continue
-
-            results.sort(key=lambda x: x['score'], reverse=True)
-
-            if results:
-                logger.info(f"Search successful - returning {len(results)} results (top score: {results[0]['score']:.3f})")
-            else:
-             logger.warning("Search completed but no valid results found")
-
-            return results
-
-        except Exception as e:
-            logger.critical(f"Search failed: {str(e)}", exc_info=True)
-            return []
-    
-    def _preprocess_text(self, text):
-        """Clean and normalize text before chunking with detailed debugging"""
-        if not text or not isinstance(text, str):
-            logger.warning(f"Invalid text input: {type(text)}")
-            return ""
-
-        original_length = len(text)
-        logger.debug(f"Starting text preprocessing (length: {original_length} chars)")
-
-        try:
-            # Normalize line endings
-            text = text.replace('\r\n', '\n').replace('\r', '\n')
-            logger.debug("Normalized line endings")
-
-            # Reduce multiple newlines
-            text = re.sub(r'\n{3,}', '\n\n', text)
-            newline_reductions = original_length - len(text)
-            logger.debug(f"Reduced excessive newlines ({newline_reductions} changes)")
-
-            # Handle Unicode characters (more sophisticated approach)
-            def replace_non_ascii(match):
-                char = match.group()
-                logger.debug(f"Replacing non-ASCII character: {char} (ord: {ord(char)})")
-                return ' '
-
-            text = re.sub(r'[^\x00-\x7F]', replace_non_ascii, text)
-        
-            # Additional cleaning steps
-            text = re.sub(r'\t', ' ', text)  # Replace tabs with spaces
-            text = re.sub(r' +', ' ', text)  # Collapse multiple spaces
-            text = text.strip()
-        
-            logger.debug(f"Text preprocessing complete. Final length: {len(text)} chars "
-                    f"({100*len(text)/original_length:.1f}% of original)")
-        
-            return text
-
-        except Exception as e:
-            logger.error(f"Text preprocessing failed: {str(e)}", exc_info=True)
-            # Fallback to basic cleaning
-            return text.replace('\r\n', '\n').replace('\r', '\n').strip()
-    
-    def process_documents_parallel(self, file_paths):
-        results = []
-        for file_path in file_paths:
-            try:
-                # Process and verify
-                doc = self.process_document(file_path, self.user_id)
-                if not doc:
-                    raise Exception("Document processing returned None")
-                
-                # Verify chunks were stored
-                chunks = DocumentChunk.query.filter_by(document_id=doc.id).count()
-                if chunks == 0:
-                    raise Exception("No chunks stored for document")
-                
-                results.append({
-                    'file': file_path,
-                    'chunks': chunks,
-                    'success': True
-                })
-            except Exception as e:
-                logger.error(f"Failed to process {file_path}: {str(e)}")
-                results.append({
-                    'file': file_path,
-                    'error': str(e),
-                    'success': False
-                })
-    
-        self.save_vector_store()
-        return results
-
-    def _process_single_document_wrapper(self, file_path, user_id=None):
-        """Wrapper for parallel processing"""
-        logger.debug(f"Starting document wrapper for: {file_path}")
-        try:
-            with app.app_context():
-                logger.debug(f"App context acquired for processing: {file_path}")
-            
-                # Verify file exists before processing
-                if not os.path.exists(file_path):
-                    logger.error(f"File not found in wrapper: {file_path}")
-                    return None
-                
-                logger.debug(f"File size: {os.path.getsize(file_path)} bytes")
-            
-                # Process the document
-                result = self.process_document(file_path, user_id)
-            
-                if result:
-                    logger.debug(f"Successfully processed document: {file_path}")
+                index = faiss.read_index(index_file)
+                if self.device == 'cuda':
+                    res = faiss.StandardGpuResources()
+                    gpu_index = faiss.index_cpu_to_gpu(res, 0, index)
+                    self.logger.info(f"Loaded existing GPU index with {gpu_index.ntotal} vectors")
+                    return gpu_index
                 else:
-                    logger.warning(f"Document processing returned None for: {file_path}")
+                    self.logger.info(f"Loaded existing CPU index with {index.ntotal} vectors")
+                    return index
+            
+            # Create new index
+            if self.device == 'cuda':
+                res = faiss.StandardGpuResources()
+                index = faiss.IndexFlatIP(dim)  # Inner product for normalized vectors
+                gpu_index = faiss.index_cpu_to_gpu(res, 0, index)
+                self.logger.info(f"Created new GPU FAISS index (dim={dim})")
+                return gpu_index
+            else:
+                index = faiss.IndexFlatIP(dim)
+                self.logger.info(f"Created new CPU FAISS index (dim={dim})")
+                return index
                 
-                return result
+        except Exception as e:
+            self.logger.error(f"Failed to create FAISS index: {e}")
+            # Fallback to simple CPU index
+            dim = self.embedder.get_sentence_embedding_dimension()
+            return faiss.IndexFlatL2(dim)
+
+    def process_documents_parallel(self, file_paths):
+        """GPU-accelerated parallel document processing"""
+        if not file_paths:
+            return []
+            
+        start_time = time.time()
+        self.logger.info(f"Starting parallel processing of {len(file_paths)} files")
+        
+        # Phase 1: Parallel text extraction and chunking
+        extraction_start = time.time()
+        extracted_data = []
+        
+        # Create a wrapper function that includes app context
+        def process_with_context(file_path):
+            with self.app.app_context():
+                return self._extract_and_chunk(file_path)
+        
+        with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+            future_to_file = {
+                executor.submit(process_with_context, file_path): file_path 
+                for file_path in file_paths
+            }
+            
+            for future in as_completed(future_to_file):
+                file_path = future_to_file[future]
+                try:
+                    chunks, doc_id = future.result()
+                    if chunks:
+                        extracted_data.extend([(chunk, file_path, doc_id) for chunk in chunks])
+                        self.logger.debug(f"Processed {file_path}: {len(chunks)} chunks")
+                except Exception as e:
+                    self.logger.error(f"Failed to process {file_path}: {e}")
+        
+        extraction_time = time.time() - extraction_start
+        self.logger.info(f"Extraction completed in {extraction_time:.2f}s ({len(extracted_data)} chunks)")
+        
+        if not extracted_data:
+            self.logger.warning("No data extracted from files")
+            return []
+        
+        # Phase 2: GPU batch embedding
+        embedding_start = time.time()
+        chunk_texts = [item[0] for item in extracted_data]
+        
+        self.logger.info(f"Starting GPU embedding for {len(chunk_texts)} chunks")
+        embeddings = self._batch_embed(chunk_texts)
+        
+        if len(embeddings) == 0:
+            self.logger.error("No embeddings generated")
+            return []
+        
+        embedding_time = time.time() - embedding_start
+        self.logger.info(f"GPU embedding completed in {embedding_time:.2f}s ({len(chunk_texts)/embedding_time:.0f} chunks/sec)")
+        
+        # Phase 3: Bulk storage with app context
+        storage_start = time.time()
+        with self.app.app_context():
+            self._bulk_store_vectors_and_chunks(extracted_data, embeddings)
+        storage_time = time.time() - storage_start
+        
+        total_time = time.time() - start_time
+        self.logger.info(f"Total processing: {total_time:.2f}s ({len(extracted_data)/total_time:.0f} chunks/sec)")
+        
+        # Save vector store
+        self.save_vector_store()
+        
+        return extracted_data
+
+    def _extract_and_chunk(self, file_path):
+        """Extract text and create chunks for a single file"""
+        try:
+            file_hash = get_file_hash(file_path)
+            if not file_hash:
+                return [], None
+            
+            # Check if document already exists
+            existing_doc = Document.query.filter_by(file_hash=file_hash, user_id=self.user_id).first()
+            if existing_doc:
+                chunk_count = DocumentChunk.query.filter_by(document_id=existing_doc.id).count()
+                if chunk_count > 0:
+                    self.logger.info(f"Document already processed: {file_path}")
+                    return [], existing_doc.id
+            
+            # Create document record
+            doc = self._store_document(file_path, file_hash, self.user_id)
+            if not doc:
+                return [], None
+            
+            # Extract text
+            text = read_file(file_path, self.user_id)
+            if not text or not text.strip():
+                self.logger.warning(f"No text extracted from {file_path}")
+                return [], doc.id
+            
+            # Create chunks
+            chunks = self.text_splitter.split_text(text)
+            self.logger.debug(f"Created {len(chunks)} chunks from {file_path}")
+            return chunks, doc.id
             
         except Exception as e:
-            logger.error(f"Error in document wrapper for {file_path}: {str(e)}", exc_info=True)
-            return None
-    def _generate_embeddings(self, chunks):
-        """Generate embeddings with robust error handling and performance tracking"""
-        embeddings = []
-        if not chunks:
-            logger.warning("Empty chunks list provided for embedding")
-            return embeddings
+            self.logger.error(f"Error extracting {file_path}: {e}")
+            return [], None
 
-        embedding_dim = self.embedder.get_sentence_embedding_dimension()
-        logger.debug(f"Starting embedding generation for {len(chunks)} chunks (dim={embedding_dim})")
-
-        total_chunks = len(chunks)
-        processed_chunks = 0
-        batch_errors = 0
-        single_errors = 0
-
-        for i in range(0, len(chunks), self.embedder.batch_size):
-            batch = chunks[i:i + self.embedder.batch_size]
-            batch_num = (i // self.embedder.batch_size) + 1
-            logger.debug(f"Processing batch {batch_num} with {len(batch)} chunks")
-
-            try:
-                # Time batch processing
-                start_time = time.time()
-                batch_embeddings = self.embedder.encode(
-                    batch,
-                    show_progress_bar=False,
-                    convert_to_numpy=True,
-                    normalize_embeddings=True
-                )
-                embeddings.extend(batch_embeddings)
-                processed_chunks += len(batch)
-                duration = time.time() - start_time
-                logger.debug(f"Batch {batch_num} processed in {duration:.2f}s "
-                            f"({len(batch)/duration:.1f} chunks/s)")
-            except Exception as e:
-                batch_errors += 1
-                logger.error(f"Batch embedding failed (batch {batch_num}): {str(e)}")
-                logger.debug("Falling back to single chunk processing")
-
-                # Fallback to single chunk processing
-                for chunk in batch:
-                    try:
-                        start_time = time.time()
-                        embedding = self.embedder.encode(chunk)
-                        embeddings.append(embedding)
-                        processed_chunks += 1
-                        duration = time.time() - start_time
-                        logger.debug(f"Single chunk processed in {duration:.3f}s")
-                    except Exception as single_e:
-                        single_errors += 1
-                        logger.error(f"Single chunk embedding failed: {str(single_e)}")
-                        logger.debug("Using zero vector as fallback")
-                        embeddings.append(np.zeros(embedding_dim))
-
-        # Final validation
-        if len(embeddings) != total_chunks:
-            logger.error(f"Embedding count mismatch! Expected {total_chunks}, got {len(embeddings)}")
-        if batch_errors or single_errors:
-            logger.warning(f"Completed with {batch_errors} batch errors and {single_errors} single errors")
-
-        return embeddings
+    def _batch_embed(self, texts):
+        """GPU-accelerated batch embedding"""
+        if not texts:
+            return np.array([])
+        
+        all_embeddings = []
+        
+        try:
+            # Process in optimized batches
+            for i in range(0, len(texts), self.batch_size):
+                batch = texts[i:i + self.batch_size]
+                
+                try:
+                    batch_embeddings = self.embedder.encode(
+                        batch,
+                        batch_size=len(batch),
+                        show_progress_bar=False,
+                        convert_to_numpy=True,
+                        normalize_embeddings=True,
+                        device=self.device
+                    )
+                    all_embeddings.append(batch_embeddings)
+                    
+                except Exception as e:
+                    self.logger.error(f"Batch embedding failed: {e}")
+                    # Fallback to individual processing
+                    for text in batch:
+                        try:
+                            embedding = self.embedder.encode([text], normalize_embeddings=True)
+                            all_embeddings.append(embedding)
+                        except:
+                            dim = self.embedder.get_sentence_embedding_dimension()
+                            all_embeddings.append(np.zeros((1, dim)))
+            
+            return np.vstack(all_embeddings) if all_embeddings else np.array([])
+            
+        except Exception as e:
+            self.logger.error(f"Embedding generation failed: {e}")
+            return np.array([])
 
     def _store_document(self, file_path, file_hash, user_id):
-        """Create document record with enhanced metadata"""
+        """Create document record"""
         try:
             if not os.path.exists(file_path):
-                raise FileNotFoundError(f"File not found: {file_path}")
-
+                return None
+            
             file_stats = os.stat(file_path)
             doc_metadata = {
                 'size': file_stats.st_size,
                 'modified': datetime.fromtimestamp(file_stats.st_mtime).isoformat(),
-                'created': datetime.fromtimestamp(file_stats.st_ctime).isoformat(),
                 'original_filename': os.path.basename(file_path),
                 'file_type': os.path.splitext(file_path)[1].lower(),
-                'processing_time': datetime.utcnow().isoformat()
+                'processing_time': datetime.now(timezone.utc).isoformat()
             }
-
+            
             doc = Document(
                 user_id=user_id,
                 file_path=file_path,
                 file_hash=file_hash,
                 file_type=doc_metadata['file_type'],
                 document_metadata=doc_metadata,
-                processed_at=datetime.utcnow()  # Add this line
+                processed_at=datetime.now(timezone.utc)
             )
-
+            
             db.session.add(doc)
             db.session.flush()
-            logger.debug(f"Created document record ID {doc.id} for {file_path}")
             return doc
-
+            
         except Exception as e:
-            logger.error(f"Failed to create document record: {str(e)}")
+            self.logger.error(f"Failed to store document {file_path}: {e}")
             db.session.rollback()
-            raise
+            return None
 
-    def _store_chunks(self, doc, chunks, embeddings, file_path):
-        """Store chunks with transaction safety and validation"""
-        if len(chunks) != len(embeddings):
-            raise ValueError(f"Mismatched chunks ({len(chunks)}) and embeddings ({len(embeddings)})")
-
+    def _bulk_store_vectors_and_chunks(self, extracted_data, embeddings):
+        """Bulk store vectors and database records"""
+        if len(extracted_data) == 0 or len(embeddings) == 0:
+            return
+        
         try:
-            total_chunks = len(chunks)
-            logger.info(f"Storing {total_chunks} chunks for document {doc.id}")
-
-            for i, (chunk, embedding) in enumerate(zip(chunks, embeddings)):
-                if not chunk or not isinstance(chunk, str):
-                    logger.warning(f"Invalid chunk at index {i} - skipping")
-                    continue
-
-                try:
-                    # Convert embedding to numpy if needed
-                    if not isinstance(embedding, np.ndarray):
-                        embedding = np.array(embedding, dtype=np.float32)
-
-                    self.vector_store.add(embedding.reshape(1, -1))
-                    vector_id = self.vector_store.ntotal - 1
-
-                    # Create metadata
-                    chunk_metadata = {
-                        'document_id': doc.id,
+            # Add to vector store
+            start_idx = self.vector_store.ntotal
+            self.vector_store.add(embeddings.astype(np.float32))
+            
+            # Prepare bulk database insert
+            chunk_records = []
+            for i, (chunk_text, file_path, doc_id) in enumerate(extracted_data):
+                chunk_records.append({
+                    'document_id': doc_id,
+                    'chunk_text': chunk_text,
+                    'chunk_hash': hashlib.md5(chunk_text.encode()).hexdigest(),
+                    'vector_id': str(start_idx + i),
+                    'metadata': {
+                        'file_path': file_path,
                         'chunk_index': i,
-                        'page': self._estimate_page_number(i, total_chunks),
-                        'section': self._extract_section_header(chunk),
-                        'file_path': file_path
+                        'page': i // 10 + 1
                     }
-
-                    # Store chunk
-                    doc_chunk = DocumentChunk(
-                        document_id=doc.id,
-                        chunk_text=chunk,
-                        chunk_hash=hashlib.md5(chunk.encode()).hexdigest(),
-                        chunk_metadata=chunk_metadata,
-                        vector_id=str(vector_id)
-                    )
-
-                    db.session.add(doc_chunk)
-                    logger.debug(f"Added chunk {i} to session")
-
-                except Exception as e:
-                    logger.error(f"Failed to store chunk {i} for doc {doc.id}: {str(e)}")
-                    continue
-
+                })
+            
+            # Bulk insert
+            db.session.bulk_insert_mappings(DocumentChunk, chunk_records)
             db.session.commit()
-            logger.info(f"Successfully stored {len(chunks)} chunks for document {doc.id}")
-
+            self.logger.info(f"Bulk stored {len(chunk_records)} chunks")
+            
         except Exception as e:
             db.session.rollback()
-            logger.error(f"Error storing chunks for document {doc.id}: {str(e)}", exc_info=True)
-            raise
+            self.logger.error(f"Bulk storage failed: {e}")
 
-    def _estimate_page_number(self, chunk_index, total_chunks):
-        """Estimate page number based on chunk position with robust error handling"""
+    def search_documents(self, query, user_id=None, top_k=None):
+        """GPU-accelerated document search"""
+        top_k = top_k or app.config['SIMILARITY_TOP_K']
+        
+        if not self.vector_store or self.vector_store.ntotal == 0:
+            self.logger.warning("Vector store is empty")
+            return []
+        
         try:
-            # Handle edge cases
-            if total_chunks <= 0:
-                return 1
+            # Generate query embedding
+            query_embedding = self.embedder.encode([query], normalize_embeddings=True)
             
-            # Calculate chunks per page (minimum 1, target ~20 pages)
-            chunks_per_page = max(1, total_chunks // 20)
-            page_num = (chunk_index // chunks_per_page) + 1
-        
-            # Only log progress if we have enough chunks
-            if total_chunks >= 10 and chunk_index % (total_chunks // 10) == 0:
-                logger.debug(f"Estimated page {page_num} for chunk {chunk_index}/{total_chunks}")
-        
-            return page_num
-        
+            # Search
+            distances, indices = self.vector_store.search(query_embedding, top_k)
+            
+            # Get results
+            results = []
+            for idx, distance in zip(indices[0], distances[0]):
+                if idx == -1:  # FAISS returns -1 for invalid results
+                    continue
+                    
+                chunk = DocumentChunk.query.filter_by(vector_id=str(idx)).first()
+                if chunk and chunk.document.user_id == user_id:
+                    results.append({
+                        'chunk': chunk.chunk_text,
+                        'score': float(distance),
+                        'document': {
+                            'id': chunk.document_id,
+                            'path': chunk.document.document_metadata.get('original_filename', '')
+                        },
+                        'metadata': chunk.chunk_metadata or {}
+                    })
+            
+            return results
+            
         except Exception as e:
-            logger.error(f"Page estimation failed for chunk {chunk_index}/{total_chunks}: {str(e)}")
-            return 1  # Safe fallback
-    
-    def _extract_section_header(self, chunk):
-        """Enhanced section header extraction"""
+            self.logger.error(f"Search failed: {e}")
+            return []
+
+    def save_vector_store(self):
+        """Save vector store to disk"""
         try:
-            # Try Markdown-style headers first
-            markdown_header = re.search(r'^(#{1,6}\s+(.+?)\s*$', chunk, re.MULTILINE)
-            if markdown_header:
-                return markdown_header.group(2).strip()
-
-            # Try ALLCAPS headings
-            allcaps_header = re.search(r'^([A-Z][A-Z0-9_ -]{10,})\s*$', chunk, re.MULTILINE)
-            if allcaps_header:
-                return allcaps_header.group(1).strip()
-
-            # Try underlined headings
-            underlined_header = re.search(r'^(.+?)\n[-=]{3,}\s*$', chunk, re.MULTILINE)
-            if underlined_header:
-                return underlined_header.group(1).strip()
-
-            return None
-        except Exception as e:
-            logger.debug(f"Header extraction failed: {str(e)}")
-            return None
-        
-    def process_document(self, file_path, user_id=None):
-        """Full document processing pipeline for a single file"""
-        logger.debug(f"Processing document: {file_path}")
-        try:
-            # File validation
-            if not os.path.exists(file_path):
-                logger.error(f"File not found: {file_path}")
-                return None
-
-            file_hash = get_file_hash(file_path)
-            if not file_hash:
-                logger.error(f"Failed to generate hash for {file_path}")
-                return None
-
-            # Check for existing document - only skip if it has chunks
-            existing_doc = Document.query.filter_by(file_hash=file_hash, user_id=user_id).first()
-            if existing_doc:
-                chunk_count = DocumentChunk.query.filter_by(document_id=existing_doc.id).count()
-                if chunk_count > 0:
-                    logger.info(f"Document already processed with {chunk_count} chunks: {file_path}")
-                    return existing_doc
-                else:
-                    logger.warning(f"Document exists but has no chunks. Reprocessing: {file_path}")
-                    db.session.delete(existing_doc)
-                    db.session.commit()
-
-            # Text extraction
-            logger.debug(f"Extracting text from {file_path}")
-            text = read_file(file_path, user_id)
-            if not text:
-                logger.error(f"Failed to extract text from {file_path}")
-                return None
-
-            # Text preprocessing
-            logger.debug(f"Preprocessing text from {file_path}")
-            text = self._preprocess_text(text)
-            chunks = self.text_splitter.split_text(text)
-            logger.debug(f"Split into {len(chunks)} chunks")
+            os.makedirs(app.config['VECTOR_STORE_PATH'], exist_ok=True)
+            index_file = os.path.join(app.config['VECTOR_STORE_PATH'], 'gpu_index.faiss')
             
-            if not chunks:
-                logger.error(f"No chunks generated from {file_path}")
-                return None
-
-            # Embedding generation
-            logger.debug(f"Generating embeddings for {len(chunks)} chunks")
-            embeddings = self._generate_embeddings(chunks)
-            if len(embeddings) != len(chunks):
-                logger.error(f"Embedding count mismatch for {file_path} (expected {len(chunks)}, got {len(embeddings)})")
-                return None
-
-            # Document storage
-            logger.debug(f"Storing document in database: {file_path}")
-            doc = self._store_document(file_path, file_hash, user_id)
-            self._store_chunks(doc, chunks, embeddings, file_path)
-
-            logger.info(f"Processed document {file_path} into {len(chunks)} chunks")
-            return doc
-
-        except Exception as e:
-            db.session.rollback()
-            logger.error(f"Error processing document {file_path}: {str(e)}", exc_info=True)
-            return None
-# Initialize database
-with app.app_context():
-    db.create_all()
-
-
-# User loader
-@login_manager.user_loader
-def load_user(user_id):
-    return User.query.get(int(user_id))
-
-# Validate critical environment variables
-def check_environment():
-    """Validate required environment variables before starting"""
-    required_vars = ['OLLAMA_URL', 'OLLAMA_MODEL']
-    missing = [var for var in required_vars if not os.getenv(var)]
-    if missing:
-        raise EnvironmentError(f"Missing required environment variables: {', '.join(missing)}")
-
-# Global progress tracking with thread safety
-progress_data = {
-    'current': 0,
-    'total': 100,
-    'message': '',
-    'error': None,
-    'redirect_url': None
-}
-progress_lock = threading.Lock()
-
-# Enhanced Configuration with document processing improvements
-class Config:
-    SECRET_KEY = os.getenv('SECRET_KEY', 'dev-secret-key')
-    UPLOAD_FOLDER = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'uploads')
-    EXTRACT_FOLDER = os.path.join(os.getcwd(), 'extracted_files')
-    CACHE_FOLDER = os.path.join(os.getcwd(), 'file_cache')
-    ALLOWED_EXTENSIONS = {'txt', 'pdf', 'docx', 'md', 'csv', 'json', 'xml', 'html'}
-    MAX_CONTENT_LENGTH = 500 * 1024 * 1024  # 500MB
-    OLLAMA_URL = os.getenv('OLLAMA_URL', 'http://127.0.0.1:11434/api/generate')
-    OLLAMA_MODEL = os.getenv('OLLAMA_MODEL', 'llama3:70b-instruct-q4_K_M')
-    OLLAMA_TIMEOUT = 600  # 10 minutes
-    MAX_FILE_SIZE = 100 * 1024 * 1024  # 100MB per file
-    MAX_RETRIES = 3
-    LOG_FILE = os.path.join(os.getcwd(), 'app.log')
-    LOG_LEVEL = logging.INFO
-    MAX_CONTEXT_LENGTH = 500000  # Characters per file
-    STREAM_TIMEOUT = 500  # Seconds
-    CACHE_EXPIRATION_SECONDS = 3600  # 1 hour
-    CHUNK_SIZE = 30000  # For text chunking
-    CHUNK_OVERLAP = 500  # Overlap between chunks
-    PDF_EXTRACTION_METHOD = 'pdfminer'  # Options: 'pdfminer', 'pdfplumber', 'pypdf2'
-
-    # New RAG configuration
-    EMBEDDING_MODEL = "all-MiniLM-L6-v2"  # Local embedding model
-    CHUNK_SIZE = 1000  # Token size for chunks
-    CHUNK_OVERLAP = 200  # Overlap between chunks
-    SIMILARITY_TOP_K = 4  # Number of chunks to retrieve
-    VECTOR_STORE_PATH = os.path.join(os.getcwd(), 'vector_store')
-    MAX_PARALLEL_PROCESSES = 8  # For CPU-bound tasks
-    EMBEDDING_BATCH_SIZE = 32  # For GPU batch processing
-
-app.config.from_object(Config)
-
-# Ensure directories exist
-os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-os.makedirs(app.config['EXTRACT_FOLDER'], exist_ok=True)
-os.makedirs(app.config['CACHE_FOLDER'], exist_ok=True)
-
-
-
-# Configure logging
-handler = RotatingFileHandler(
-    app.config['LOG_FILE'],
-    maxBytes=10 * 1024 * 1024,
-    backupCount=3
-)
-handler.setLevel(app.config['LOG_LEVEL'])
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-handler.setFormatter(formatter)
-app.logger.addHandler(handler)
-logging.getLogger().setLevel(app.config['LOG_LEVEL'])
-
-
-
-# Configure logging with more detailed format
-logging.basicConfig(
-    level=logging.DEBUG,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        RotatingFileHandler(
-            app.config['LOG_FILE'],
-            maxBytes=10 * 1024 * 1024,  # 10MB
-            backupCount=3
-        ),
-        logging.StreamHandler()  # Also log to console
-    ]
-)
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-
-# Add this to log all SQL queries in development
-if os.getenv('FLASK_DEBUG') == 'true':
-    logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
-
-
-
-
-# In-memory storage for conversations
-conversations = {}
-
-@app.route('/debug_file_processing')
-@login_required
-def debug_file_processing():
-    """Debug endpoint to verify file processing"""
-    try:
-        # Get all files in user's extract directory
-        user_extract_dir = os.path.join(app.config['EXTRACT_FOLDER'], str(current_user.id))
-        all_files = []
-        if os.path.exists(user_extract_dir):
-            for root, _, files in os.walk(user_extract_dir):
-                for file in files:
-                    file_path = os.path.join(root, file)
-                    if not file.startswith('.') and not file == '__MACOSX':
-                        all_files.append({
-                            'path': file_path,
-                            'rel_path': os.path.relpath(file_path, user_extract_dir),
-                            'exists': os.path.exists(file_path),
-                            'size': os.path.getsize(file_path) if os.path.exists(file_path) else 0
-                        })
-        
-        # Try reading first 3 files
-        sample_results = []
-        for file in all_files[:3]:
-            content = read_file(file['path'], current_user.id)
-            sample_results.append({
-                'file': file['rel_path'],
-                'content_length': len(content) if content else 0,
-                'content_sample': (content[:100] + '...') if content else None,
-                'cache_exists': bool(FileCache.query.filter_by(file_hash=get_file_hash(file['path'])).first()) if os.path.exists(file['path']) else False
-            })
-        
-        return jsonify({
-            'extract_dir': user_extract_dir,
-            'files_found': len(all_files),
-            'sample_results': sample_results,
-            'cache_entries': FileCache.query.count()
-        })
-        
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-    
-def allowed_file(filename):
-    """Check if the file has an allowed extension"""
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
-
-def extract_zip_parallel(zip_path, extract_to):
-    """Enhanced ZIP extraction with parallel processing"""
-    try:
-        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-            file_infos = [
-                f for f in zip_ref.infolist() 
-                if not f.is_dir() 
-                and '__MACOSX' not in f.filename
-                and allowed_file(f.filename)
-            ]
-            
-            # Use ThreadPoolExecutor for parallel extraction
-            with ThreadPoolExecutor(max_workers=app.config['MAX_PARALLEL_PROCESSES']) as executor:
-                futures = []
-                for file_info in file_infos:
-                    futures.append(executor.submit(
-                        extract_single_file,
-                        zip_ref, 
-                        file_info,
-                        extract_to
-                    ))
+            if self.device == 'cuda':
+                cpu_index = faiss.index_gpu_to_cpu(self.vector_store)
+                faiss.write_index(cpu_index, index_file)
+            else:
+                faiss.write_index(self.vector_store, index_file)
                 
-                # Wait for all extractions to complete
-                for future in as_completed(futures):
-                    try:
-                        future.result()
-                    except Exception as e:
-                        app.logger.error(f"File extraction failed: {str(e)}")
-                        
-        return True
-    except Exception as e:
-        app.logger.error(f"ZIP extraction failed: {str(e)}")
-        return False
-
-def generate_embeddings_batch(self, texts):
-    """Generate embeddings in batches for better GPU utilization"""
-    if not texts:
-        return []
-    
-    # Process in batches
-    batch_size = app.config['EMBEDDING_BATCH_SIZE']
-    embeddings = []
-    
-    for i in range(0, len(texts), batch_size):
-        batch = texts[i:i + batch_size]
-        try:
-            batch_embeddings = self.embedder.encode(
-                batch,
-                show_progress_bar=False,
-                convert_to_numpy=True,
-                normalize_embeddings=True
-            )
-            embeddings.extend(batch_embeddings)
+            self.logger.info(f"Saved vector store with {self.vector_store.ntotal} vectors")
+            
         except Exception as e:
-            app.logger.error(f"Error generating embeddings for batch {i//batch_size}: {str(e)}")
-            # Fallback to single processing for failed batch
-            for text in batch:
-                try:
-                    embedding = self.embedder.encode(text)
-                    embeddings.append(embedding)
-                except:
-                    embeddings.append(np.zeros(self.embedder.get_sentence_embedding_dimension()))
-    
-    return embeddings
+            self.logger.error(f"Failed to save vector store: {e}")
 
-def extract_single_file(zip_ref, file_info, extract_to):
-    """Helper function for parallel file extraction"""
-    file_path = file_info.filename
-    target_path = os.path.join(extract_to, file_path)
-    
-    if file_info.file_size > app.config['MAX_FILE_SIZE']:
-        app.logger.warning(f"Skipping large file: {file_path}")
-        return
-        
-    os.makedirs(os.path.dirname(target_path), exist_ok=True)
-    
-    with zip_ref.open(file_info) as source, open(target_path, 'wb') as target:
-        shutil.copyfileobj(source, target)
-
+# Helper Functions
 def get_file_hash(file_path):
-    """Guaranteed file hashing with fallback"""
+    """Generate file hash"""
     try:
         hasher = hashlib.md5()
         with open(file_path, 'rb') as f:
@@ -1123,207 +745,62 @@ def get_file_hash(file_path):
                 hasher.update(chunk)
         return hasher.hexdigest()
     except:
-        # Fallback to file stats if hashing fails
-        stat = os.stat(file_path)
-        return f"{stat.st_size}:{stat.st_mtime}"
-    
-def read_pdf(file_path):
-    """Improved PDF reading with multiple extraction methods and structure preservation"""
-    try:
-        if app.config['PDF_EXTRACTION_METHOD'] == 'pdfminer':
-            text = pdfminer_extract(file_path)
-        elif app.config['PDF_EXTRACTION_METHOD'] == 'pdfplumber':
-            text = ""
-            with pdfplumber.open(file_path) as pdf:
-                for page in pdf.pages:
-                    # Extract text with layout preservation
-                    page_text = page.extract_text(
-                        layout=True,
-                        x_tolerance=1,
-                        y_tolerance=1,
-                        keep_blank_chars=True
-                    )
-                    if page_text:
-                        text += f"=== PAGE {page.page_number} ===\n{page_text}\n\n"
-        else:  # PyPDF2 fallback
-            with open(file_path, 'rb') as file:
-                reader = PyPDF2.PdfReader(file)
-                text = ""
-                for i, page in enumerate(reader.pages):
-                    page_text = page.extract_text()
-                    if page_text:
-                        text += f"=== PAGE {i+1} ===\n{page_text}\n\n"
-        return text
-    except Exception as e:
-        app.logger.error(f"PDF extraction failed for {file_path}: {str(e)}")
         return None
 
-def read_docx(file_path):
-    """Enhanced DOCX reading with style information and structure preservation"""
-    try:
-        doc = docx.Document(file_path)
-        text = []
-        for para in doc.paragraphs:
-            # Preserve heading structure
-            if para.style.name.startswith('Heading'):
-                level = int(para.style.name.split(' ')[1]) if ' ' in para.style.name else 1
-                text.append(f"\n{'#' * level} {para.text}\n")
-            else:
-                text.append(para.text)
-            
-            # Preserve tables
-            if para.tables:
-                for table in para.tables:
-                    for row in table.rows:
-                        row_text = "| " + " | ".join(cell.text for cell in row.cells) + " |"
-                        text.append(row_text)
-                    text.append("")  # Add empty line after table
-                    
-        return "\n".join(text)
-    except Exception as e:
-        app.logger.error(f"DOCX extraction failed for {file_path}: {str(e)}")
-        return None
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
-def read_markdown(file_path):
-    """Read markdown with original structure preservation"""
-    try:
-        with open(file_path, 'r', encoding='utf-8') as f:
-            return f.read()
-    except Exception as e:
-        app.logger.error(f"Markdown extraction failed for {file_path}: {str(e)}")
-        return None
-
-def read_csv(file_path):
-    """Read CSV with header detection and structure preservation"""
-    try:
-        with open(file_path, 'r', encoding='utf-8') as f:
-            reader = csv.reader(f)
-            return "\n".join([", ".join(row) for row in reader])
-    except Exception as e:
-        app.logger.error(f"CSV extraction failed for {file_path}: {str(e)}")
-        return None
-
-def read_xml(file_path):
-    """Read XML with tag preservation and structure"""
-    try:
-        tree = ET.parse(file_path)
-        root = tree.getroot()
-        
-        def xml_to_text(element, indent=0):
-            text = []
-            # Add opening tag with attributes
-            attrs = " ".join(f'{k}="{v}"' for k, v in element.attrib.items())
-            tag_text = f"{' ' * indent}<{element.tag}"
-            if attrs:
-                tag_text += f" {attrs}"
-            tag_text += ">"
-            text.append(tag_text)
-            
-            # Handle text content
-            if element.text and element.text.strip():
-                text.append(f"{' ' * (indent+2)}{element.text.strip()}")
-            
-            # Recursively process children
-            for child in element:
-                text.append(xml_to_text(child, indent+2))
-            
-            # Add closing tag
-            text.append(f"{' ' * indent}</{element.tag}>")
-            return "\n".join(text)
-        
-        return xml_to_text(root)
-    except Exception as e:
-        app.logger.error(f"XML extraction failed for {file_path}: {str(e)}")
-        return None
-
-def read_html(file_path):
-    """Read HTML content with structure preservation"""
-    try:
-        with open(file_path, 'r', encoding='utf-8') as f:
-            soup = BeautifulSoup(f.read(), 'html.parser')
-            
-            # Preserve basic structure
-            for elem in soup.find_all(['div', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6']):
-                if elem.name.startswith('h'):
-                    level = int(elem.name[1])
-                    elem.insert_before(f"\n{'#' * level} ")
-                    elem.insert_after("\n")
-                elif elem.name == 'p':
-                    elem.insert_before("\n")
-                    elem.insert_after("\n")
-                elif elem.name == 'div':
-                    elem.insert_before("\n---\n")
-                    elem.insert_after("\n---\n")
-            
-            # Get text with preserved structure
-            return soup.get_text('\n')
-    except Exception as e:
-        app.logger.error(f"HTML extraction failed for {file_path}: {str(e)}")
-        return None
-
-# Helper function to read files with user-specific caching
 def read_file(file_path, user_id=None):
-    """Completely rewritten file reading with guaranteed caching"""
-    logger.debug(f"Attempting to read file: {file_path} for user {user_id}")
+    """Read file with caching"""
     if not os.path.exists(file_path):
-        logger.error(f"File not found: {file_path}")
         return None
-
+    
     try:
-        # Generate reliable file hash
         file_hash = get_file_hash(file_path)
         if not file_hash:
-            logger.error(f"Failed to generate hash for {file_path}")
             return None
-
-        logger.debug(f"File hash: {file_hash}")
-
-        # Check cache with direct database verification
+        
+        # Check cache
         cached = FileCache.query.filter_by(file_hash=file_hash).first()
         if cached:
-            logger.debug(f"Cache HIT for {file_path}")
             return cached.content
-
-        logger.debug(f"Cache MISS for {file_path}")
-
-        # Read file content based on type
+        
+        # Read file based on type
         text = None
         ext = os.path.splitext(file_path)[1].lower()
-        logger.debug(f"File extension: {ext}")
         
         if ext == '.pdf':
-            logger.debug("Processing PDF file")
             text = read_pdf(file_path)
         elif ext == '.docx':
-            logger.debug("Processing DOCX file")
             text = read_docx(file_path)
+        elif ext == '.txt':
+            encodings = ['utf-8', 'iso-8859-1', 'windows-1252']
+            for encoding in encodings:
+                try:
+                    with open(file_path, 'r', encoding=encoding) as f:
+                        text = f.read()
+                    break
+                except UnicodeDecodeError:
+                    continue
         elif ext in ('.md', '.markdown'):
-            logger.debug("Processing Markdown file")
-            text = read_markdown(file_path)
+            with open(file_path, 'r', encoding='utf-8') as f:
+                text = f.read()
         elif ext == '.csv':
-            logger.debug("Processing CSV file")
-            text = read_csv(file_path)
+            with open(file_path, 'r', encoding='utf-8') as f:
+                reader = csv.reader(f)
+                text = "\n".join([", ".join(row) for row in reader])
         elif ext == '.json':
-            logger.debug("Processing JSON file")
             with open(file_path, 'r', encoding='utf-8') as f:
                 text = json.dumps(json.load(f), indent=2)
         elif ext == '.xml':
-            logger.debug("Processing XML file")
             text = read_xml(file_path)
         elif ext == '.html':
-            logger.debug("Processing HTML file")
             text = read_html(file_path)
-        elif ext == '.txt':
-            logger.debug("Processing text file")
-            text = read_text_file(file_path)
-
+        
         if not text or not text.strip():
-            logger.warning(f"No text extracted from {file_path}")
             return None
-
-        logger.debug(f"Extracted {len(text)} characters from {file_path}")
-
-        # Create new cache entry with transaction safety
+        
+        # Cache the content
         try:
             new_cache = FileCache(
                 file_hash=file_hash,
@@ -1336,373 +813,104 @@ def read_file(file_path, user_id=None):
                 },
                 user_id=user_id
             )
-            
             db.session.add(new_cache)
             db.session.commit()
-            
-            # Verify commit
-            db.session.refresh(new_cache)
-            if not new_cache.id:
-                raise Exception("Cache entry not persisted")
-                
-            logger.debug(f"Successfully cached {file_path} with ID {new_cache.id}")
-            
         except Exception as e:
-            logger.error(f"Failed to cache {file_path}: {str(e)}", exc_info=True)
+            logger.error(f"Failed to cache {file_path}: {e}")
             db.session.rollback()
-            # Even if caching fails, still return the text
-            return text
-
+        
         return text
-
-    except Exception as e:
-        logger.error(f"Fatal error in read_file: {str(e)}", exc_info=True)
-        return None
-    
-@app.route('/upload', methods=['POST'])
-@login_required
-def upload_files():
-    """Handle file uploads with ZIP extraction and session tracking"""
-    logger.debug("Upload endpoint called by user %s", current_user.id)
-    
-    if not current_user.is_subscribed and not current_user.is_admin:
-        logger.warning("User %s attempted upload without subscription", current_user.id)
-        return jsonify({'error': 'Subscription required'}), 403
-        
-    try:
-        # Create user directories
-        user_id = str(current_user.id)
-        user_upload_dir = os.path.join(app.config['UPLOAD_FOLDER'], user_id)
-        user_extract_dir = os.path.join(app.config['EXTRACT_FOLDER'], user_id)
-        
-        logger.debug("Creating directories:\nUpload: %s\nExtract: %s", 
-                     user_upload_dir, user_extract_dir)
-        
-        os.makedirs(user_upload_dir, exist_ok=True)
-        os.makedirs(user_extract_dir, exist_ok=True)
-        
-        # Clean directories
-        logger.debug("Cleaning directories")
-        clean_directory(user_upload_dir)
-        clean_directory(user_extract_dir)
-        
-        if 'files' not in request.files:
-            logger.error("No files in request")
-            return jsonify({'error': 'No files uploaded'}), 400
-            
-        files = request.files.getlist('files')
-        saved_files = []
-        extracted_files = []  # Track all successfully extracted files
-        
-        logger.info("Processing %d uploaded files", len(files))
-        
-        for file in files:
-            if file.filename == '':
-                logger.debug("Skipping empty filename")
-                continue
-                
-            filename = secure_filename(file.filename)
-            is_zip = filename.lower().endswith('.zip')
-            logger.debug("Processing file: %s (ZIP: %s)", filename, is_zip)
-            
-            try:
-                if is_zip:
-                    # Handle ZIP file
-                    zip_path = os.path.join(user_upload_dir, filename)
-                    logger.debug("Saving ZIP to: %s", zip_path)
-                    
-                    # Save the ZIP file
-                    file.save(zip_path)
-                    
-                    # Verify ZIP integrity
-                    if not zipfile.is_zipfile(zip_path):
-                        logger.error("Invalid ZIP file: %s", zip_path)
-                        os.remove(zip_path)
-                        continue
-                        
-                    # Extract contents
-                    logger.debug("Extracting ZIP to: %s", user_extract_dir)
-                    try:
-                        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-                            zip_files = zip_ref.namelist()
-                            logger.debug("ZIP contains %d files", len(zip_files))
-                            
-                            allowed_files = [
-                                f for f in zip_files 
-                                if allowed_file(f) 
-                                and not f.startswith('__MACOSX/')
-                                and not f.endswith('/')  # Skip directories
-                            ]
-                            logger.debug("%d allowed files in ZIP", len(allowed_files))
-                            
-                            if not allowed_files:
-                                logger.warning("No allowed files in ZIP")
-                                continue
-                            
-                            extracted_files.extend([
-                                os.path.join(user_extract_dir, f) 
-                                for f in allowed_files
-                            ])
-                            
-                            if not extract_zip_parallel(zip_path, user_extract_dir):
-                                logger.error("Failed to extract ZIP: %s", zip_path)
-                                continue
-                                
-                        saved_files.append(filename)
-                    except Exception as zip_error:
-                        logger.error("ZIP extraction failed: %s", str(zip_error), exc_info=True)
-                        continue
-                        
-                else:
-                    # Handle regular files
-                    if not allowed_file(filename):
-                        logger.warning("File type not allowed: %s", filename)
-                        continue
-                        
-                    file_path = os.path.join(user_extract_dir, filename)
-                    logger.debug("Saving file to: %s", file_path)
-                    
-                    try:
-                        file.save(file_path)
-                        extracted_files.append(file_path)
-                        saved_files.append(filename)
-                    except Exception as save_error:
-                        logger.error("File save failed: %s", str(save_error), exc_info=True)
-                        continue
-                        
-            except Exception as e:
-                logger.error("File processing error: %s", str(e), exc_info=True)
-                continue
-                
-        if not saved_files:
-            logger.error("No valid files processed")
-            return jsonify({'error': 'No valid files were uploaded'}), 400
-
-        # Store RELATIVE paths in session (relative to EXTRACT_FOLDER)
-        session['current_upload_files'] = [
-            os.path.relpath(f, app.config['EXTRACT_FOLDER']) 
-            for f in extracted_files
-        ]
-        session.modified = True  # Explicitly mark session as modified
-        logger.info("Stored %d files in session", len(session['current_upload_files']))
-        logger.debug("Session files: %s", session['current_upload_files'])
-        
-        # Process documents
-        logger.info("Starting document processing for %d files", len(extracted_files))
-        processor = DocumentProcessor(user_id=current_user.id)
-        processor.process_documents_parallel(extracted_files)
-                
-        return jsonify({
-            'message': f'{len(saved_files)} files processed successfully',
-            'files': saved_files,
-            'redirect': url_for('new_chat')
-        })
         
     except Exception as e:
-        logger.critical("Upload failed: %s", str(e), exc_info=True)
-        return jsonify({'error': 'Server error during upload'}), 500
-     
-
-def get_file_hash_with_verification(file_path):
-    """Generate file hash with verification"""
-    try:
-        hasher = hashlib.md5()
-        with open(file_path, 'rb') as f:
-            while chunk := f.read(65536):  # Read in 64k chunks
-                hasher.update(chunk)
-        file_hash = hasher.hexdigest()
-        
-        # Verify hash wasn't empty
-        if not file_hash or len(file_hash) != 32:
-            raise ValueError(f"Invalid hash generated: {file_hash}")
-            
-        return file_hash
-    except Exception as e:
-        app.logger.error(f"Hash generation failed for {file_path}: {str(e)}")
+        logger.error(f"Error reading {file_path}: {e}")
         return None
 
-def get_cached_content(file_hash, user_id):
-    """Retrieve cached content with verification"""
+def read_pdf(file_path):
+    """Read PDF file"""
     try:
-        # Check both user-specific and global cache
-        cache_query = FileCache.query.filter_by(file_hash=file_hash)
-        
-        if user_id is not None:
-            cache_query = cache_query.filter(
-                (FileCache.user_id == user_id) | 
-                (FileCache.user_id.is_(None))
-            )
-
-        cached_file = cache_query.order_by(FileCache.user_id.desc()).first()
-        
-        if cached_file:
-            # Verify cached content
-            if not cached_file.content or not isinstance(cached_file.content, str):
-                app.logger.warning(f"Invalid cache content for hash {file_hash}")
-                return None
-                
-            app.logger.debug(f"Cache hit for hash {file_hash}")
-            return cached_file.content
-            
-        return None
-    except Exception as e:
-        app.logger.error(f"Cache lookup failed: {str(e)}")
-        return None
-
-def cache_file_content(file_hash, text, file_path, file_ext, user_id):
-    """Store file content in cache with verification"""
-    try:
-        # Verify inputs before caching
-        if not file_hash or not text or not file_path:
-            return False
-
-        # Prepare metadata
-        file_metadata = {
-            'path': file_path,
-            'size': os.path.getsize(file_path),
-            'last_modified': datetime.fromtimestamp(os.path.getmtime(file_path)).isoformat(),
-            'type': file_ext[1:] if file_ext else 'unknown',
-            'extraction_method': app.config['PDF_EXTRACTION_METHOD'] if file_ext == '.pdf' else 'standard'
-        }
-
-        # Create cache entry
-        cache_entry = FileCache(
-            file_hash=file_hash,
-            content=text,
-            file_metadata=file_metadata,
-            user_id=user_id
-        )
-
-        # Verify database connection
-        if not db.session.is_active:
-            db.session.rollback()
-            db.session.begin()
-
-        db.session.add(cache_entry)
-        db.session.commit()
-
-        # Verify the record was actually saved
-        saved_entry = FileCache.query.filter_by(file_hash=file_hash).first()
-        if not saved_entry:
-            raise ValueError("Cache entry not persisted to database")
-
-        app.logger.debug(f"Successfully cached {file_path}")
-        return True
-
-    except Exception as e:
-        app.logger.error(f"Failed to cache file {file_path}: {str(e)}")
-        db.session.rollback()
-        return False
-
-def read_file_by_type(file_path, file_ext):
-    """Read file based on its type"""
-    try:
-        if file_ext == '.pdf':
-            return read_pdf(file_path)
-        elif file_ext == '.docx':
-            return read_docx(file_path)
-        elif file_ext in ('.md', '.markdown'):
-            return read_markdown(file_path)
-        elif file_ext == '.csv':
-            return read_csv(file_path)
-        elif file_ext == '.json':
-            with open(file_path, 'r', encoding='utf-8') as f:
-                return json.dumps(json.load(f), indent=2)
-        elif file_ext == '.xml':
-            return read_xml(file_path)
-        elif file_ext == '.html':
-            return read_html(file_path)
-        elif file_ext == '.txt':
-            encodings = ['utf-8', 'iso-8859-1', 'windows-1252']
-            for encoding in encodings:
-                try:
-                    with open(file_path, 'r', encoding=encoding) as f:
-                        return f.read()
-                except UnicodeDecodeError:
-                    continue
-        return None
-    except Exception as e:
-        app.logger.error(f"Error reading {file_path}: {str(e)}")
-        return None
-    
-
-@app.route('/verify_cache')
-@login_required
-def verify_cache():
-    """Route to manually verify caching functionality"""
-    try:
-        # Create a test file
-        test_content = f"Test content at {datetime.now()}"
-        test_file = os.path.join(app.config['UPLOAD_FOLDER'], 'cache_test.txt')
-        
-        with open(test_file, 'w') as f:
-            f.write(test_content)
-        
-        # Read file (should trigger caching)
-        content = read_file(test_file, current_user.id)
-        
-        # Check cache directly
-        file_hash = get_file_hash(test_file)
-        cached_entry = FileCache.query.filter_by(file_hash=file_hash).first()
-        
-        # Check database connection
-        db_status = "OK" if db.session.execute("SELECT 1").scalar() == 1 else "FAILED"
-        
-        return jsonify({
-            'test_file': test_file,
-            'file_hash': file_hash,
-            'content_matches': content == test_content,
-            'cache_exists': bool(cached_entry),
-            'cache_content_matches': cached_entry.content == test_content if cached_entry else False,
-            'db_connection': db_status,
-            'table_exists': 'file_cache' in [t.name for t in db.inspect(db.engine).get_table_names()],
-            'cache_entries': FileCache.query.count()
-        })
-        
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-    
-def chunk_text(text, chunk_size=None, overlap=None):
-    """Intelligent chunking that preserves document structure"""
-    chunk_size = chunk_size or app.config['CHUNK_SIZE']
-    overlap = overlap or app.config['CHUNK_OVERLAP']
-    
-    # Split by major document sections first
-    sections = re.split(r'(\[\w+_SECTION:.+?\])', text)
-    sections = [s for s in sections if s.strip()]
-    
-    chunks = []
-    current_chunk = ""
-    
-    for section in sections:
-        # If section is a marker, always keep it with its content
-        if re.match(r'\[\w+_SECTION:.+?\]', section):
-            if current_chunk and len(current_chunk) + len(section) > chunk_size:
-                chunks.append(current_chunk)
-                current_chunk = current_chunk[-overlap:] + "\n" + section
-            else:
-                current_chunk += "\n" + section
+        if app.config['PDF_EXTRACTION_METHOD'] == 'pdfminer':
+            return pdfminer_extract(file_path)
+        elif app.config['PDF_EXTRACTION_METHOD'] == 'pdfplumber':
+            text = ""
+            with pdfplumber.open(file_path) as pdf:
+                for page in pdf.pages:
+                    page_text = page.extract_text(layout=True)
+                    if page_text:
+                        text += f"=== PAGE {page.page_number} ===\n{page_text}\n\n"
+            return text
         else:
-            # Regular content - split by paragraphs if possible
-            paragraphs = re.split(r'(\n\n+)', section)
-            for para in paragraphs:
-                if len(current_chunk) + len(para) > chunk_size:
-                    if current_chunk:
-                        chunks.append(current_chunk)
-                        current_chunk = current_chunk[-overlap:] + para
-                    else:
-                        # Handle very large paragraphs
-                        chunks.append(para[:chunk_size])
-                        current_chunk = para[chunk_size-overlap:chunk_size]
-                else:
-                    current_chunk += para
-    
-    if current_chunk:
-        chunks.append(current_chunk)
-    
-    return chunks
+            with open(file_path, 'rb') as file:
+                reader = PyPDF2.PdfReader(file)
+                text = ""
+                for i, page in enumerate(reader.pages):
+                    page_text = page.extract_text()
+                    if page_text:
+                        text += f"=== PAGE {i+1} ===\n{page_text}\n\n"
+                return text
+    except Exception as e:
+        logger.error(f"PDF extraction failed: {e}")
+        return None
+
+def read_docx(file_path):
+    """Read DOCX file"""
+    try:
+        doc = docx.Document(file_path)
+        text = []
+        for para in doc.paragraphs:
+            if para.style.name.startswith('Heading'):
+                level = int(para.style.name.split(' ')[1]) if ' ' in para.style.name else 1
+                text.append(f"\n{'#' * level} {para.text}\n")
+            else:
+                text.append(para.text)
+        return "\n".join(text)
+    except Exception as e:
+        logger.error(f"DOCX extraction failed: {e}")
+        return None
+
+def read_xml(file_path):
+    """Read XML file"""
+    try:
+        tree = ET.parse(file_path)
+        root = tree.getroot()
+        
+        def xml_to_text(element, indent=0):
+            text = []
+            attrs = " ".join(f'{k}="{v}"' for k, v in element.attrib.items())
+            tag_text = f"{' ' * indent}<{element.tag}"
+            if attrs:
+                tag_text += f" {attrs}"
+            tag_text += ">"
+            text.append(tag_text)
+            
+            if element.text and element.text.strip():
+                text.append(f"{' ' * (indent+2)}{element.text.strip()}")
+            
+            for child in element:
+                text.append(xml_to_text(child, indent+2))
+            
+            text.append(f"{' ' * indent}</{element.tag}>")
+            return "\n".join(text)
+        
+        return xml_to_text(root)
+    except Exception as e:
+        logger.error(f"XML extraction failed: {e}")
+        return None
+
+def read_html(file_path):
+    """Read HTML file"""
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            soup = BeautifulSoup(f.read(), 'html.parser')
+            return soup.get_text('\n')
+    except Exception as e:
+        logger.error(f"HTML extraction failed: {e}")
+        return None
+
 def clean_directory(directory):
-    """Safely clean all files in directory"""
+    """Clean directory"""
+    if not os.path.exists(directory):
+        return
+        
     for filename in os.listdir(directory):
         file_path = os.path.join(directory, filename)
         try:
@@ -1711,160 +919,545 @@ def clean_directory(directory):
             elif os.path.isdir(file_path):
                 shutil.rmtree(file_path)
         except Exception as e:
-            app.logger.error(f'Failed to delete {file_path}. Reason: {e}')
+            logger.error(f'Failed to delete {file_path}: {e}')
 
-def update_progress(current, total, message="", redirect_url=None):
-    """Update progress information with thread safety"""
-    with progress_lock:
-        progress_data['current'] = current
-        progress_data['total'] = total
-        progress_data['message'] = message
-        if redirect_url:
-            progress_data['redirect_url'] = redirect_url
-        if current >= total:
-            progress_data['error'] = None
-
-def get_answer_stream(text, question):
-    """Process all chunks with context accumulation"""
-    # First check if we have any meaningful context
-    if not text or text.strip() in ('', '.'):
-        app.logger.error(f"No content to analyze. Text length: {len(text) if text else 0}")
-        yield "I couldn't find any text content in the uploaded documents to analyze."
-        return
-
+def extract_zip_parallel(zip_path, extract_to):
+    """Extract ZIP file in parallel"""
     try:
-        chunks = chunk_text(text)
-        if not chunks:
-            app.logger.error("No chunks generated from text")
-            yield "Error: Could not process document content."
-            return
-
-        context_window = []
-        max_context_size = app.config['MAX_CONTEXT_LENGTH'] // 2
-        
-        full_answer = ""
-        
-        for i, chunk in enumerate(chunks):
-            # Maintain a sliding context window
-            context_window.append(chunk)
-            context_window = context_window[-3:]  # Keep last 3 chunks
+        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+            file_infos = [
+                f for f in zip_ref.infolist() 
+                if not f.is_dir() 
+                and '__MACOSX' not in f.filename
+                and allowed_file(f.filename)
+            ]
             
-            # Build context ensuring we don't exceed limits
-            context = "\n\n".join(context_window)[-max_context_size:]
-            
-            prompt = build_prompt(context, question, is_final=i == len(chunks)-1)
-            
-            try:
-                response = requests.post(
-                    app.config['OLLAMA_URL'],
-                    json={
-                        "model": app.config['OLLAMA_MODEL'],
-                        "prompt": prompt,
-                        "stream": True
-                    },
-                    stream=True,
-                    timeout=app.config['OLLAMA_TIMEOUT']
-                )
+            with ThreadPoolExecutor(max_workers=8) as executor:
+                futures = []
+                for file_info in file_infos:
+                    futures.append(executor.submit(
+                        extract_single_file, zip_ref, file_info, extract_to
+                    ))
                 
-                for line in response.iter_lines():
-                    if line:
-                        data = json.loads(line)
-                        if 'response' in data:
-                            response_text = data['response']
-                            
-                            # Skip if we get just a dot
-                            if response_text.strip() == '.':
-                                continue
-                                
-                            full_answer += response_text
-                            yield response_text
-                                
-            except Exception as e:
-                app.logger.error(f"Error processing chunk {i}: {str(e)}")
-                yield f"Error processing content: {str(e)}"
-                break
-        
-        # Final check to ensure we don't return empty
-        if not full_answer.strip():
-            app.logger.error("Empty response generated despite having content")
-            yield "I couldn't generate a response based on the provided documents."
-
+                for future in as_completed(futures):
+                    try:
+                        future.result()
+                    except Exception as e:
+                        logger.error(f"File extraction failed: {e}")
+                        
+        return True
     except Exception as e:
-        app.logger.error(f"Error in get_answer_stream: {str(e)}")
-        yield "An error occurred while processing your request."
+        logger.error(f"ZIP extraction failed: {e}")
+        return False
 
+def extract_single_file(zip_ref, file_info, extract_to):
+    """Extract single file from ZIP"""
+    file_path = file_info.filename
+    target_path = os.path.join(extract_to, file_path)
+    
+    if file_info.file_size > app.config['MAX_FILE_SIZE']:
+        logger.warning(f"Skipping large file: {file_path}")
+        return
+        
+    os.makedirs(os.path.dirname(target_path), exist_ok=True)
+    
+    with zip_ref.open(file_info) as source, open(target_path, 'wb') as target:
+        shutil.copyfileobj(source, target)
 
-def build_prompt(context, question, is_final=False):
-    """Construct a prompt that considers multi-chunk context"""
+def build_rag_prompt(context, question):
+    """Build RAG prompt"""
     return (
-        "Document Context (may be partial):\n"
-        f"{context}\n\n"
-        "Question:\n"
-        f"{question}\n\n"
+        "Use the following documents to answer the question. "
+        "Provide detailed answers with direct quotes when possible. "
+        "Always cite sources using the format [^filename||page].\n\n"
+        "Documents:\n"
+        f"{context}\n"
+        f"Question: {question}\n\n"
         "Instructions:\n"
-        "1. Answer based on the current context\n"
-        # "3. Mark complete answers with [ANSWER_COMPLETE]\n"
-        "4. Preserve original document structure in responses\n"
-        "5. Every response that includes a section or quote must end with a citation in the format: [^filename||page||section-heading]\n"
-        "   - filename must be the exact relative path from the extracted_files directory\n"
-        "   - Use forward slashes (/) for path separators\n"
-        "6. If no matching section is found, output a single dot (.) as the result: '.'\n"
-        "7. **Never**:\n"
-        "   - Paraphrase or summarize\n"
-        "   - Add interpretation\n"
-        "   - Combine text from different sections\n"
-        "   - Modify legal terms or definitions\n\n"
-        "   - Mention that something was not found or unrelated\n"
-        f"{'8. This is the final context section' if is_final else ''}\n\n"
-        "Response:"
+        "1. Answer precisely based on the documents\n"
+        "2. Include relevant quotes with citations\n"
+        "3. If unsure, say you couldn't find the information\n"
+        "4. Format citations as [^filename||page]\n\n"
+        "Answer:"
     )
 
-@app.template_filter('datetimeformat')
-def datetimeformat(value, format='%b %d, %H:%M'):
-    """Format datetime for templates"""
-    if isinstance(value, str):
-        value = datetime.fromisoformat(value)
-    return value.strftime(format)
-
-
-# Add before first route
-@app.before_request
-def check_subscription():
-    if current_user.is_authenticated and not current_user.is_admin:
-        # Reset document count if new billing month
-        if current_user.last_billing_date and current_user.last_billing_date.month < datetime.utcnow().month:
-            current_user.documents_uploaded = 0
-            db.session.commit()
-
-@app.route('/api/check_subscription', methods=['GET'])
-@login_required
-def check_subscription_api():
+def get_ollama_response_stream(prompt):
+    """Stream response from Ollama"""
     try:
-        return jsonify({
-            'is_logged_in': True,
-            'has_subscription': current_user.is_subscribed,
-            'has_active_trial': (current_user.subscription_plan == 'trial' and 
-                                current_user.trial_end_date > datetime.utcnow()),
-            'has_trial_available': (current_user.subscription_plan != 'trial' or 
-                                   not current_user.is_subscribed),
-            'trial_days_remaining': (current_user.trial_end_date - datetime.utcnow()).days 
-                                   if current_user.trial_end_date else 0,
-            'allow_uploads': current_user.is_subscribed,
-            'plan_name': current_user.plan_details.get('name', 'Free')
-        })
+        response = requests.post(
+            app.config['OLLAMA_URL'],
+            json={
+                "model": app.config['OLLAMA_MODEL'],
+                "prompt": prompt,
+                "stream": True
+            },
+            stream=True,
+            timeout=app.config['OLLAMA_TIMEOUT']
+        )
+        
+        for line in response.iter_lines():
+            if line:
+                data = json.loads(line)
+                if 'response' in data:
+                    yield data['response']
+                    
     except Exception as e:
+        yield f"\n\nError: Failed to get response from AI model ({str(e)})"
+
+# Routes
+@app.route('/upload', methods=['POST'])
+@login_required
+def upload_files():
+    """GPU-optimized file upload"""
+    logger.info(f"Upload request from user {current_user.id}")
+    
+    if not current_user.is_subscribed and not current_user.is_admin:
+        return jsonify({'error': 'Subscription required'}), 403
+        
+    try:
+        # Create directories
+        user_id = str(current_user.id)
+        user_upload_dir = os.path.join(app.config['UPLOAD_FOLDER'], user_id)
+        user_extract_dir = os.path.join(app.config['EXTRACT_FOLDER'], user_id)
+        
+        os.makedirs(user_upload_dir, exist_ok=True)
+        os.makedirs(user_extract_dir, exist_ok=True)
+        
+        # Clean directories
+        clean_directory(user_upload_dir)
+        clean_directory(user_extract_dir)
+        
+        if 'files' not in request.files:
+            return jsonify({'error': 'No files uploaded'}), 400
+            
+        files = request.files.getlist('files')
+        saved_files = []
+        extracted_files = []
+        
+        logger.info(f"Processing {len(files)} uploaded files")
+        
+        for file in files:
+            if file.filename == '':
+                continue
+                
+            filename = secure_filename(file.filename)
+            is_zip = filename.lower().endswith('.zip')
+            
+            try:
+                if is_zip:
+                    # Handle ZIP
+                    zip_path = os.path.join(user_upload_dir, filename)
+                    file.save(zip_path)
+                    
+                    if not zipfile.is_zipfile(zip_path):
+                        logger.error(f"Invalid ZIP: {zip_path}")
+                        os.remove(zip_path)
+                        continue
+                        
+                    # Extract in parallel
+                    if extract_zip_parallel(zip_path, user_extract_dir):
+                        # Find extracted files
+                        for root, _, files_in_zip in os.walk(user_extract_dir):
+                            for f in files_in_zip:
+                                if allowed_file(f) and not f.startswith('.'):
+                                    extracted_files.append(os.path.join(root, f))
+                        saved_files.append(filename)
+                        
+                else:
+                    # Handle regular files
+                    if not allowed_file(filename):
+                        continue
+                        
+                    file_path = os.path.join(user_extract_dir, filename)
+                    file.save(file_path)
+                    extracted_files.append(file_path)
+                    saved_files.append(filename)
+                    
+            except Exception as e:
+                logger.error(f"Error processing {filename}: {e}")
+                continue
+                
+        if not saved_files:
+            return jsonify({'error': 'No valid files were uploaded'}), 400
+
+        # Store in session
+        session['current_upload_files'] = [
+            os.path.relpath(f, app.config['EXTRACT_FOLDER']) 
+            for f in extracted_files
+        ]
+        session.modified = True
+        
+        # GPU-accelerated processing
+        logger.info(f"Starting GPU processing for {len(extracted_files)} files")
+        processor = OptimizedDocumentProcessor(user_id=current_user.id)
+        results = processor.process_documents_parallel(extracted_files)
+        
+        logger.info(f"Processing complete: {len(results)} chunks processed")
+        
+        return jsonify({
+            'message': f'{len(saved_files)} files processed successfully',
+            'files': saved_files,
+            'chunks': len(results),
+            'redirect': url_for('new_chat')
+        })
+        
+    except Exception as e:
+        logger.error(f"Upload failed: {e}")
+        return jsonify({'error': 'Server error during upload'}), 500
+
+@app.route('/new_chat', methods=['GET', 'POST'])
+@login_required
+def new_chat():
+    """Create new chat"""
+    try:
+        if 'current_upload_files' in session:
+            del session['current_upload_files']
+            
+        chat_id = str(uuid.uuid4())
+        
+        conversation = Conversation(
+            id=chat_id,
+            user_id=current_user.id,
+            title='New Query'
+        )
+        db.session.add(conversation)
+        
+        # Get uploaded files
+        uploaded_files = []
+        user_upload_dir = os.path.join(app.config['UPLOAD_FOLDER'], str(current_user.id))
+        if os.path.exists(user_upload_dir):
+            for root, _, files in os.walk(user_upload_dir):
+                for file in files:
+                    if not file.startswith('.'):
+                        uploaded_files.append(file)
+        
+        initial_message = "Files uploaded successfully. Type your search query below."
+        if uploaded_files:
+            file_list = "\n".join(f"- {file}" for file in uploaded_files[:5])
+            if len(uploaded_files) > 5:
+                file_list += f"\n- ...and {len(uploaded_files) - 5} more files"
+            initial_message = f"{file_list}\n\nUploaded successfully. Type your search query below."
+        
+        initial_msg = Message(
+            conversation_id=chat_id,
+            role='assistant',
+            content=initial_message,
+            timestamp=datetime.now(timezone.utc)
+        )
+        db.session.add(initial_msg)
+        db.session.commit()
+        
+        return redirect(url_for('chat', chat_id=chat_id))
+        
+    except Exception as e:
+        logger.error(f'Error creating chat: {e}')
+        flash('Error creating new chat', 'error')
+        return redirect(url_for('index'))
+
+@app.route('/chat/<chat_id>', methods=['GET', 'POST'])
+@login_required
+def chat(chat_id):
+    """GPU-optimized chat interface"""
+    try:
+        conversation = Conversation.query.filter_by(
+            id=chat_id,
+            user_id=current_user.id
+        ).first_or_404()
+
+        if request.method == 'GET':
+            messages = Message.query.filter_by(
+                conversation_id=chat_id
+            ).order_by(Message.timestamp.asc()).all()
+
+            user_conversations = Conversation.query.filter_by(
+                user_id=current_user.id
+            ).order_by(Conversation.updated_at.desc()).all()
+
+            uploaded_files = get_uploaded_files(current_user.id)
+
+            return render_template(
+                'chat.html',
+                chat_id=chat_id,
+                conversation=conversation,
+                messages=messages,
+                conversations=user_conversations,
+                chat_title=conversation.title,
+                uploaded_files=uploaded_files
+            )
+
+        elif request.method == 'POST':
+            def generate_response():
+                try:
+                    if not request.is_json:
+                        yield json.dumps({'status': 'error', 'message': 'Invalid request'})
+                        return
+
+                    data = request.get_json()
+                    question = data.get('question', '').strip()
+                    
+                    if not question:
+                        yield json.dumps({'status': 'error', 'message': 'Please enter a question'})
+                        return
+
+                    # Save user message
+                    user_msg = Message(
+                        conversation_id=chat_id,
+                        role='user',
+                        content=question,
+                        timestamp=datetime.now(timezone.utc)
+                    )
+                    db.session.add(user_msg)
+                    db.session.commit()
+
+                    # Update conversation title
+                    if conversation.title == 'New Query':
+                        short_title = question[:50] + '...' if len(question) > 50 else question
+                        conversation.title = short_title
+                        db.session.commit()
+                        yield json.dumps({
+                            'status': 'title_update',
+                            'chat_id': chat_id,
+                            'title': short_title
+                        }) + "\n"
+
+                    # GPU-accelerated search
+                    processor = OptimizedDocumentProcessor(user_id=current_user.id)
+                    chunks = processor.search_documents(question, current_user.id)
+                    
+                    if not chunks:
+                        yield json.dumps({
+                            'status': 'error',
+                            'message': 'No relevant information found'
+                        })
+                        return
+
+                    # Build context
+                    context = ""
+                    sources = []
+                    for chunk in chunks:
+                        context += f"[Document: {chunk['document']['path']}, Score: {chunk['score']:.3f}]\n"
+                        context += f"{chunk['chunk']}\n\n"
+                        sources.append({
+                            'path': chunk['document']['path'],
+                            'score': chunk['score'],
+                            'text': chunk['chunk'][:200] + '...'
+                        })
+
+                    # Stream response
+                    yield json.dumps({'status': 'stream_start'}) + "\n"
+
+                    prompt = build_rag_prompt(context, question)
+                    full_answer = ""
+                    
+                    for chunk in get_ollama_response_stream(prompt):
+                        yield json.dumps({'status': 'stream_chunk', 'content': chunk}) + "\n"
+                        full_answer += chunk
+
+                    # Save response
+                    assistant_msg = Message(
+                        conversation_id=chat_id,
+                        role='assistant',
+                        content=full_answer,
+                        sources=[s['path'] for s in sources],
+                        timestamp=datetime.now(timezone.utc)
+                    )
+                    db.session.add(assistant_msg)
+                    
+                    conversation.updated_at = datetime.now(timezone.utc)
+                    db.session.commit()
+
+                    yield json.dumps({
+                        'status': 'stream_end',
+                        'sources': sources
+                    }) + "\n"
+
+                except Exception as e:
+                    logger.error(f"Chat error: {e}")
+                    yield json.dumps({
+                        'status': 'error',
+                        'message': f"Error: {str(e)}"
+                    }) + "\n"
+
+            return Response(stream_with_context(generate_response()), mimetype='application/x-ndjson')
+
+    except Exception as e:
+        logger.error(f"Chat route error: {e}")
+        if request.method == 'GET':
+            flash('Error loading chat', 'error')
+            return redirect(url_for('index'))
+        else:
+            return jsonify({'error': str(e)}), 500
+
+def get_uploaded_files(user_id):
+    """Get uploaded files for user"""
+    try:
+        user_extract_dir = os.path.join(app.config['EXTRACT_FOLDER'], str(user_id))
+        uploaded_files = []
+        
+        if os.path.exists(user_extract_dir):
+            for root, _, files in os.walk(user_extract_dir):
+                for file in files:
+                    if not file.startswith('.'):
+                        rel_path = os.path.relpath(os.path.join(root, file), user_extract_dir)
+                        uploaded_files.append({
+                            'name': file,
+                            'path': rel_path,
+                            'size': os.path.getsize(os.path.join(root, file))
+                        })
+        
+        return uploaded_files
+    except Exception as e:
+        logger.error(f"Error getting files: {e}")
+        return []
+
+@app.route('/delete_chat/<chat_id>', methods=['POST'])
+@login_required
+def delete_chat(chat_id):
+    """Delete chat"""
+    try:
+        conversation = Conversation.query.filter_by(id=chat_id, user_id=current_user.id).first()
+        if not conversation:
+            return jsonify({'success': False, 'error': 'Chat not found'}), 404
+            
+        db.session.delete(conversation)
+        db.session.commit()
+        return jsonify({'success': True}), 200
+        
+    except Exception as e:
+        logger.error(f'Error deleting chat: {e}')
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/')
+def index():
+    """Main index page"""
+    return render_template('index.html')
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    """User registration"""
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+    
+    if request.method == 'POST':
+        username = request.form.get('username')
+        email = request.form.get('email')
+        password = request.form.get('password')
+        confirm_password = request.form.get('confirm_password')
+        
+        if not username or not email or not password:
+            flash('All fields are required', 'error')
+            return redirect(url_for('register'))
+        
+        if password != confirm_password:
+            flash('Passwords do not match', 'error')
+            return redirect(url_for('register'))
+        
+        if User.query.filter_by(username=username).first():
+            flash('Username already taken', 'error')
+            return redirect(url_for('register'))
+        
+        if User.query.filter_by(email=email).first():
+            flash('Email already registered', 'error')
+            return redirect(url_for('register'))
+        
+        user = User(username=username, email=email)
+        user.set_password(password)
+        db.session.add(user)
+        db.session.commit()
+        
+        flash('Registration successful! Please log in.', 'success')
+        return redirect(url_for('login'))
+    
+    return render_template('register.html')
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    """User login"""
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        remember = request.form.get('remember') == 'on'
+
+        user = User.query.filter_by(username=username).first()
+
+        if user and user.check_password(password):
+            login_user(user, remember=remember)
+            next_page = request.args.get('next')
+            return redirect(next_page or url_for('index'))
+        else:
+            flash('Invalid username or password', 'error')
+
+    return render_template('login.html')
+
+@app.route('/logout', methods=['GET', 'POST'])
+@login_required
+def logout():
+    """User logout"""
+    logout_user()
+    session.clear()
+    flash('You have been logged out successfully.', 'success')
+    return redirect(url_for('login'))
+
+@app.route('/get_file_content')
+def get_file_content():
+    """Get file content"""
+    rel_path = request.args.get('path')
+    if not rel_path:
+        return jsonify({'error': 'File path required'}), 400
+    
+    try:
+        if '..' in rel_path or rel_path.startswith('/'):
+            return jsonify({'error': 'Invalid file path'}), 400
+        
+        rel_path = rel_path.replace('\\', '/').strip('/')
+        full_path = os.path.join(app.config['EXTRACT_FOLDER'], *rel_path.split('/'))
+        full_path = os.path.normpath(full_path)
+        
+        if not full_path.startswith(os.path.abspath(app.config['EXTRACT_FOLDER'])):
+            return jsonify({'error': 'Access denied'}), 403
+        
+        if not os.path.exists(full_path):
+            return jsonify({'error': 'File not found'}), 404
+        
+        file_ext = os.path.splitext(full_path)[1].lower()
+        
+        if file_ext == '.pdf' or file_ext.startswith('.image'):
+            return send_file(full_path, as_attachment=False)
+        else:
+            content = read_file(full_path)
+            if not content:
+                return jsonify({'error': 'Could not read file'}), 400
+                
+            return jsonify({
+                'file': os.path.basename(full_path),
+                'content': content,
+                'path': rel_path
+            })
+    
+    except Exception as e:
+        logger.error(f"Error serving file: {e}")
         return jsonify({'error': str(e)}), 500
 
+# Subscription routes
 @app.route('/start_trial', methods=['POST'])
 @login_required
 def start_trial():
-    if current_user.subscription_plan == 'trial' and current_user.trial_end_date > datetime.utcnow():
+    """Start trial subscription"""
+    now = datetime.now(timezone.utc)
+    
+    # Check if user already has an active trial
+    if (current_user.subscription_plan == 'trial' and 
+        current_user.trial_end_date and 
+        current_user._make_aware(current_user.trial_end_date) > now):
         return jsonify({'error': 'You already have an active trial'}), 400
         
     current_user.subscription_plan = 'trial'
     current_user.subscription_status = 'active'
-    current_user.trial_start_date = datetime.utcnow()
-    current_user.trial_end_date = datetime.utcnow() + timedelta(days=14)
+    current_user.trial_start_date = now
+    current_user.trial_end_date = now + timedelta(days=14)
     db.session.commit()
     
     return jsonify({
@@ -1873,37 +1466,63 @@ def start_trial():
         'trial_end_date': current_user.trial_end_date.isoformat()
     })
 
-@app.before_request
-def check_trial():
-    if current_user.is_authenticated and not current_user.is_admin:
-        # Check if trial is ending soon (3 days or less)
-        if (current_user.subscription_plan == 'trial' and 
-            current_user.trial_end_date and 
-            (current_user.trial_end_date - datetime.utcnow()).days <= 3 and
-            not request.path.startswith('/static') and
-            not request.path.startswith('/pricing')):
-            
-            days_left = (current_user.trial_end_date - datetime.utcnow()).days
-            flash(f'Your free trial ends in {days_left} day(s). Upgrade now to continue uninterrupted service.', 'warning')
-
+@app.route('/api/check_subscription', methods=['GET'])
+@login_required
+def check_subscription_api():
+    """Check subscription status"""
+    try:
+        now = datetime.now(timezone.utc)
+        trial_days_remaining = 0
+        
+        if current_user.trial_end_date:
+            trial_end = current_user._make_aware(current_user.trial_end_date)
+            trial_days_remaining = max(0, (trial_end - now).days)
+        
+        has_active_trial = (current_user.subscription_plan == 'trial' and 
+                           current_user.trial_end_date and 
+                           current_user._make_aware(current_user.trial_end_date) > now)
+        
+        return jsonify({
+            'is_logged_in': True,
+            'has_subscription': current_user.is_subscribed,
+            'has_active_trial': has_active_trial,
+            'has_trial_available': (current_user.subscription_plan != 'trial' or 
+                                   not current_user.is_subscribed),
+            'trial_days_remaining': trial_days_remaining,
+            'allow_uploads': current_user.is_subscribed,
+            'plan_name': current_user.plan_details.get('name', 'Free')
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/pricing')
 @login_required
 def pricing():
+    """Pricing page"""
     plans = {
         'basic': SubscriptionPlan.BASIC,
         'pro': SubscriptionPlan.PRO,
         'enterprise': SubscriptionPlan.TRIAL
     }
-    return render_template('pricing.html', plans=plans, now=datetime.utcnow())
+    return render_template('pricing.html', plans=plans, now=datetime.now(timezone.utc))
 
-@app.context_processor
-def inject_now():
-    return {'now': datetime.utcnow()}
+@app.route('/billing')
+@login_required
+def billing():
+    """Billing page"""
+    payments = Payment.query.filter_by(user_id=current_user.id).order_by(Payment.created_at.desc()).limit(10).all()
+    invoices = BillingHistory.query.filter_by(user_id=current_user.id).order_by(BillingHistory.created_at.desc()).limit(10).all()
+    
+    return render_template('billing.html', 
+                         payments=payments,
+                         invoices=invoices,
+                         plan=current_user.plan_details,
+                         now=datetime.now(timezone.utc))
 
 @app.route('/create_subscription', methods=['POST'])
 @login_required
 def create_subscription():
+    """Create subscription with Fatora"""
     plan_id = request.form.get('plan_id')
     payment_method_id = request.form.get('payment_method_id')
     
@@ -1915,7 +1534,6 @@ def create_subscription():
         return jsonify({'error': 'Invalid plan'}), 400
     
     try:
-        # Fatora API integration
         headers = {
             'Authorization': f'Bearer {app.config["FATORA_API_KEY"]}',
             'Content-Type': 'application/json'
@@ -1926,7 +1544,7 @@ def create_subscription():
             customer_data = {
                 'name': current_user.username,
                 'email': current_user.email,
-                'phone': '',  # Can collect during signup
+                'phone': '',
                 'metadata': {
                     'user_id': current_user.id
                 }
@@ -1970,7 +1588,7 @@ def create_subscription():
         current_user.subscription_plan = plan_id
         current_user.subscription_status = 'active'
         current_user.payment_method_id = payment_method_id
-        current_user.current_period_end = datetime.utcnow() + timedelta(days=30)
+        current_user.current_period_end = datetime.now(timezone.utc) + timedelta(days=30)
         current_user.cancel_at_period_end = False
         db.session.commit()
         
@@ -1994,12 +1612,13 @@ def create_subscription():
         })
         
     except Exception as e:
-        app.logger.error(f'Subscription error: {str(e)}')
+        logger.error(f'Subscription error: {e}')
         return jsonify({'error': str(e)}), 500
 
 @app.route('/cancel_subscription', methods=['POST'])
 @login_required
 def cancel_subscription():
+    """Cancel subscription"""
     try:
         if not current_user.subscription_id:
             return jsonify({'error': 'No active subscription'}), 400
@@ -2024,12 +1643,13 @@ def cancel_subscription():
         return jsonify({'success': True})
         
     except Exception as e:
-        app.logger.error(f'Cancel subscription error: {str(e)}')
+        logger.error(f'Cancel subscription error: {e}')
         return jsonify({'error': str(e)}), 500
 
 @app.route('/update_payment_method', methods=['POST'])
 @login_required
 def update_payment_method():
+    """Update payment method"""
     payment_method_id = request.form.get('payment_method_id')
     
     if not payment_method_id:
@@ -2056,24 +1676,14 @@ def update_payment_method():
         return jsonify({'success': True})
         
     except Exception as e:
-        app.logger.error(f'Update payment method error: {str(e)}')
+        logger.error(f'Update payment method error: {e}')
         return jsonify({'error': str(e)}), 500
-
-@app.route('/billing')
-@login_required
-def billing():
-    payments = Payment.query.filter_by(user_id=current_user.id).order_by(Payment.created_at.desc()).limit(10).all()
-    invoices = BillingHistory.query.filter_by(user_id=current_user.id).order_by(BillingHistory.created_at.desc()).limit(10).all()
-    
-    return render_template('billing.html', 
-                         payments=payments,
-                         invoices=invoices,
-                         plan=current_user.plan_details,
-                         now=datetime.utcnow())
-
 
 @app.route('/fatora_webhook', methods=['POST'])
 def fatora_webhook():
+    """Fatora webhook handler"""
+    import hmac
+    
     payload = request.data
     sig_header = request.headers.get('X-Fatora-Signature')
     
@@ -2100,10 +1710,11 @@ def fatora_webhook():
         return jsonify({'success': True})
         
     except Exception as e:
-        app.logger.error(f'Webhook error: {str(e)}')
+        logger.error(f'Webhook error: {e}')
         return jsonify({'error': str(e)}), 500
 
 def handle_payment_succeeded(data):
+    """Handle successful payment"""
     payment_intent = data['object']
     
     payment = Payment.query.filter_by(payment_intent_id=payment_intent['id']).first()
@@ -2123,13 +1734,14 @@ def handle_payment_succeeded(data):
             db.session.commit()
 
 def handle_invoice_paid(data):
+    """Handle paid invoice"""
     invoice = data['object']
     user = User.query.filter_by(subscription_id=invoice['customer']).first()
     
     if user:
         # Update subscription period
         user.current_period_end = datetime.fromtimestamp(invoice['period_end'])
-        user.last_billing_date = datetime.utcnow()
+        user.last_billing_date = datetime.now(timezone.utc)
         user.documents_uploaded = 0  # Reset monthly count
         db.session.commit()
         
@@ -2146,6 +1758,7 @@ def handle_invoice_paid(data):
         db.session.commit()
 
 def handle_payment_failed(data):
+    """Handle failed payment"""
     invoice = data['object']
     user = User.query.filter_by(subscription_id=invoice['customer']).first()
     
@@ -2162,6 +1775,7 @@ def handle_payment_failed(data):
         db.session.commit()
 
 def handle_subscription_deleted(data):
+    """Handle subscription deletion"""
     subscription = data['object']
     user = User.query.filter_by(subscription_id=subscription['customer']).first()
     
@@ -2170,707 +1784,59 @@ def handle_subscription_deleted(data):
         user.current_period_end = None
         db.session.commit()
 
+@app.before_request
+def check_subscription():
+    """Check subscription status before each request"""
+    if current_user.is_authenticated and not current_user.is_admin:
+        # Reset document count if new billing month
+        if (current_user.last_billing_date and 
+            current_user._make_aware(current_user.last_billing_date).month < datetime.now(timezone.utc).month):
+            current_user.documents_uploaded = 0
+            db.session.commit()
 
-
-# Authentication routes
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    if current_user.is_authenticated:
-        return redirect(url_for('index'))
-    
-    if request.method == 'POST':
-        username = request.form.get('username')
-        email = request.form.get('email')
-        password = request.form.get('password')
-        confirm_password = request.form.get('confirm_password')
-        
-        if not username or not email or not password:
-            flash('All fields are required', 'error')
-            return redirect(url_for('register'))
-        
-        if password != confirm_password:
-            flash('Passwords do not match', 'error')
-            return redirect(url_for('register'))
-        
-        if User.query.filter_by(username=username).first():
-            flash('Username already taken', 'error')
-            return redirect(url_for('register'))
-        
-        if User.query.filter_by(email=email).first():
-            flash('Email already registered', 'error')
-            return redirect(url_for('register'))
-        
-        user = User(username=username, email=email)
-        user.set_password(password)
-        db.session.add(user)
-        db.session.commit()
-        
-        flash('Registration successful! Please log in.', 'success')
-        return redirect(url_for('login'))
-    
-    return render_template('register.html')
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if current_user.is_authenticated:
-        return redirect(url_for('index'))
-
-    if request.method == 'POST':
-        # CSRF token is automatically validated by Flask-WTF
-        username = request.form.get('username')
-        password = request.form.get('password')
-        remember = request.form.get('remember') == 'on'
-
-        user = User.query.filter_by(username=username).first()
-
-        if user and user.check_password(password):
-            login_user(user, remember=remember)
-            next_page = request.args.get('next')
-            return redirect(next_page or url_for('index'))
-        else:
-            flash('Invalid username or password', 'error')
-
-    return render_template('login.html')
-
-
-@app.route('/logout', methods=['GET', 'POST'])
-@login_required
-def logout():
-    app.logger.info(f"Logging out user: {current_user.username}")
-    logout_user()
-    session.clear()
-    app.logger.info("User logged out successfully")
-    flash('You have been logged out successfully.', 'success')
-    return redirect(url_for('login'))
-
-@app.route('/new_chat', methods=['GET', 'POST'])
-@login_required
-def new_chat():
-    app.logger.info('Received request to create new query')
-    try:
-        # Clear any previous session files
-        if 'current_upload_files' in session:
-            del session['current_upload_files']
+@app.before_request
+def check_trial():
+    """Check trial status"""
+    if current_user.is_authenticated and not current_user.is_admin:
+        # Check if trial is ending soon (3 days or less)
+        if (current_user.subscription_plan == 'trial' and 
+            current_user.trial_end_date and 
+            not request.path.startswith('/static') and
+            not request.path.startswith('/pricing')):
             
-        chat_id = str(uuid.uuid4())
-        
-        # Create new conversation in database
-        conversation = Conversation(
-            id=chat_id,
-            user_id=current_user.id,
-            title='New Query'
-        )
-        db.session.add(conversation)
-        
-        # Get uploaded files information
-        uploaded_files = []
-        user_upload_dir = os.path.join(app.config['UPLOAD_FOLDER'], str(current_user.id))
-        if os.path.exists(user_upload_dir):
-            for root, _, files in os.walk(user_upload_dir):
-                for file in files:
-                    if not file.startswith('.') and not file == '__MACOSX':
-                        uploaded_files.append(file)
-        
-        # Create initial message
-        initial_message = "Files uploaded successfully. 'Type your search query' in the Query bar below."
-        if uploaded_files:
-            file_list = "\n".join(f"- {file}" for file in uploaded_files[:5])
-            if len(uploaded_files) > 5:
-                file_list += f"\n- ...and {len(uploaded_files) - 5} more files"
-            initial_message = f"{file_list}\n\nUploaded. 'Type your search query' in the Query bar below."
-        
-        # Add initial message to database
-        initial_msg = Message(
-            conversation_id=chat_id,
-            role='assistant',
-            content=initial_message,
-            timestamp=datetime.now(timezone.utc)
-        )
-        db.session.add(initial_msg)
-        db.session.commit()
-        
-        app.logger.info(f'Created new query with ID: {chat_id}')
-        return redirect(url_for('chat', chat_id=chat_id))
-    except Exception as e:
-        app.logger.error(f'Error creating new query session: {str(e)}', exc_info=True)
-        flash('Error creating new query session', 'error')
-        return redirect(url_for('index'))
-    
-
-@app.route('/chat/<chat_id>', methods=['GET', 'POST'])
-@login_required
-def chat(chat_id):
-    logger.debug(f"Chat endpoint called for chat_id: {chat_id}")
-    try:
-        # Verify the chat belongs to the current user
-        conversation = Conversation.query.filter_by(
-            id=chat_id,
-            user_id=current_user.id
-        ).first_or_404()
-        logger.debug(f"Found conversation: {conversation.title}")
-
-        if request.method == 'GET':
-            logger.debug("Handling GET request")
-            messages = Message.query.filter_by(
-                conversation_id=chat_id
-            ).order_by(Message.timestamp.asc()).all()
-            logger.debug(f"Loaded {len(messages)} messages")
-
-            # Get all conversations for the sidebar
-            user_conversations = Conversation.query.filter_by(
-                user_id=current_user.id
-            ).order_by(Conversation.updated_at.desc()).all()
-            logger.debug(f"Loaded {len(user_conversations)} user conversations")
-
-            # Get uploaded files
-            uploaded_files = get_uploaded_files(current_user.id)
-            logger.debug(f"Found {len(uploaded_files)} uploaded files")
-
-            return render_template(
-                'chat.html',
-                chat_id=chat_id,
-                conversation=conversation,
-                messages=messages,
-                conversations=user_conversations,
-                chat_title=conversation.title,
-                uploaded_files=uploaded_files
-            )
-
-        elif request.method == 'POST':
-            logger.debug("Handling POST request")
-            def generate_response():
-                try:
-                    if not request.is_json:
-                        logger.error("Request is not JSON")
-                        yield json.dumps({
-                            'status': 'error',
-                            'message': 'Content-Type must be application/json'
-                        })
-                        return
-
-                    data = request.get_json()
-                    question = data.get('question', '').strip()
-                    logger.debug(f"Received question: {question}")
-                    
-                    if not question:
-                        logger.error("Empty question received")
-                        yield json.dumps({'status': 'error', 'message': 'Please enter a question'})
-                        return
-
-                    # Save user message
-                    user_msg = Message(
-                        conversation_id=chat_id,
-                        role='user',
-                        content=question,
-                        timestamp=datetime.now(timezone.utc))
-                    db.session.add(user_msg)
-                    db.session.commit()
-                    logger.debug("Saved user message to database")
-
-                    # Update conversation title if it's the first message
-                    if conversation.title == 'New Query':
-                        short_title = question[:50] + '...' if len(question) > 50 else question
-                        conversation.title = short_title
-                        db.session.commit()
-                        logger.debug(f"Updated conversation title to: {short_title}")
-                        yield json.dumps({
-                            'status': 'title_update',
-                            'chat_id': chat_id,
-                            'title': short_title
-                        }) + "\n"
-
-                    # Initialize processor
-                    logger.debug("Initializing DocumentProcessor")
-                    processor = DocumentProcessor(user_id=current_user.id)
-                    
-                    # Get relevant chunks
-                    logger.debug("Searching documents for relevant chunks")
-                    chunks = processor.search_documents(question, current_user.id)
-                    logger.debug(f"Found {len(chunks)} relevant chunks")
-                    
-                    if not chunks:
-                        logger.warning("No relevant chunks found")
-                        yield json.dumps({
-                            'status': 'error',
-                            'message': 'No relevant information found in documents'
-                        })
-                        return
-
-                    # Build context with sources
-                    context = ""
-                    sources = []
-                    for chunk in chunks:
-                        context += f"[Document: {chunk['document']['path']}, Page ~{chunk.get('page', 1)}]\n"
-                        context += f"{chunk['chunk']}\n\n"
-                        sources.append({
-                            'path': chunk['document']['path'],
-                            'page': chunk.get('page', 1),
-                            'text': chunk['chunk'][:200] + '...'  # Preview
-                        })
-                    logger.debug("Built context from chunks")
-
-                    # Stream response from Ollama
-                    yield json.dumps({'status': 'stream_start'}) + "\n"
-
-                    prompt = build_rag_prompt(context, question)
-                    logger.debug(f"Generated prompt with {len(prompt)} characters")
-                    full_answer = ""
-                    
-                    for chunk in get_ollama_response_stream(prompt):
-                        yield json.dumps({'status': 'stream_chunk', 'content': chunk}) + "\n"
-                        full_answer += chunk
-
-                    logger.debug(f"Received full answer with {len(full_answer)} characters")
-
-                    # Save assistant response with sources
-                    assistant_msg = Message(
-                        conversation_id=chat_id,
-                        role='assistant',
-                        content=full_answer,
-                        sources=[s['path'] for s in sources],
-                        timestamp=datetime.now(timezone.utc))
-                    db.session.add(assistant_msg)
-                    
-                    # Update conversation timestamp
-                    conversation.updated_at = datetime.now(timezone.utc)
-                    db.session.commit()
-                    logger.debug("Saved assistant message to database")
-
-                    yield json.dumps({
-                        'status': 'stream_end',
-                        'sources': sources
-                    }) + "\n"
-
-                except Exception as e:
-                    logger.error(f"Error in chat: {str(e)}", exc_info=True)
-                    yield json.dumps({
-                        'status': 'error',
-                        'message': f"Error processing your request: {str(e)}"
-                    }) + "\n"
-
-            return Response(stream_with_context(generate_response()), mimetype='application/x-ndjson')
-
-    except Exception as e:
-        logger.error(f"Error in chat route: {str(e)}", exc_info=True)
-        if request.method == 'GET':
-            flash('Error loading chat', 'error')
-            return redirect(url_for('index'))
-        else:
-            return jsonify({'error': str(e)}), 500
-              
-
-def get_uploaded_files(user_id):
-    """Get list of uploaded files for a user"""
-    try:
-        user_extract_dir = os.path.join(app.config['EXTRACT_FOLDER'], str(user_id))
-        uploaded_files = []
-        
-        if os.path.exists(user_extract_dir):
-            for root, _, files in os.walk(user_extract_dir):
-                for file in files:
-                    if not file.startswith('.') and not file == '__MACOSX':
-                        rel_path = os.path.relpath(os.path.join(root, file), user_extract_dir)
-                        uploaded_files.append({
-                            'name': file,
-                            'path': rel_path,
-                            'size': os.path.getsize(os.path.join(root, file))
-                        })
-        
-        return uploaded_files
-    except Exception as e:
-        app.logger.error(f"Error getting uploaded files: {str(e)}")
-        return []
-
-        
-def build_rag_prompt(context, question):
-    """Construct a RAG prompt with context and instructions"""
-    return (
-        "Use the following documents to answer the question. "
-        "Provide detailed answers with direct quotes when possible. "
-        "Always cite sources using the format [^filename||page].\n\n"
-        "Documents:\n"
-        f"{context}\n"
-        f"Question: {question}\n\n"
-        "Instructions:\n"
-        "1. Answer precisely based on the documents\n"
-        "2. Include relevant quotes with citations\n"
-        "3. If unsure, say you couldn't find the information\n"
-        "4. Format citations as [^filename||page]\n\n"
-        "Answer:"
-    )
-
-
-def get_ollama_response_stream(prompt):
-    """Stream response from Ollama with proper error handling"""
-    try:
-        response = requests.post(
-            app.config['OLLAMA_URL'],
-            json={
-                "model": app.config['OLLAMA_MODEL'],
-                "prompt": prompt,
-                "stream": True
-            },
-            stream=True,
-            timeout=app.config['OLLAMA_TIMEOUT']
-        )
-        
-        for line in response.iter_lines():
-            if line:
-                data = json.loads(line)
-                if 'response' in data:
-                    yield data['response']
-                    
-    except Exception as e:
-        yield f"\n\nError: Failed to get response from AI model ({str(e)})"
-
-@app.route('/delete_chat/<chat_id>', methods=['POST'])
-@login_required
-def delete_chat(chat_id):
-    """Delete a chat session"""
-    app.logger.info(f'Received request to delete chat ID: {chat_id}')
-    try:
-        conversation = Conversation.query.filter_by(id=chat_id, user_id=current_user.id).first()
-        if not conversation:
-            app.logger.warning(f'Chat not found for deletion: {chat_id}')
-            return jsonify({'success': False, 'error': 'Chat not found'}), 404
+            now = datetime.now(timezone.utc)
+            trial_end = current_user._make_aware(current_user.trial_end_date)
+            days_left = (trial_end - now).days
             
-        db.session.delete(conversation)
-        db.session.commit()
-        app.logger.info(f'Successfully deleted chat ID: {chat_id}')
-        return jsonify({'success': True}), 200
-        
-    except Exception as e:
-        app.logger.error(f'Error deleting chat {chat_id}: {str(e)}', exc_info=True)
-        return jsonify({'success': False, 'error': str(e)}), 500
+            if days_left <= 3:
+                flash(f'Your free trial ends in {days_left} day(s). Upgrade now to continue uninterrupted service.', 'warning')
+
+# Template filters
+@app.template_filter('datetimeformat')
+def datetimeformat(value, format='%b %d, %H:%M'):
+    """Format datetime for templates"""
+    if isinstance(value, str):
+        value = datetime.fromisoformat(value)
+    return value.strftime(format)
+
+@app.template_filter('days_from_now')
+def days_from_now(value):
+    """Calculate days from now with timezone-aware handling"""
+    if not value:
+        return 0
     
-@app.route('/', methods=['GET', 'POST'])
-def index():
-    if request.method == 'POST':
-        if current_user.is_authenticated and not current_user.is_subscribed and not current_user.is_admin:
-            return jsonify({'error': 'Subscription required'}), 403
-            
-        try:
-            # Create user-specific directories
-            user_id = str(current_user.id) if current_user.is_authenticated else 'anonymous'
-            user_upload_dir = os.path.join(app.config['UPLOAD_FOLDER'], user_id)
-            user_extract_dir = os.path.join(app.config['EXTRACT_FOLDER'], user_id)
-            
-            os.makedirs(user_upload_dir, exist_ok=True)
-            os.makedirs(user_extract_dir, exist_ok=True)
-            
-            # Clean directories
-            clean_directory(user_upload_dir)
-            clean_directory(user_extract_dir)
-            
-        except Exception as e:
-            app.logger.error(f'Cleanup error: {str(e)}')
-            return jsonify({'error': 'Failed to prepare directories'}), 500
-
-        if 'files' not in request.files:
-            return jsonify({'error': 'No files uploaded'}), 400
-            
-        files = request.files.getlist('files')
-        saved_files = []
-        
-        for file in files:
-            if file.filename == '':
-                continue
-                
-            filename = secure_filename(file.filename)
-            is_zip = filename.lower().endswith('.zip')
-            
-            try:
-                if is_zip:
-                    # Save ZIP to user's upload directory
-                    zip_path = os.path.join(user_upload_dir, filename)
-                    file.save(zip_path)
-                    
-                    # Extract to user's extract directory
-                    try:
-                        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-                            for file_info in zip_ref.infolist():
-                                if file_info.is_dir() or '__MACOSX' in file_info.filename:
-                                    continue
-                                    
-                                if not allowed_file(file_info.filename):
-                                    continue
-                                    
-                                # Extract file
-                                extracted_path = os.path.join(user_extract_dir, file_info.filename)
-                                os.makedirs(os.path.dirname(extracted_path), exist_ok=True)
-                                with zip_ref.open(file_info) as source, open(extracted_path, 'wb') as target:
-                                    shutil.copyfileobj(source, target)
-                                    
-                        saved_files.append(filename)
-                    except Exception as e:
-                        app.logger.error(f'Failed to extract {filename}: {str(e)}')
-                        continue
-                        
-                else:
-                    # Handle regular files
-                    if not allowed_file(filename):
-                        continue
-                        
-                    # Save directly to extract directory
-                    file_path = os.path.join(user_extract_dir, filename)
-                    file.save(file_path)
-                    saved_files.append(filename)
-                    
-            except Exception as e:
-                app.logger.error(f'Failed to process {filename}: {str(e)}')
-                continue
-                
-        if not saved_files:
-            return jsonify({'error': 'No valid files were uploaded'}), 400
-            
-        return jsonify({
-            'message': f'{len(saved_files)} files processed',
-            'files': saved_files,
-            'extract_dir': user_extract_dir
-        })
+    now = datetime.now(timezone.utc)
     
-    return render_template('index.html', chats=conversations)
-
-@app.route('/verify_upload')
-@login_required
-def verify_upload():
-    """Verify upload directory structure"""
-    try:
-        user_id = str(current_user.id)
-        results = {
-            'upload_dir': {
-                'path': os.path.join(app.config['UPLOAD_FOLDER'], user_id),
-                'exists': os.path.exists(os.path.join(app.config['UPLOAD_FOLDER'], user_id)),
-                'files': []
-            },
-            'extract_dir': {
-                'path': os.path.join(app.config['EXTRACT_FOLDER'], user_id),
-                'exists': os.path.exists(os.path.join(app.config['EXTRACT_FOLDER'], user_id)),
-                'files': []
-            }
-        }
-        
-        if results['upload_dir']['exists']:
-            for root, _, files in os.walk(results['upload_dir']['path']):
-                for file in files:
-                    results['upload_dir']['files'].append({
-                        'name': file,
-                        'path': os.path.join(root, file),
-                        'size': os.path.getsize(os.path.join(root, file))
-                    })
-                    
-        if results['extract_dir']['exists']:
-            for root, _, files in os.walk(results['extract_dir']['path']):
-                for file in files:
-                    results['extract_dir']['files'].append({
-                        'name': file,
-                        'path': os.path.join(root, file),
-                        'size': os.path.getsize(os.path.join(root, file))
-                    })
-                    
-        return jsonify(results)
-        
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+    # Handle both naive and timezone-aware datetimes
+    if value.tzinfo is None:
+        value = value.replace(tzinfo=timezone.utc)
     
-
-@app.route('/update_chat_title/<chat_id>', methods=['POST'])
-def update_chat_title(chat_id):
-    try:
-        data = request.get_json()
-        new_title = data.get('title', '')
-        
-        # Update your database/store here
-        # chats[chat_id]['title'] = new_title
-        
-        return jsonify({'success': True})
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 400
-    
-
-@app.route('/get_file_structure')
-@login_required
-def get_file_structure():
-    """Return the file structure for current user only"""
-    user_extract_dir = os.path.join(app.config['EXTRACT_FOLDER'], str(current_user.id))
-    file_structure = []
-
-    if not os.path.exists(user_extract_dir):
-        return jsonify([])
-
-    def build_tree(current_path, relative_path=""):
-        name = os.path.basename(current_path)
-        item = {
-            'name': name,
-            'path': os.path.join(relative_path, name) if relative_path else name,
-            'type': 'directory' if os.path.isdir(current_path) else 'file',
-            'extension': os.path.splitext(name)[1].lower() if os.path.isfile(current_path) else None
-        }
-        
-        if os.path.isdir(current_path):
-            item['children'] = []
-            try:
-                for entry in sorted(os.listdir(current_path)):
-                    full_path = os.path.join(current_path, entry)
-                    if not entry.startswith('.') and not entry == '__MACOSX':
-                        child_relative = os.path.join(relative_path, name) if relative_path else name
-                        item['children'].append(build_tree(full_path, child_relative))
-            except Exception as e:
-                app.logger.error(f"Error reading directory {current_path}: {str(e)}")
-        return item
-
-    file_structure = []
-    for entry in sorted(os.listdir(user_extract_dir)):
-        full_path = os.path.join(user_extract_dir, entry)
-        if not entry.startswith('.') and not entry == '__MACOSX':
-            file_structure.append(build_tree(full_path))
-    
-    return jsonify(file_structure)
-
-
-@app.route('/get_file_content')
-def get_file_content():
-    """Enhanced file content endpoint with robust path handling"""
-    rel_path = request.args.get('path')
-    page_num = request.args.get('page', '')
-    highlight = request.args.get('highlight', '')
-    
-    if not rel_path:
-        return jsonify({'error': 'File path required'}), 400
-    
-    try:
-        # Security check - prevent directory traversal
-        if '..' in rel_path or rel_path.startswith('/'):
-            return jsonify({'error': 'Invalid file path'}), 400
-        
-        # Normalize path (handle different OS path separators)
-        rel_path = rel_path.replace('\\', '/').strip('/')  # Convert to Unix-style and remove leading/trailing slashes
-        
-        # Build the full path safely
-        try:
-            full_path = os.path.join(app.config['EXTRACT_FOLDER'], *rel_path.split('/'))
-            full_path = os.path.normpath(full_path)
-        except Exception as e:
-            app.logger.error(f"Path joining failed: {rel_path} - {str(e)}")
-            return jsonify({'error': 'Invalid file path'}), 400
-        
-        # Verify the path is within the extract folder
-        if not full_path.startswith(os.path.abspath(app.config['EXTRACT_FOLDER'])):
-            app.logger.error(f"Security violation attempt: {full_path}")
-            return jsonify({'error': 'Access denied'}), 403
-        
-        # Case-insensitive file search if needed
-        if not os.path.exists(full_path):
-            dirname, filename = os.path.split(full_path)
-            if os.path.exists(dirname):
-                for f in os.listdir(dirname):
-                    if f.lower() == filename.lower():
-                        full_path = os.path.join(dirname, f)
-                        break
-            
-            if not os.path.exists(full_path):
-                app.logger.error(f"File not found: {full_path} (resolved from {rel_path})")
-                app.logger.error(f"Extract folder contents: {os.listdir(app.config['EXTRACT_FOLDER'])}")
-                return jsonify({'error': 'File not found'}), 404
-        
-        # Get file stats for debugging
-        file_stats = os.stat(full_path)
-        app.logger.info(f"Serving file: {full_path} (Size: {file_stats.st_size} bytes)")
-        
-        # Determine content type
-        file_ext = os.path.splitext(full_path)[1].lower()
-        mime_types = {
-            '.pdf': 'application/pdf',
-            '.jpg': 'image/jpeg',
-            '.jpeg': 'image/jpeg',
-            '.png': 'image/png',
-            '.gif': 'image/gif',
-            '.webp': 'image/webp',
-            '.bmp': 'image/bmp',
-            '.svg': 'image/svg+xml',
-            '.txt': 'text/plain',
-            '.md': 'text/markdown',
-            '.csv': 'text/csv',
-            '.json': 'application/json',
-            '.xml': 'application/xml',
-            '.html': 'text/html'
-        }
-        
-        content_type = mime_types.get(file_ext, 'application/octet-stream')
-        
-        # Handle different response types
-        if content_type.startswith('image/') or file_ext == '.pdf':
-            return send_file(
-                full_path,
-                mimetype=content_type,
-                as_attachment=False,
-                last_modified=datetime.fromtimestamp(file_stats.st_mtime),
-                etag=str(file_stats.st_mtime)
-            )
-        else:
-            # For text files, read and return content
-            content = read_file(full_path)
-            if not content:
-                return jsonify({'error': 'Could not read file content'}), 400
-                
-            return jsonify({
-                'file': os.path.basename(full_path),
-                'content': content,
-                'path': rel_path,
-                'size': file_stats.st_size,
-                'last_modified': datetime.fromtimestamp(file_stats.st_mtime).isoformat()
-            })
-    
-    except Exception as e:
-        app.logger.error(f"Error serving file {rel_path}: {str(e)}", exc_info=True)
-        return jsonify({'error': str(e)}), 500
-        
-           
-
-@app.route('/progress_stream')
-def progress_stream():
-    """Server-Sent Events for progress updates"""
-    def event_stream():
-        last_progress = -1
-        try:
-            while True:
-                with progress_lock:
-                    current = progress_data['current']
-                    total = progress_data['total']
-                    message = progress_data['message']
-                    error = progress_data['error']
-                    redirect_url = progress_data.get('redirect_url')
-                    progress = int((current / total) * 100) if total > 0 else 0
-                
-                if redirect_url or progress != last_progress or error:
-                    data = {
-                        'progress': progress,
-                        'message': message,
-                        'error': error,
-                        'redirect': redirect_url
-                    }
-                    yield f"data: {json.dumps(data)}\n\n"
-                    last_progress = progress
-                
-                if redirect_url:
-                    yield "event: redirect\ndata: {}\n\n"
-                    break
-                
-                if progress >= 100 or error:
-                    yield "event: complete\ndata: {}\n\n"
-                    break
-                
-                time.sleep(0.5)
-        except GeneratorExit:
-            app.logger.info("Client disconnected from progress stream")
-        except Exception as e:
-            app.logger.error(f"Error in progress stream: {str(e)}")
-    
-    return Response(event_stream(), mimetype="text/event-stream")
+    days = (value - now).days
+    return max(0, days)
 
 @app.template_filter('process_references')
 def process_references(text):
-    """Template filter to process references in text"""
+    """Process references in text"""
     reference_counter = 1
     references = []
     
@@ -2880,14 +1846,12 @@ def process_references(text):
         page = match.group(2) or ''
         highlight = match.group(3) or ''
         
-        # Clean and normalize the filename path
-        filename = filename.split(']')[0]  # Remove any trailing content
-        filename = filename.replace('\\', '/')  # Normalize to forward slashes
+        filename = filename.split(']')[0]
+        filename = filename.replace('\\', '/')
         
         ref_id = reference_counter
         reference_counter += 1
         
-        # Store reference data
         references.append({
             'id': ref_id,
             'filename': filename,
@@ -2895,7 +1859,6 @@ def process_references(text):
             'highlight': highlight
         })
         
-        # Return the reference link with proper data attributes
         return (f'<sup class="reference-link" '
                 f'data-ref="{ref_id}" '
                 f'data-filename="{filename}" '
@@ -2903,18 +1866,16 @@ def process_references(text):
                 f'data-highlight="{highlight}">'
                 f'[{ref_id}]</sup>')
     
-    # Process all references in the text
     processed_text = re.sub(
         r'\[\^([^\|\]]+)(?:\|\|([^\|\]]+))?(?:\|\|([^\|\]]+))?\]',
         replace_reference,
         text
     )
     
-    # Add references section if any references exist
     if references:
         references_section = '<div class="references-section"><h4>References</h4><ol>'
         for ref in sorted(references, key=lambda x: x['id']):
-            ref_text = ref['filename'].split('/')[-1]  # Show only filename
+            ref_text = ref['filename'].split('/')[-1]
             if ref['page']:
                 ref_text += f", {ref['page']}"
             if ref['highlight']:
@@ -2926,6 +1887,10 @@ def process_references(text):
     
     return processed_text
 
+@app.context_processor
+def inject_now():
+    """Inject current time into templates"""
+    return {'now': datetime.now(timezone.utc)}
 
 @app.after_request
 def after_request(response):
@@ -2936,7 +1901,7 @@ def after_request(response):
 
 if __name__ == '__main__':
     try:
-        app.logger.info('Starting application on port 8000')
+        logger.info('Starting GPU-optimized DocumentIQ application')
         app.run(
             host='0.0.0.0',
             port=8000,
@@ -2944,5 +1909,5 @@ if __name__ == '__main__':
             debug=os.getenv('FLASK_DEBUG', 'false').lower() == 'true'
         )
     except Exception as e:
-        app.logger.critical(f"Failed to start application: {str(e)}")
+        logger.critical(f"Failed to start application: {e}")
         raise

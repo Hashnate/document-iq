@@ -37,7 +37,7 @@
                         {% if current_user.subscription_plan == 'trial' and current_user.is_subscribed %}
                         <li><span class="dropdown-item-text text-info">
                                 <i class="bi bi-clock"></i>
-                                Trial: {{ (current_user.trial_end_date - now).days }} days left
+                                Trial: {{ current_user.trial_days_remaining }} days left
                             </span></li>
                         <li>
                             <hr class="dropdown-divider">

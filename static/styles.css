@@ -1,22 +1,19 @@
-
-
-
 :root {
     --primary-color: #10a37f;
     --secondary-color: #2563eb;
     --sidebar-width: 280px;
     --navbar-height: 60px;
     --input-height: 56px;
-
-            --accent-color: #10a37f;
-            --light-color: #f8f9fa;
-            --dark-color: #212529;
-            --success-color: #10a37f;
-            --error-color: #f72585;
+    --accent-color: #10a37f;
+    --light-color: #f8f9fa;
+    --dark-color: #212529;
+    --success-color: #10a37f;
+    --error-color: #f72585;
 }
 
 
 /* Base Styles */
+
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     background-color: #ffffff;
@@ -26,11 +23,13 @@ body {
     line-height: 1.5;
 }
 
+
 /* Navbar */
+
 .navbar {
     height: var(--navbar-height);
     background: white !important;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     border-bottom: 1px solid #e5e7eb;
     padding: 0 1rem;
 }
@@ -47,12 +46,13 @@ body {
     height: 24px;
 }
 
+
 /* Main Layout */
+
 .app-container {
     display: flex;
     min-height: calc(100vh - var(--navbar-height));
 }
-
 
 .sidebar-header {
     padding: 0.5rem 0;
@@ -109,7 +109,9 @@ body {
     color: #9ca3af;
 }
 
+
 /* Chat Container */
+
 .chat-container {
     flex: 1;
     display: flex;
@@ -120,15 +122,20 @@ body {
     width: 100%;
 }
 
-
 .message {
     margin-bottom: 1.5rem;
     animation: fadeIn 0.3s ease-out;
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .message-user {
@@ -182,7 +189,9 @@ body {
     color: #9ca3af;
 }
 
+
 /* Input Area */
+
 .chat-input-container {
     position: fixed;
     bottom: 0;
@@ -208,7 +217,7 @@ body {
     border-radius: 8px;
     border: 1px solid #e5e7eb;
     background: white;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
     font-size: 0.9375rem;
     min-height: var(--input-height);
     resize: none;
@@ -245,7 +254,9 @@ body {
     cursor: not-allowed;
 }
 
+
 /* Loading Indicator */
+
 .loading-indicator {
     display: flex;
     align-items: center;
@@ -265,10 +276,14 @@ body {
 }
 
 @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
+
 /* Upload Page */
+
 .upload-container {
     display: flex;
     justify-content: center;
@@ -284,7 +299,7 @@ body {
     width: 100%;
     max-width: 600px;
     text-align: center;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     border: 1px solid #e5e7eb;
 }
 
@@ -305,21 +320,21 @@ body {
     margin-bottom: 1.5rem;
 }
 
-    .file-upload-area {
-        border: 2px dashed #e5e7eb;
-        border-radius: 8px;
-        padding: 2rem;
-        margin: 1.5rem 0;
-        transition: all 0.2s;
-        text-align: center;
-        cursor: pointer;
-        background: #f9fafb;
-    }
+.file-upload-area {
+    border: 2px dashed #e5e7eb;
+    border-radius: 8px;
+    padding: 2rem;
+    margin: 1.5rem 0;
+    transition: all 0.2s;
+    text-align: center;
+    cursor: pointer;
+    background: #f9fafb;
+}
 
-    .file-upload-area:hover {
-        border-color: var(--primary-color);
-        background: #f3f4f6;
-    }
+.file-upload-area:hover {
+    border-color: var(--primary-color);
+    background: #f3f4f6;
+}
 
 .file-upload-label {
     display: flex;
@@ -354,16 +369,16 @@ body {
     font-size: 0.75rem;
 }
 
+
 /* Responsive */
+
 @media (max-width: 768px) {
     .sidebar {
         display: none;
     }
-    
     .chat-container {
         max-width: 100%;
     }
-    
     .chat-input-container {
         padding: 0.75rem;
     }
@@ -371,10 +386,11 @@ body {
 
 
 /* Update the navbar to be sticky */
+
 .navbar {
     height: var(--navbar-height);
     background: white !important;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     border-bottom: 1px solid #e5e7eb;
     padding: 0 1rem;
     position: sticky;
@@ -382,7 +398,9 @@ body {
     z-index: 1000;
 }
 
+
 /* Update the sidebar to be sticky */
+
 .sidebar {
     width: var(--sidebar-width);
     background: white;
@@ -397,7 +415,9 @@ body {
     z-index: 900;
 }
 
+
 /* Update the chat input container to be sticky */
+
 .chat-input-container {
     position: sticky;
     bottom: 0;
@@ -411,7 +431,9 @@ body {
     z-index: 800;
 }
 
+
 /* Adjust the chat messages container to account for sticky elements */
+
 .chat-messages {
     flex: 1;
     overflow-y: auto;
@@ -420,14 +442,18 @@ body {
     /* margin-bottom: calc(var(--input-height) + 2rem); Add margin to account for sticky input */
 }
 
+
 /* Update the app container to handle the sticky layout */
+
 .app-container {
     display: flex;
     min-height: 100vh;
     overflow: hidden;
 }
 
+
 /* Adjust the chat container */
+
 .chat-container {
     flex: 1;
     display: flex;
@@ -441,23 +467,25 @@ body {
     overflow: hidden;
 }
 
+
 /* For mobile view */
+
 @media (max-width: 768px) {
     .sidebar {
         display: none;
     }
-
     .chat-container {
         max-width: 100%;
         height: calc(100vh - var(--navbar-height));
     }
-    
     .chat-input-container {
         padding: 0.75rem;
     }
 }
 
+
 /* Chat item container */
+
 .chat-item-container {
     display: flex;
     align-items: center;
@@ -479,7 +507,9 @@ body {
     font-weight: 500;
 }
 
+
 /* Chat item link */
+
 .chat-item {
     flex: 1;
     display: flex;
@@ -489,7 +519,9 @@ body {
     text-decoration: none;
 }
 
+
 /* Delete button */
+
 .btn-delete-chat {
     background: none;
     border: none;
@@ -512,14 +544,16 @@ body {
 }
 
 
-
 /* File selected state */
+
 .file-selected {
     border-color: var(--primary-color);
     background-color: rgba(16, 163, 127, 0.05);
 }
 
+
 /* Loading spinner */
+
 .spinner-border {
     vertical-align: middle;
     margin-right: 8px;
@@ -527,6 +561,7 @@ body {
 
 
 /* Chat item container */
+
 .chat-item-container {
     display: flex;
     align-items: center;
@@ -549,7 +584,9 @@ body {
     font-weight: 500;
 }
 
+
 /* Chat item link */
+
 .chat-item {
     flex: 1;
     display: flex;
@@ -559,7 +596,9 @@ body {
     text-decoration: none;
 }
 
+
 /* Delete button */
+
 .btn-delete-chat {
     background: none;
     border: none;
@@ -585,13 +624,15 @@ body {
 }
 
 
-
 /* Chat item wrapper */
+
 .chat-item-wrapper {
     margin-bottom: 4px;
 }
 
+
 /* Chat item link */
+
 .chat-item {
     display: flex;
     align-items: center;
@@ -612,22 +653,29 @@ body {
     font-weight: 500;
 }
 
+
 /* Chat item icon */
+
 .chat-item-icon {
     color: #9ca3af;
     flex-shrink: 0;
 }
 
+
 /* Chat item title */
+
 .chat-item-title {
     flex: 1;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    padding-right: 24px; /* Space for delete icon */
+    padding-right: 24px;
+    /* Space for delete icon */
 }
 
+
 /* Delete button */
+
 .btn-delete-chat {
     position: absolute;
     right: 8px;
@@ -652,30 +700,41 @@ body {
     background: rgba(239, 68, 68, 0.1);
 }
 
+
 /* Explicitly set icon color */
+
 .delete-icon {
-    color: inherit; /* Inherits color from parent */
+    color: inherit;
+    /* Inherits color from parent */
     font-size: 14px;
 }
 
 
 /* Add this to your existing CSS */
+
 .chat-item-wrapper {
     transition: opacity 0.3s ease;
 }
 
+
 /* Loading spinner for delete button */
+
 .bi-arrow-clockwise {
     animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 
 /* Chat item styles */
+
 .chat-item-wrapper {
     margin-bottom: 4px;
     position: relative;
@@ -714,7 +773,9 @@ body {
     padding-right: 24px;
 }
 
+
 /* Delete button styles */
+
 .btn-delete-chat {
     position: absolute;
     right: 8px;
@@ -743,34 +804,44 @@ body {
     background: rgba(239, 68, 68, 0.1);
 }
 
+
 /* Loading spinner */
+
 .bi-arrow-clockwise.spin {
     animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 
 /* File Explorer Styles */
+
 .file-explorer {
     position: fixed;
     top: var(--navbar-height);
-    right: 0; /* Changed from left: 0 */
+    right: 0;
+    /* Changed from left: 0 */
     width: 300px;
     height: calc(100vh - var(--navbar-height));
     background: white;
-    box-shadow: -2px 0 10px rgba(0,0,0,0.1); /* Shadow on left side now */
+    box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+    /* Shadow on left side now */
     z-index: 999;
-    transform: translateX(100%); /* Changed to 100% */
+    transform: translateX(100%);
+    /* Changed to 100% */
     transition: transform 0.3s ease;
     display: flex;
     flex-direction: column;
-    border-left: 1px solid #e5e7eb; /* Changed from border-right */
+    border-left: 1px solid #e5e7eb;
+    /* Changed from border-right */
 }
-
 
 .file-explorer.open {
     transform: translateX(0);
@@ -837,23 +908,45 @@ body {
     margin-right: 0.5rem;
 }
 
-.file-icon-pdf { color: #ef4444; }
-.file-icon-doc { color: #2563eb; }
-.file-icon-txt { color: #6b7280; }
-.file-icon-md { color: #6b7280; }
-.file-icon-csv { color: #10b981; }
-.file-icon-json { color: #f59e0b; }
-.file-icon-xml { color: #8b5cf6; }
-.file-icon-default { color: #9ca3af; }
+.file-icon-pdf {
+    color: #ef4444;
+}
 
+.file-icon-doc {
+    color: #2563eb;
+}
+
+.file-icon-txt {
+    color: #6b7280;
+}
+
+.file-icon-md {
+    color: #6b7280;
+}
+
+.file-icon-csv {
+    color: #10b981;
+}
+
+.file-icon-json {
+    color: #f59e0b;
+}
+
+.file-icon-xml {
+    color: #8b5cf6;
+}
+
+.file-icon-default {
+    color: #9ca3af;
+}
 
 .btn-outline-light {
---bs-btn-color: #4c4e50;
-
+    --bs-btn-color: #4c4e50;
 }
 
 
 /* Reference links */
+
 .reference-link {
     color: var(--primary-color);
     text-decoration: none;
@@ -876,7 +969,9 @@ body {
     text-decoration: underline;
 }
 
+
 /* File tree highlight */
+
 .file-tree .file.highlighted {
     background-color: rgba(16, 163, 127, 0.1);
     border-left: 3px solid var(--primary-color);
@@ -885,6 +980,7 @@ body {
 
 
 /* File Preview Styles */
+
 #file-preview-container {
     margin-top: 1rem;
     border-top: 1px solid #e5e7eb;
@@ -914,18 +1010,18 @@ body {
     margin-top: 0.5rem;
 }
 
-
-
 .upload-percentage {
     position: absolute;
     right: 10px;
     color: white;
     font-size: 12px;
     font-weight: bold;
-    text-shadow: 0 0 2px rgba(0,0,0,0.5);
+    text-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
 }
 
+
 /* Navbar button styles */
+
 .navbar .btn-outline-light {
     border-color: rgba(255, 255, 255, 0.2);
     color: var(--bs-btn-color);
@@ -942,25 +1038,24 @@ body {
     gap: 5px;
 }
 
+.container {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+h1 {
+    color: var(--primary-color);
+    margin-bottom: 1.5rem;
+    text-align: center;
+    font-weight: 600;
+}
 
 
-        .container {
-            max-width: 800px;
-            margin: 2rem auto;
-            padding: 2rem;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-        }
-
-        h1 {
-            color: var(--primary-color);
-            margin-bottom: 1.5rem;
-            text-align: center;
-            font-weight: 600;
-        }
-
-        /* .upload-area {
+/* .upload-area {
             border: 2px dashed var(--accent-color);
             border-radius: 12px;
             padding: 3rem 2rem;
@@ -970,7 +1065,8 @@ body {
             background-color: rgba(72, 149, 239, 0.05);
         } */
 
-        /* .upload-area:hover {
+
+/* .upload-area:hover {
             background-color: rgba(72, 149, 239, 0.1);
         }
 
@@ -979,108 +1075,111 @@ body {
             background-color: rgba(76, 201, 240, 0.1);
         } */
 
-        .upload-icon {
-            font-size: 3rem;
-            color: var(--accent-color);
-            margin-bottom: 1rem;
-        }
+.upload-icon {
+    font-size: 3rem;
+    color: var(--accent-color);
+    margin-bottom: 1rem;
+}
 
-        .upload-text {
-            margin-bottom: 1rem;
-            color: var(--dark-color);
-        }
+.upload-text {
+    margin-bottom: 1rem;
+    color: var(--dark-color);
+}
 
-        .upload-text strong {
-            color: var(--primary-color);
-        }
+.upload-text strong {
+    color: var(--primary-color);
+}
 
-        .progress-container {
-            margin-top: 2rem;
-            display: none;
-        }
+.progress-container {
+    margin-top: 2rem;
+    display: none;
+}
 
-        .progress-bar {
-            height: 10px;
-            background: #e9ecef;
-            border-radius: 5px;
-            margin-bottom: 0.5rem;
-            overflow: hidden;
-        }
+.progress-bar {
+    height: 10px;
+    background: #e9ecef;
+    border-radius: 5px;
+    margin-bottom: 0.5rem;
+    overflow: hidden;
+}
 
-        .progress {
-            height: 100%;
-            background: var(--success-color);
-            width: 0%;
-            transition: width 0.3s ease;
-        }
+.progress {
+    height: 100%;
+    background: var(--success-color);
+    width: 0%;
+    transition: width 0.3s ease;
+}
 
-        .progress-info {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.9rem;
-            color: #6c757d;
-        }
+.progress-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    color: #6c757d;
+}
 
-        .progress-percent {
-            font-weight: 600;
-            color: var(--primary-color);
-        }
+.progress-percent {
+    font-weight: 600;
+    color: var(--primary-color);
+}
 
-        .file-list {
-            margin-top: 2rem;
-        }
+.file-list {
+    margin-top: 2rem;
+}
 
-        .file-item {
-            display: flex;
-            align-items: center;
-            padding: 0.8rem;
-            background: white;
-            border-radius: 8px;
-            margin-bottom: 0.5rem;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-            transition: all 0.3s ease;
-        }
+.file-item {
+    display: flex;
+    align-items: center;
+    padding: 0.8rem;
+    background: white;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+}
 
-        .file-item:hover {
-            transform: translateX(5px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        }
+.file-item:hover {
+    transform: translateX(5px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
 
-        /* .file-icon {
+
+/* .file-icon {
             margin-right: 1rem;
             color: var(--accent-color);
         } */
 
-        .file-name {
-            flex-grow: 1;
-            word-break: break-all;
-        }
+.file-name {
+    flex-grow: 1;
+    word-break: break-all;
+}
 
-        .file-size {
-            color: #6c757d;
-            font-size: 0.9rem;
-        }
+.file-size {
+    color: #6c757d;
+    font-size: 0.9rem;
+}
 
-        .success-message {
-            color: var(--success-color);
-            text-align: center;
-            margin-top: 1rem;
-            font-weight: 500;
-            display: none;
-        }
+.success-message {
+    color: var(--success-color);
+    text-align: center;
+    margin-top: 1rem;
+    font-weight: 500;
+    display: none;
+}
 
-        .error-message {
-            color: var(--error-color);
-            text-align: center;
-            margin-top: 1rem;
-            font-weight: 500;
-            display: none;
-        }
+.error-message {
+    color: var(--error-color);
+    text-align: center;
+    margin-top: 1rem;
+    font-weight: 500;
+    display: none;
+}
 
 
-        /* Add these new styles to your existing styles.css */
+/* Add these new styles to your existing styles.css */
+
 
 /* Auth styles */
+
 .auth-container {
     display: flex;
     justify-content: center;
@@ -1180,7 +1279,9 @@ body {
     width: auto;
 }
 
+
 /* Dropdown styles */
+
 .dropdown-menu {
     border: 1px solid #e5e7eb;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
@@ -1203,6 +1304,7 @@ body {
 
 
 /* Pricing Page Styles */
+
 .pricing-container {
     padding: 3rem 0;
     background: #f8f9fa;
@@ -1241,7 +1343,9 @@ body {
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
 
+
 /* Billing Page Styles */
+
 .billing-container {
     padding: 2rem 0;
 }
@@ -1256,38 +1360,42 @@ body {
     border-radius: 8px;
 }
 
+
 /* Payment Form Styles */
-#card-element, #card-element-update {
+
+#card-element,
+#card-element-update {
     border: 1px solid #ced4da;
     border-radius: 4px;
     padding: 10px;
 }
 
-#card-errors, #card-errors-update {
+#card-errors,
+#card-errors-update {
     margin-top: 0.5rem;
     font-size: 0.875rem;
 }
 
+
 /* Responsive adjustments */
+
 @media (max-width: 768px) {
     .pricing-card {
         margin-bottom: 1.5rem;
     }
-    
     .billing-container .col-md-8 {
         order: 2;
     }
-    
     .billing-container .col-md-4 {
         order: 1;
         margin-bottom: 2rem;
     }
 }
 
-    .close-modal {
-        position: absolute;
-        right: 15px;
-        top: 10px;
-        font-size: 1.5rem;
-        cursor: pointer;
-    }
+.close-modal {
+    position: absolute;
+    right: 15px;
+    top: 10px;
+    font-size: 1.5rem;
+    cursor: pointer;
+}
