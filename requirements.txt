@@ -36,3 +36,7 @@ torchaudio
 faiss-cpu==1.7.4
 sentence-transformers==2.2.2
 langchain==0.0.348
+
+psycopg2-binary>=2.9.5
+redis>=4.5.0
+celery>=5.2.0

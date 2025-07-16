@@ -59,26 +59,6 @@ body {
     margin-bottom: 0.5rem;
 }
 
-.btn-new-chat {
-    width: 100%;
-    padding: 0.75rem;
-    border-radius: 8px;
-    background: var(--primary-color);
-    color: white;
-    border: none;
-    font-weight: 500;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    margin-bottom: 1rem;
-    cursor: pointer;
-}
-
-.btn-new-chat:hover {
-    background: #0d8a6a;
-}
-
 .chat-history {
     flex: 1;
     overflow-y: auto;
@@ -192,17 +172,7 @@ body {
 
 /* Input Area */
 
-.chat-input-container {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: white;
-    padding: 1rem;
-    border-top: 1px solid #e5e7eb;
-    display: flex;
-    justify-content: center;
-}
+
 
 .chat-input-wrapper {
     width: 100%;
@@ -379,9 +349,7 @@ body {
     .chat-container {
         max-width: 100%;
     }
-    .chat-input-container {
-        padding: 0.75rem;
-    }
+   
 }
 
 
@@ -418,18 +386,7 @@ body {
 
 /* Update the chat input container to be sticky */
 
-.chat-input-container {
-    position: sticky;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: white;
-    padding: 1rem;
-    border-top: 1px solid #e5e7eb;
-    display: flex;
-    justify-content: center;
-    z-index: 800;
-}
+
 
 
 /* Adjust the chat messages container to account for sticky elements */
@@ -478,9 +435,7 @@ body {
         max-width: 100%;
         height: calc(100vh - var(--navbar-height));
     }
-    .chat-input-container {
-        padding: 0.75rem;
-    }
+  
 }
 
 

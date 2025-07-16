@@ -27,7 +27,7 @@
                                             <div class="mr-3 mb-1">
                                                 <i class="fas fa-calendar-check mr-1"></i>
                                                 Ends on {{ current_user.trial_end_date.strftime('%b %d, %Y') }}
-                                                ({{ (current_user.trial_end_date - now).days }} days left)
+                                                ({{ current_user.trial_end_date|days_remaining }} days left)
                                             </div>
                                         </div>
                                     </div>

@@ -1023,3 +1023,392 @@ Traceback (most recent call last):
     Trial: {{ (current_user.trial_end_date - now).days }} days left
     ^^^^^^^^^^^^^^^^^^^^^^^^^
 TypeError: can't subtract offset-naive and offset-aware datetimes
+2025-07-15 12:02:36,364 - app - ERROR - Exception on / [GET]
+Traceback (most recent call last):
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1486, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1484, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1469, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/app.py", line 1384, in index
+    return render_template('index.html')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/templating.py", line 150, in render_template
+    template = app.jinja_env.get_or_select_template(template_name_or_list)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3/dist-packages/jinja2/environment.py", line 1081, in get_or_select_template
+    return self.get_template(template_name_or_list, parent, globals)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3/dist-packages/jinja2/environment.py", line 1010, in get_template
+    return self._load_template(name, globals)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3/dist-packages/jinja2/environment.py", line 969, in _load_template
+    template = self.loader.load(self, name, self.make_globals(globals))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3/dist-packages/jinja2/loaders.py", line 138, in load
+    code = environment.compile(source, name, filename)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3/dist-packages/jinja2/environment.py", line 768, in compile
+    self.handle_exception(source=source_hint)
+  File "/usr/lib/python3/dist-packages/jinja2/environment.py", line 936, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/home/administrator/document-iq/templates/index.html", line 1152, in template
+    {% endblock %} {% endblock %}
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+jinja2.exceptions.TemplateSyntaxError: Encountered unknown tag 'endblock'.
+2025-07-15 17:00:35,261 - app - ERROR - Exception on /billing [GET]
+Traceback (most recent call last):
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1486, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1484, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1469, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask_login/utils.py", line 290, in decorated_view
+    return current_app.ensure_sync(func)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/app.py", line 1662, in billing
+    return render_template('billing.html',
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/templating.py", line 151, in render_template
+    return _render(app, template, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/templating.py", line 132, in _render
+    rv = template.render(context)
+         ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3/dist-packages/jinja2/environment.py", line 1301, in render
+    self.environment.handle_exception()
+  File "/usr/lib/python3/dist-packages/jinja2/environment.py", line 936, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/home/administrator/document-iq/templates/billing.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "/home/administrator/document-iq/templates/base.html", line 86, in top-level template code
+    {% endif %} {% include 'partials/_flash_messages.html' %} {% block content %}{% endblock %}
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/templates/billing.html", line 30, in block 'content'
+    ({{ (current_user.trial_end_date - now).days }} days left)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: can't subtract offset-naive and offset-aware datetimes
+2025-07-15 17:00:49,009 - app - ERROR - Exception on /pricing [GET]
+Traceback (most recent call last):
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1486, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1484, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1469, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask_login/utils.py", line 290, in decorated_view
+    return current_app.ensure_sync(func)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/app.py", line 1653, in pricing
+    return render_template('pricing.html', plans=plans, now=datetime.now(timezone.utc))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/templating.py", line 151, in render_template
+    return _render(app, template, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/templating.py", line 132, in _render
+    rv = template.render(context)
+         ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3/dist-packages/jinja2/environment.py", line 1301, in render
+    self.environment.handle_exception()
+  File "/usr/lib/python3/dist-packages/jinja2/environment.py", line 936, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/home/administrator/document-iq/templates/pricing.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "/home/administrator/document-iq/templates/base.html", line 86, in top-level template code
+    {% endif %} {% include 'partials/_flash_messages.html' %} {% block content %}{% endblock %}
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/templates/pricing.html", line 137, in block 'content'
+    now).days }} days left)
+TypeError: can't subtract offset-naive and offset-aware datetimes
+2025-07-15 17:26:16,845 - app - ERROR - Exception on /billing [GET]
+Traceback (most recent call last):
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1486, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1484, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1469, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask_login/utils.py", line 290, in decorated_view
+    return current_app.ensure_sync(func)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/app.py", line 1662, in billing
+    return render_template('billing.html',
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/templating.py", line 151, in render_template
+    return _render(app, template, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/templating.py", line 132, in _render
+    rv = template.render(context)
+         ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3/dist-packages/jinja2/environment.py", line 1301, in render
+    self.environment.handle_exception()
+  File "/usr/lib/python3/dist-packages/jinja2/environment.py", line 936, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/home/administrator/document-iq/templates/billing.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "/home/administrator/document-iq/templates/base.html", line 86, in top-level template code
+    {% endif %} {% include 'partials/_flash_messages.html' %} {% block content %}{% endblock %}
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/templates/billing.html", line 30, in block 'content'
+    ({{ (current_user.trial_end_date - now).days }} days left)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: can't subtract offset-naive and offset-aware datetimes
+2025-07-16 01:53:06,371 - app - ERROR - Exception on /billing [GET]
+Traceback (most recent call last):
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1486, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1484, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1469, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask_login/utils.py", line 290, in decorated_view
+    return current_app.ensure_sync(func)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/app.py", line 2093, in billing
+    return render_template('billing.html',
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/templating.py", line 151, in render_template
+    return _render(app, template, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/templating.py", line 132, in _render
+    rv = template.render(context)
+         ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3/dist-packages/jinja2/environment.py", line 1301, in render
+    self.environment.handle_exception()
+  File "/usr/lib/python3/dist-packages/jinja2/environment.py", line 936, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/home/administrator/document-iq/templates/billing.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "/home/administrator/document-iq/templates/base.html", line 87, in top-level template code
+    {% endif %} {% include 'partials/_flash_messages.html' %} {% block content %}{% endblock %}
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/templates/billing.html", line 30, in block 'content'
+    ({{ (current_user.trial_end_date - now).days }} days left)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: can't subtract offset-naive and offset-aware datetimes
+2025-07-16 01:55:59,656 - app - ERROR - Exception on /pricing [GET]
+Traceback (most recent call last):
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1486, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1484, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1469, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask_login/utils.py", line 290, in decorated_view
+    return current_app.ensure_sync(func)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/app.py", line 2084, in pricing
+    return render_template('pricing.html', plans=plans, now=datetime.now(timezone.utc))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/templating.py", line 151, in render_template
+    return _render(app, template, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/templating.py", line 132, in _render
+    rv = template.render(context)
+         ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3/dist-packages/jinja2/environment.py", line 1301, in render
+    self.environment.handle_exception()
+  File "/usr/lib/python3/dist-packages/jinja2/environment.py", line 936, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/home/administrator/document-iq/templates/pricing.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "/home/administrator/document-iq/templates/base.html", line 87, in top-level template code
+    {% endif %} {% include 'partials/_flash_messages.html' %} {% block content %}{% endblock %}
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/templates/pricing.html", line 137, in block 'content'
+    now).days }} days left)
+TypeError: can't subtract offset-naive and offset-aware datetimes
+2025-07-16 02:06:56,033 - app - ERROR - Exception on /billing [GET]
+Traceback (most recent call last):
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1486, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1484, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1469, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask_login/utils.py", line 290, in decorated_view
+    return current_app.ensure_sync(func)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/app.py", line 2095, in billing
+    return render_template('billing.html',
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/templating.py", line 151, in render_template
+    return _render(app, template, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/templating.py", line 132, in _render
+    rv = template.render(context)
+         ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3/dist-packages/jinja2/environment.py", line 1301, in render
+    self.environment.handle_exception()
+  File "/usr/lib/python3/dist-packages/jinja2/environment.py", line 936, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/home/administrator/document-iq/templates/billing.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "/home/administrator/document-iq/templates/base.html", line 87, in top-level template code
+    {% endif %} {% include 'partials/_flash_messages.html' %} {% block content %}{% endblock %}
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/templates/billing.html", line 30, in block 'content'
+    ({{ (current_user.trial_end_date - now).days }} days left)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: can't subtract offset-naive and offset-aware datetimes
+2025-07-16 02:07:49,973 - app - ERROR - Exception on /billing [GET]
+Traceback (most recent call last):
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1486, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1484, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1469, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask_login/utils.py", line 290, in decorated_view
+    return current_app.ensure_sync(func)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/app.py", line 2095, in billing
+    return render_template('billing.html',
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/templating.py", line 151, in render_template
+    return _render(app, template, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/templating.py", line 132, in _render
+    rv = template.render(context)
+         ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3/dist-packages/jinja2/environment.py", line 1301, in render
+    self.environment.handle_exception()
+  File "/usr/lib/python3/dist-packages/jinja2/environment.py", line 936, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/home/administrator/document-iq/templates/billing.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "/home/administrator/document-iq/templates/base.html", line 87, in top-level template code
+    {% endif %} {% include 'partials/_flash_messages.html' %} {% block content %}{% endblock %}
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/templates/billing.html", line 30, in block 'content'
+    ({{ (current_user.trial_end_date - now).days }} days left)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: can't subtract offset-naive and offset-aware datetimes
+2025-07-16 02:07:59,271 - app - ERROR - Exception on /billing [GET]
+Traceback (most recent call last):
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1486, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1484, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1469, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask_login/utils.py", line 290, in decorated_view
+    return current_app.ensure_sync(func)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/app.py", line 2095, in billing
+    return render_template('billing.html',
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/templating.py", line 151, in render_template
+    return _render(app, template, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/templating.py", line 132, in _render
+    rv = template.render(context)
+         ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3/dist-packages/jinja2/environment.py", line 1301, in render
+    self.environment.handle_exception()
+  File "/usr/lib/python3/dist-packages/jinja2/environment.py", line 936, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/home/administrator/document-iq/templates/billing.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "/home/administrator/document-iq/templates/base.html", line 87, in top-level template code
+    {% endif %} {% include 'partials/_flash_messages.html' %} {% block content %}{% endblock %}
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/templates/billing.html", line 30, in block 'content'
+    ({{ (current_user.trial_end_date - now).days }} days left)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: can't subtract offset-naive and offset-aware datetimes
+2025-07-16 02:09:14,715 - app - ERROR - Exception on /billing [GET]
+Traceback (most recent call last):
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1486, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1484, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/app.py", line 1469, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask_login/utils.py", line 290, in decorated_view
+    return current_app.ensure_sync(func)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/app.py", line 2095, in billing
+    return render_template('billing.html',
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/templating.py", line 151, in render_template
+    return _render(app, template, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/venv/lib/python3.12/site-packages/flask/templating.py", line 132, in _render
+    rv = template.render(context)
+         ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3/dist-packages/jinja2/environment.py", line 1301, in render
+    self.environment.handle_exception()
+  File "/usr/lib/python3/dist-packages/jinja2/environment.py", line 936, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/home/administrator/document-iq/templates/billing.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "/home/administrator/document-iq/templates/base.html", line 87, in top-level template code
+    {% endif %} {% include 'partials/_flash_messages.html' %} {% block content %}{% endblock %}
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/administrator/document-iq/templates/billing.html", line 30, in block 'content'
+    ({{ current_user.trial_end_date|days_remaining }} days left)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+jinja2.exceptions.TemplateRuntimeError: No filter named 'days_remaining' found.

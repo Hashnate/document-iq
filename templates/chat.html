@@ -1,6 +1,4 @@
-{% extends "base.html" %}
-
-{% block content %}
+{% extends "base.html" %} {% block content %}
 <div class="app-container">
     <div class="sidebar">
         <button class="btn-new-chat" onclick="location.href='{{ url_for('index') }}'">
@@ -8,8 +6,7 @@
         </button>
         <div class="chat-history">
             {% for conversation in conversations %}
-            <div class="chat-item-wrapper {% if conversation.id == chat_id %}active{% endif %}"
-                data-chat-id="{{ conversation.id }}">
+            <div class="chat-item-wrapper {% if conversation.id == chat_id %}active{% endif %}" data-chat-id="{{ conversation.id }}">
                 <a href="{{ url_for('chat', chat_id=conversation.id) }}" class="chat-item">
                     <i class="bi bi-chat-left chat-item-icon"></i>
                     <span class="chat-item-title" id="chat-title-{{ conversation.id }}">{{ conversation.title }}</span>
@@ -28,33 +25,24 @@
             <div class="message {% if message.role == 'assistant' %}message-assistant{% else %}message-user{% endif %}">
                 <div class="message-avatar">
                     {% if message.role == 'user' %}
-                    <i class="bi bi-person-fill"></i>
-                    {% else %}
-                    <i class="bi bi-robot"></i>
-                    {% endif %}
+                    <i class="bi bi-person-fill"></i> {% else %}
+                    <i class="bi bi-robot"></i> {% endif %}
                 </div>
                 <div class="message-content">
                     <div class="message-text">
-                        {% if message.role == 'assistant' %}
-                        {{ message.content|process_references|safe }}
-                        {% else %}
-                        {{ message.content|replace('\n', '<br>')|safe }}
-                        {% endif %}
+                        {% if message.role == 'assistant' %} {{ message.content|process_references|safe }} {% else %} {{ message.content|replace('\n', '<br>')|safe }} {% endif %}
                     </div>
                     {% if message.role == 'assistant' and message.sources %}
                     <div class="message-sources">
                         <div class="sources-header">
-                            <span class="supported-files-title">Sources:</span>
-                            {% if message.sources|length > 2 %}
+                            <span class="supported-files-title">Sources:</span> {% if message.sources|length > 2 %}
                             <button class="btn-toggle-sources" onclick="toggleSources(this)">
                                 Show more
-                            </button>
-                            {% endif %}
+                            </button> {% endif %}
                         </div>
                         <div class="sources-list" style="{% if message.sources|length > 2 %}display: none;{% endif %}">
                             {% for source in message.sources %}
-                            <div class="message-source"
-                                data-source="{% if source is string %}{{ source }}{% else %}{{ source.path|default('') }}{% endif %}">
+                            <div class="message-source" data-source="{% if source is string %}{{ source }}{% else %}{{ source.path|default('') }}{% endif %}">
                                 <i class="bi bi-file-text message-source-icon"></i>
                                 <span>
                                     {% if source is string %}
@@ -85,8 +73,7 @@
                             <i class="bi bi-file-text"></i>
                             <span>{{ file }}</span>
                         </div>
-                        {% endfor %}
-                        {% if uploaded_files|length > 3 %}
+                        {% endfor %} {% if uploaded_files|length > 3 %}
                         <div class="file-preview-more">
                             +{{ uploaded_files|length - 3 }} more files
                         </div>
@@ -131,7 +118,890 @@
     </div>
 </div>
 
+<style>
+    /* Modern color scheme with gradients */
+    
+     :root {
+        --primary-color: #4361ee;
+        --secondary-color: #3a0ca3;
+        --accent-color: #7209b7;
+        --light-accent: #f72585;
+        --text-color: #2b2d42;
+        --light-text: #8d99ae;
+        --background-light: #f8f9fa;
+        --card-bg: #ffffff;
+        --success-color: #4cc9f0;
+        --warning-color: #f8961e;
+        --error-color: #f94144;
+    }
+    /* Gradient text effect */
+    
+    .gradient-text {
+        background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        display: inline-block;
+    }
+    /* Main app container */
+    
+    .app-container {
+        display: flex;
+        min-height: 100vh;
+        background: linear-gradient(135deg, var(--background-light) 0%, #e9ecef 100%);
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        color: var(--text-color);
+        line-height: 1.6;
+    }
+    /* Sidebar styling */
+    
+    .sidebar {
+        width: 280px;
+        background-color: var(--card-bg);
+        border-right: 1px solid rgba(0, 0, 0, 0.1);
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
+    }
+    
+    .btn-new-chat {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 12px 16px;
+        border-radius: 8px;
+        border: none;
+        background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+        color: white;
+        font-weight: 500;
+        cursor: pointer;
+        margin-bottom: 20px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(67, 97, 238, 0.3);
+    }
+    
+    .btn-new-chat:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(67, 97, 238, 0.4);
+    }
+    
+    .btn-new-chat i {
+        font-size: 1.1rem;
+    }
+    
+    .chat-history {
+        flex-grow: 1;
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(67, 97, 238, 0.3) transparent;
+    }
+    
+    .chat-history::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    .chat-history::-webkit-scrollbar-track {
+        background: rgba(67, 97, 238, 0.1);
+        border-radius: 3px;
+    }
+    
+    .chat-history::-webkit-scrollbar-thumb {
+        background: rgba(67, 97, 238, 0.3);
+        border-radius: 3px;
+    }
+    
+    .chat-history::-webkit-scrollbar-thumb:hover {
+        background: rgba(67, 97, 238, 0.5);
+    }
+    
+    .chat-item-wrapper {
+        margin-bottom: 8px;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+    
+    .chat-item-wrapper:hover {
+        background-color: rgba(67, 97, 238, 0.05);
+    }
+    
+    .chat-item-wrapper.active {
+        background-color: rgba(67, 97, 238, 0.1);
+        border-left: 3px solid var(--primary-color);
+    }
+    
+    .chat-item {
+        display: flex;
+        align-items: center;
+        padding: 12px;
+        text-decoration: none;
+        color: var(--text-color);
+        border-radius: 8px;
+    }
+    
+    .chat-item-icon {
+        margin-right: 12px;
+        color: var(--primary-color);
+        font-size: 1.1rem;
+    }
+    
+    .chat-item-title {
+        flex-grow: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: 0.95rem;
+    }
+    
+    .btn-delete-chat {
+        background: none;
+        border: none;
+        color: var(--light-text);
+        cursor: pointer;
+        padding: 4px;
+        border-radius: 4px;
+        opacity: 0;
+        transition: all 0.3s ease;
+    }
+    
+    .chat-item-wrapper:hover .btn-delete-chat {
+        opacity: 1;
+    }
+    
+    .btn-delete-chat:hover {
+        color: var(--error-color);
+        background-color: rgba(249, 65, 68, 0.1);
+    }
+    /* Chat container */
+    
+    .chat-container {
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        max-width: 1000px;
+        width: 100%;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    
+    .chat-messages {
+        flex-grow: 1;
+        overflow-y: auto;
+        padding: 20px;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(67, 97, 238, 0.3) transparent;
+    }
+    
+    .chat-messages::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    .chat-messages::-webkit-scrollbar-track {
+        background: rgba(67, 97, 238, 0.1);
+        border-radius: 3px;
+    }
+    
+    .chat-messages::-webkit-scrollbar-thumb {
+        background: rgba(67, 97, 238, 0.3);
+        border-radius: 3px;
+    }
+    
+    .chat-messages::-webkit-scrollbar-thumb:hover {
+        background: rgba(67, 97, 238, 0.5);
+    }
+    /* Message styling */
+    
+    .message {
+        display: flex;
+        gap: 1rem;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border-radius: 12px;
+    }
+    
+    .message-user {
+        border-left: 4px solid var(--primary-color);
+    }
+    
+    
+    .message-avatar {
+        flex-shrink: 0;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+    }
+    
+    .message-content {
+        flex-grow: 1;
+        min-width: 0;
+    }
+    
+    .message-text {
+        line-height: 1.6;
+        word-wrap: break-word;
+    }
+    
+    .message-text pre {
+        background-color: rgba(67, 97, 238, 0.1);
+        padding: 12px;
+        border-radius: 8px;
+        overflow-x: auto;
+    }
+    
+    .message-text code {
+        font-family: 'Courier New', monospace;
+        background-color: rgba(67, 97, 238, 0.1);
+        padding: 2px 4px;
+        border-radius: 4px;
+    }
+    /* Empty state placeholder */
+    
+    .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: calc(100% - 100px);
+        text-align: center;
+        padding: 2rem;
+        color: var(--light-text);
+    }
+    
+    .empty-state.hidden {
+        display: none;
+    }
+    
+    .empty-state i.bi {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        color: var(--primary-color);
+    }
+    
+    .empty-state h4 {
+        margin-bottom: 0.5rem;
+        color: var(--text-color);
+        font-size: 1.5rem;
+    }
+    
+    .uploaded-files-preview {
+        max-width: 400px;
+        width: 100%;
+        margin: 1rem auto;
+        background: rgba(67, 97, 238, 0.05);
+        border-radius: 12px;
+        padding: 1rem;
+        border: 1px dashed rgba(67, 97, 238, 0.2);
+    }
+    
+    .file-preview-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem;
+        text-align: left;
+        border-bottom: 1px solid rgba(67, 97, 238, 0.1);
+    }
+    
+    .file-preview-item:last-child {
+        border-bottom: none;
+    }
+    
+    .file-preview-more {
+        padding: 0.5rem;
+        font-size: 0.9rem;
+        color: var(--light-text);
+    }
+    
+    .prompt-text {
+        margin-top: 1rem;
+        font-style: italic;
+        color: var(--light-text);
+    }
+    /* Status message styling */
+    
+    .status-message {
+        margin-bottom: 0.5rem;
+        font-size: 0.95rem;
+        min-height: 1.5em;
+        position: relative;
+        padding-left: 1.5rem;
+    }
+    
+    .status-message::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 0.8rem;
+        height: 0.8rem;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+        animation: pulse 1.5s infinite ease-in-out;
+    }
+    
+    .status-message.error::before {
+        background: linear-gradient(135deg, var(--error-color), #ff006e);
+        animation: pulse-error 0.75s infinite ease-in-out;
+    }
+    
+    @keyframes pulse {
+        0% {
+            transform: translateY(-50%) scale(1);
+            opacity: 1;
+        }
+        50% {
+            transform: translateY(-50%) scale(1.2);
+            opacity: 0.7;
+        }
+        100% {
+            transform: translateY(-50%) scale(1);
+            opacity: 1;
+        }
+    }
+    
+    @keyframes pulse-error {
+        0% {
+            transform: translateY(-50%) scale(1);
+            opacity: 1;
+        }
+        50% {
+            transform: translateY(-50%) scale(1.3);
+            opacity: 0.5;
+        }
+        100% {
+            transform: translateY(-50%) scale(1);
+            opacity: 1;
+        }
+    }
+    /* Reference styling */
+    
+    .reference-link {
+        cursor: pointer;
+        color: var(--primary-color);
+        text-decoration: underline;
+    }
+    
+    .reference-link:hover {
+        color: var(--accent-color);
+    }
+    /* Sources section styling */
+    
+    .message-sources {
+        margin-top: 1rem;
+        font-size: 0.875rem;
+        background-color: rgba(67, 97, 238, 0.05);
+        padding: 12px;
+        border-radius: 8px;
+    }
+    
+    .sources-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+    
+    .supported-files-title {
+        font-weight: 500;
+        color: var(--text-color);
+    }
+    
+    .btn-toggle-sources {
+        background: none;
+        border: none;
+        color: var(--primary-color);
+        cursor: pointer;
+        font-size: 0.8rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+    }
+    
+    .btn-toggle-sources:hover {
+        background-color: rgba(67, 97, 238, 0.1);
+    }
+    
+    .sources-list {
+        max-height: 200px;
+        overflow-y: auto;
+        transition: max-height 0.3s ease;
+    }
+    
+    .message-source {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 4px;
+        cursor: pointer;
+        padding: 8px;
+        border-radius: 4px;
+        transition: all 0.3s ease;
+    }
+    
+    .message-source:hover {
+        background-color: rgba(67, 97, 238, 0.1);
+    }
+    
+    .message-source-icon {
+        color: var(--primary-color);
+    }
+    /* Preview Modal Styles */
+    
+    .preview-modal {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: var(--card-bg);
+        border-top: 1px solid rgba(0, 0, 0, 0.1);
+        box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.1);
+        z-index: 1000;
+        display: none;
+        height: 300px;
+        flex-direction: column;
+        transition: height 0.2s ease;
+    }
+    
+    .preview-modal-open {
+        --preview-modal-height: 300px;
+    }
+    
+    .preview-modal-header {
+        padding: 12px 16px;
+        background: rgba(67, 97, 238, 0.05);
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .preview-modal-header h6 {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 500;
+        color: var(--text-color);
+    }
+    
+    .preview-actions {
+        display: flex;
+        gap: 8px;
+    }
+    
+    .btn-preview-action {
+        background: none;
+        border: none;
+        color: var(--light-text);
+        cursor: pointer;
+        padding: 4px;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .btn-preview-action:hover {
+        background-color: rgba(0, 0, 0, 0.05);
+    }
+    
+    .preview-resize-handle {
+        height: 8px;
+        cursor: ns-resize;
+        background-color: rgba(67, 97, 238, 0.05);
+        border-top: 1px solid rgba(0, 0, 0, 0.1);
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    }
+    
+    .preview-resize-handle:hover {
+        background-color: rgba(67, 97, 238, 0.1);
+    }
+    
+    .preview-content {
+        flex-grow: 1;
+        overflow-y: auto;
+        padding: 0;
+        background: var(--card-bg);
+    }
+    
+    .preview-content .preview-document {
+        padding: 16px;
+    }
+    
+    .preview-document pre {
+        white-space: pre-wrap;
+        font-family: 'Courier New', monospace;
+        font-size: 0.9rem;
+        line-height: 1.5;
+        margin: 0;
+        color: var(--text-color);
+        background-color: rgba(67, 97, 238, 0.05);
+        padding: 1rem;
+        border-radius: 0.5rem;
+        overflow-x: auto;
+    }
+    
+    .preview-document mark {
+        background-color: #fef08a;
+        padding: 0 0.2em;
+        border-radius: 0.25em;
+    }
+    
+    .preview-meta {
+        padding: 8px 16px;
+        font-size: 0.8rem;
+        color: var(--light-text);
+        background: rgba(67, 97, 238, 0.05);
+        border-top: 1px solid rgba(0, 0, 0, 0.1);
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+    
+    .preview-meta-item {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+    
+    .preview-meta-item a {
+        color: var(--primary-color);
+        text-decoration: none;
+    }
+    
+    .preview-meta-item a:hover {
+        text-decoration: underline;
+    }
+    
+    .preview-placeholder {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: var(--light-text);
+    }
+    
+    .preview-placeholder i {
+        font-size: 2rem;
+        margin-bottom: 8px;
+        color: var(--primary-color);
+    }
+    
+    .preview-placeholder p {
+        margin: 0;
+        font-size: 0.9rem;
+    }
+    
+    .preview-loading {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        gap: 8px;
+        color: var(--text-color);
+    }
+    
+    .loading-spinner {
+        width: 24px;
+        height: 24px;
+        border: 3px solid rgba(67, 97, 238, 0.1);
+        border-radius: 50%;
+        border-top-color: var(--primary-color);
+        animation: spin 1s linear infinite;
+    }
+    
+    .preview-error {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        gap: 8px;
+        color: var(--error-color);
+        padding: 20px;
+        text-align: center;
+    }
+    
+    .preview-error i {
+        font-size: 2rem;
+    }
+    /* Adjust chat container when preview is open */
+    
+    .chat-container {
+        padding-bottom: 0;
+        transition: padding-bottom 0.2s ease;
+    }
+    /* Chat input */
+    
+    .chat-input-container {
+        position: sticky;
+        bottom: 0;
+        background: var(--card-bg);
+        padding: 1rem;
+        border-top: 1px solid rgba(0, 0, 0, 0.1);
+        box-shadow: 0 -5px 15px rgba(0, 0, 0, 0.05);
+    }
+    
+    .input-group {
+        display: flex;
+        align-items: flex-end;
+        gap: 0.5rem;
+    }
+    
+    .chat-input {
+        flex-grow: 1;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-radius: 12px;
+        padding: 0.75rem;
+        resize: none;
+        max-height: 150px;
+        min-height: 44px;
+        font-family: inherit;
+        background-color: var(--card-bg);
+        transition: all 0.3s ease;
+    }
+    
+    .chat-input:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 2px rgba(67, 97, 238, 0.2);
+    }
+    
+    .btn-send {
+        height: 44px;
+        width: 44px;
+        border: none;
+        border-radius: 12px;
+        background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+        color: white;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-send:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(67, 97, 238, 0.3);
+    }
+    
+    .btn-send:disabled {
+        background: var(--light-text);
+        cursor: not-allowed;
+    }
+    
+    .btn-stop-active {
+        background: linear-gradient(135deg, var(--error-color), #ff006e) !important;
+    }
+    
+    .btn-stop-active:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(249, 65, 68, 0.3) !important;
+    }
+    
+    .spin {
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        from {
+            transform: rotate(0deg);
+        }
+        to {
+            transform: rotate(360deg);
+        }
+    }
+    /* PDF Preview Styles */
+    
+    .pdf-preview-container {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+    }
+    
+    .pdf-preview-frame {
+        width: 100%;
+        height: 100%;
+        border: none;
+    }
+    /* Image Preview Styles */
+    
+    .image-preview-container {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: auto;
+    }
+    
+    .image-preview {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+    }
+    /* Syntax highlighting for JSON */
+    
+    .preview-document.json .key {
+        color: #d946ef;
+    }
+    
+    .preview-document.json .string {
+        color: #65a30d;
+    }
+    
+    .preview-document.json .number {
+        color: #2563eb;
+    }
+    
+    .preview-document.json .boolean {
+        color: #9333ea;
+    }
+    
+    .preview-document.json .null {
+        color: #64748b;
+    }
+    
+    .last-clicked-source {
+        background-color: rgba(67, 97, 238, 0.1);
+        border-left: 3px solid var(--primary-color);
+    }
+    
+    .loading-file-name {
+        font-size: 0.8rem;
+        margin-top: 0.5rem;
+        color: var(--light-text);
+        font-style: italic;
+    }
+    
+    .office-preview-container {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+    
+    .office-preview-frame {
+        flex-grow: 1;
+        border: none;
+    }
+    
+    .office-preview-footer {
+        padding: 0.5rem;
+        background: rgba(67, 97, 238, 0.05);
+        border-top: 1px solid rgba(0, 0, 0, 0.1);
+        text-align: center;
+    }
+    
+    .btn-retry {
+        background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        margin-top: 1rem;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-retry:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(67, 97, 238, 0.3);
+    }
+    
+    .btn-retry i {
+        animation: spin 1s linear infinite;
+    }
+    
+    .loading-file-path {
+        font-size: 0.7rem;
+        margin-top: 0.3rem;
+        color: var(--light-text);
+        word-break: break-all;
+        font-family: monospace;
+    }
+    /* Progress bar styling */
+    
+    .file-progress-container {
+        margin-bottom: 10px;
+        padding: 8px;
+        background: rgba(67, 97, 238, 0.05);
+        border-radius: 8px;
+    }
+    
+    .file-progress-label {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 4px;
+        font-size: 0.85rem;
+        color: var(--text-color);
+    }
+    
+    .file-progress-bar {
+        width: 100%;
+        height: 8px;
+        border-radius: 4px;
+        background-color: rgba(67, 97, 238, 0.1);
+        overflow: hidden;
+    }
+    
+    .file-progress-bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+        transition: width 0.3s ease;
+    }
+    /* Responsive styles */
+    
+    @media (max-width: 768px) {
+        .app-container {
+            flex-direction: column;
+        }
+        .sidebar {
+            width: 100%;
+            border-right: none;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            padding: 15px;
+        }
+        .chat-container {
+            padding: 15px;
+        }
+        .message {
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .message-avatar {
+            align-self: flex-start;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .preview-modal {
+            height: 60vh;
+        }
+        .chat-input-container {
+            padding: 0.75rem;
+        }
+        .btn-send {
+            height: 40px;
+            width: 40px;
+        }
+    }
+</style>
+
 <script>
+   
+     // Make user ID available to JavaScript
+   window.currentUserId = {{ current_user.id | tojson }};
+
     // Global variables
     let currentRequestController = null;
     let isPreviewModalOpen = false;
@@ -142,7 +1012,38 @@
     const previewTitle = document.getElementById('preview-title');
     const previewMeta = document.getElementById('preview-meta');
 
-    document.addEventListener('DOMContentLoaded', function () {
+    // Debug function to help troubleshoot file paths
+    window.debugFilePaths = function() {
+        console.log('Current user ID:', window.currentUserId);
+        console.log('Available sources in current conversation:');
+
+        document.querySelectorAll('.message-source').forEach((source, index) => {
+            const path = source.getAttribute('data-source');
+            const display = source.querySelector('span').textContent;
+            console.log(`${index + 1}. Display: "${display}", Path: "${path}"`);
+        });
+    };
+
+    // Enhanced error logging
+    const originalFetch = window.fetch;
+    window.fetch = function(...args) {
+        const url = args[0];
+        if (url.includes('/get_file_content')) {
+            console.log('Fetching file:', url);
+        }
+        return originalFetch.apply(this, args).then(response => {
+            if (!response.ok && url.includes('/get_file_content')) {
+                console.error('File fetch failed:', url, response.status, response.statusText);
+            }
+            return response;
+        });
+    };
+
+    function getCurrentUserId() {
+        return window.currentUserId || '1';
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
         // Initialize all components
         initChatForm();
         initReferenceHandlers();
@@ -157,6 +1058,7 @@
         }
     });
 
+
     function initChatForm() {
         const chatForm = document.getElementById('chat-form');
         if (!chatForm) return;
@@ -165,14 +1067,14 @@
         const sendButton = document.getElementById('send-button');
 
         // Auto-resize textarea
-        textarea.addEventListener('input', function () {
+        textarea.addEventListener('input', function() {
             this.style.height = 'auto';
             this.style.height = Math.min(this.scrollHeight, 150) + 'px';
         });
         textarea.style.height = 'auto';
 
         // Handle Enter key submission
-        textarea.addEventListener('keydown', function (e) {
+        textarea.addEventListener('keydown', function(e) {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
                 chatForm.dispatchEvent(new Event('submit'));
@@ -180,7 +1082,7 @@
         });
 
         // Form submission handler
-        chatForm.addEventListener('submit', async function (e) {
+        chatForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             const question = textarea.value.trim();
             if (!question) return;
@@ -222,7 +1124,9 @@
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ question: question }),
+                    body: JSON.stringify({
+                        question: question
+                    }),
                     signal: controller.signal
                 });
 
@@ -234,10 +1138,15 @@
                 let fullAnswer = '';
 
                 while (true) {
-                    const { done, value } = await reader.read();
+                    const {
+                        done,
+                        value
+                    } = await reader.read();
                     if (done) break;
 
-                    buffer += decoder.decode(value, { stream: true });
+                    buffer += decoder.decode(value, {
+                        stream: true
+                    });
                     const lines = buffer.split('\n');
 
                     // Process all complete lines (leave incomplete line in buffer)
@@ -260,16 +1169,15 @@
                                     }
                                 }
                                 updateProcessingStatus(data.message, null, data.error);
-                            }
-                            else if (data.status === 'stream_chunk') {
+                            } else if (data.status === 'stream_chunk') {
                                 // Replace the status container with the actual answer
-                                if (document.getElementById('dynamic-status-container')) {
-                                    document.getElementById('dynamic-status-container').remove();
+                                const statusContainer = document.querySelector('.dynamic-status-container');
+                                if (statusContainer) {
+                                    statusContainer.remove();
                                 }
                                 fullAnswer += data.content;
                                 updateMessageInUI(assistantMessageId, 'assistant', fullAnswer);
-                            }
-                            else if (data.status === 'stream_end') {
+                            } else if (data.status === 'stream_end') {
                                 // Finalize the message with sources if available
                                 updateMessageInUI(
                                     assistantMessageId,
@@ -282,13 +1190,12 @@
                                 const chatId = window.location.pathname.split('/').pop();
                                 const chatTitleElement = document.querySelector(`#chat-title-${chatId}`);
                                 if (chatTitleElement && chatTitleElement.textContent.trim() === 'New Query') {
-                                    const shortTitle = question.length > 50
-                                        ? question.substring(0, 50) + '...'
-                                        : question;
+                                    const shortTitle = question.length > 50 ?
+                                        question.substring(0, 50) + '...' :
+                                        question;
                                     updateChatTitle(chatId, shortTitle);
                                 }
-                            }
-                            else if (data.status === 'title_update') {
+                            } else if (data.status === 'title_update') {
                                 // Update chat title in sidebar
                                 const chatItem = document.querySelector(`.chat-item-wrapper[data-chat-id="${data.chat_id}"] .chat-item-title`);
                                 if (chatItem) {
@@ -359,12 +1266,14 @@
 
         // Update the server asynchronously
         fetch(`/update_chat_title/${chatId}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ title: newTitle })
-        })
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    title: newTitle
+                })
+            })
             .catch(error => {
                 console.error('Error updating chat title:', error);
             });
@@ -376,7 +1285,7 @@
         const chatContainer = document.getElementById('chat-container');
 
         // Toggle modal visibility
-        window.togglePreviewModal = function () {
+        window.togglePreviewModal = function() {
             isPreviewModalOpen = !isPreviewModalOpen;
 
             if (isPreviewModalOpen) {
@@ -392,7 +1301,7 @@
         };
 
         // Make modal resizable
-        resizeHandle.addEventListener('mousedown', function (e) {
+        resizeHandle.addEventListener('mousedown', function(e) {
             e.preventDefault();
             document.addEventListener('mousemove', resize);
             document.addEventListener('mouseup', stopResize);
@@ -420,7 +1329,7 @@
             return;
         }
 
-        // Clean the filename path
+        // Clean the filename path - ensure it's relative from extract folder
         filename = filename.replace(/\\/g, '/').trim();
 
         // Remove any anchor tags or query parameters from the filename
@@ -447,25 +1356,43 @@
             // Update title immediately
             previewTitle.textContent = `Preview: ${shortName}`;
 
-            // Encode the filename for URL (encode each path segment separately)
-            const encodedPath = filename.split('/').map(encodeURIComponent).join('/');
-            let url = `/get_file_content?path=${encodedPath}`;
-
+            // Build URL - filename should already be the correct relative path
+            let url = `/get_file_content?path=${encodeURIComponent(filename)}`;
+            console.log(url);
             if (page) url += `&page=${encodeURIComponent(page)}`;
             if (highlight) url += `&highlight=${encodeURIComponent(highlight)}`;
 
+            console.log('Requesting file:', url); // Debug log
+
             // First check if file exists
-            const checkResponse = await fetch(url, { method: 'HEAD' });
+            const checkResponse = await fetch(url, {
+                method: 'HEAD'
+            });
+
             if (!checkResponse.ok) {
-                const errorData = await checkResponse.json().catch(() => null);
-                throw new Error(errorData?.error || 'File not found on server');
+                // Try alternative path construction if the first attempt fails
+                const alternativePath = `${getCurrentUserId()}/${filename}`;
+                const alternativeUrl = `/get_file_content?path=${encodeURIComponent(alternativePath)}`;
+
+                console.log('Trying alternative path:', alternativeUrl); // Debug log
+
+                const altCheckResponse = await fetch(alternativeUrl, {
+                    method: 'HEAD'
+                });
+
+                if (altCheckResponse.ok) {
+                    url = alternativeUrl;
+                } else {
+                    const errorData = await checkResponse.json().catch(() => null);
+                    throw new Error(errorData ?.error || 'File not found on server');
+                }
             }
 
-            // Then get the content
+            // Get the content
             const response = await fetch(url);
             if (!response.ok) {
                 const errorData = await response.json().catch(() => null);
-                throw new Error(errorData?.error || 'Failed to load file');
+                throw new Error(errorData ?.error || 'Failed to load file');
             }
 
             // Check content type
@@ -476,14 +1403,12 @@
                 const blob = await response.blob();
                 const objectUrl = URL.createObjectURL(blob);
                 renderPdfPreview(objectUrl, shortName);
-            }
-            else if (contentType.startsWith('image/')) {
+            } else if (contentType.startsWith('image/')) {
                 // Handle image response
                 const blob = await response.blob();
                 const objectUrl = URL.createObjectURL(blob);
                 renderImagePreview(objectUrl, shortName);
-            }
-            else if (contentType.includes('application/json')) {
+            } else if (contentType.includes('application/json')) {
                 // Handle JSON response
                 const data = await response.json();
                 if (data.error) throw new Error(data.error);
@@ -521,8 +1446,7 @@
                         <pre>${formattedContent}</pre>
                     </div>
                 `;
-            }
-            else {
+            } else {
                 // Fallback for other content types
                 const text = await response.text();
                 previewContent.innerHTML = `
@@ -542,6 +1466,7 @@
             let errorMessage = error.message;
             if (error.message.includes('not found')) {
                 errorMessage = `File not found: ${shortName}`;
+                errorMessage += `<br><small>Path attempted: ${filename}</small>`;
                 errorMessage += `<br><small>Please verify the file exists in the extracted documents.</small>`;
             }
 
@@ -607,7 +1532,7 @@
         previewContent.innerHTML = `
             <div class="preview-error">
                 <i class="bi bi-exclamation-triangle"></i>
-                <p>${escapeHtml(message)}</p>
+                <p>${message}</p>
                 <button class="btn-retry" onclick="retryPreview()">
                     <i class="bi bi-arrow-clockwise"></i> Try Again
                 </button>
@@ -624,13 +1549,26 @@
     }
 
     function handleImageLoad(img) {
-        img.parentElement.querySelector('.image-loading').style.display = 'none';
+        const loadingDiv = img.parentElement.querySelector('.image-loading');
+        if (loadingDiv) {
+            loadingDiv.style.display = 'none';
+        }
     }
 
     function handleImageError(img) {
-        img.parentElement.querySelector('.image-loading').style.display = 'none';
+        const loadingDiv = img.parentElement.querySelector('.image-loading');
+        if (loadingDiv) {
+            loadingDiv.style.display = 'none';
+        }
         handlePreviewError('Failed to load image');
     }
+
+
+
+
+
+
+    
 
     function retryPreview() {
         // Get the last clicked element to retry
@@ -646,7 +1584,7 @@
 
     // Initialize reference handlers
     function initReferenceHandlers() {
-        document.addEventListener('click', function (e) {
+        document.addEventListener('click', function(e) {
             // Handle message source clicks
             const sourceElement = e.target.closest('.message-source');
             if (sourceElement) {
@@ -687,7 +1625,7 @@
 
     function initChatHistory() {
         document.querySelectorAll('.btn-delete-chat').forEach(button => {
-            button.addEventListener('click', function (e) {
+            button.addEventListener('click', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
 
@@ -705,26 +1643,26 @@
                             'Content-Type': 'application/json',
                         }
                     })
-                        .then(response => {
-                            if (!response.ok) {
-                                return response.json().then(err => { throw err; });
-                            }
-                            return response.json();
-                        })
-                        .then(data => {
-                            if (data.success) {
-                                chatItem.style.opacity = '0';
-                                setTimeout(() => chatItem.remove(), 300);
-                            } else {
-                                throw new Error(data.error || 'Failed to delete chat');
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Delete error:', error);
-                            alert(error.message || 'Error deleting chat');
-                            this.innerHTML = originalHTML;
-                            this.disabled = false;
-                        });
+                    .then(response => {
+                        if (!response.ok) {
+                            return response.json().then(err => { throw err; });
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.success) {
+                            chatItem.style.opacity = '0';
+                            setTimeout(() => chatItem.remove(), 300);
+                        } else {
+                            throw new Error(data.error || 'Failed to delete chat');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Delete error:', error);
+                        alert(error.message || 'Error deleting chat');
+                        this.innerHTML = originalHTML;
+                        this.disabled = false;
+                    });
                 }
             });
         });
@@ -767,47 +1705,54 @@
     }
 
     function updateMessageInUI(messageId, role, content, sources = []) {
-    const messageDiv = document.getElementById(messageId);
-    if (!messageDiv) return;
+        const messageDiv = document.getElementById(messageId);
+        if (!messageDiv) return;
 
-    const processedContent = processContentWithReferences(content);
-    let sourcesHTML = '';
+        const processedContent = processContentWithReferences(content);
+        let sourcesHTML = '';
 
-    if (sources && sources.length > 0) {
-        const showToggle = sources.length > 2;
-        sourcesHTML = `
-            <div class="message-sources">
-                <div class="sources-header">
-                    <span class="supported-files-title">Sources:</span>
-                    ${showToggle ? '<button class="btn-toggle-sources" onclick="toggleSources(this)">Show more</button>' : ''}
+        if (sources && sources.length > 0) {
+            const showToggle = sources.length > 2;
+            sourcesHTML = `
+                <div class="message-sources">
+                    <div class="sources-header">
+                        <span class="supported-files-title">Sources:</span>
+                        ${showToggle ? '<button class="btn-toggle-sources" onclick="toggleSources(this)">Show more</button>' : ''}
+                    </div>
+                    <div class="sources-list" style="${showToggle ? 'display: none;' : ''}">
+                        ${sources.map(source => {
+                            // Handle both string and object sources
+                            let sourcePath, displayName;
+                            
+                            if (typeof source === 'string') {
+                                sourcePath = source;
+                                displayName = source.split('/').pop().split('\\').pop();
+                            } else {
+                                sourcePath = source.path || source.filename || '';
+                                displayName = source.filename || sourcePath.split('/').pop().split('\\').pop();
+                            }
+                            
+                            return `
+                                <div class="message-source" data-source="${escapeHtml(sourcePath)}">
+                                    <i class="bi bi-file-text message-source-icon"></i>
+                                    <span>${escapeHtml(displayName)}</span>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
                 </div>
-                <div class="sources-list" style="${showToggle ? 'display: none;' : ''}">
-                    ${sources.map(source => {
-                        // Handle both string and object sources
-                        const sourcePath = typeof source === 'string' ? source : source.path || '';
-                        const displayName = sourcePath.split('/').pop().split('\\').pop();
-                        return `
-                            <div class="message-source" data-source="${escapeHtml(sourcePath)}">
-                                <i class="bi bi-file-text message-source-icon"></i>
-                                <span>${escapeHtml(displayName)}</span>
-                            </div>
-                        `;
-                    }).join('')}
-                </div>
+            `;
+        }
+
+        messageDiv.querySelector('.message-content').innerHTML = `
+            <div class="message-text">
+                ${processedContent}
             </div>
+            ${sourcesHTML}
         `;
+
+        scrollToBottom();
     }
-
-    messageDiv.querySelector('.message-content').innerHTML = `
-        <div class="message-text">
-            ${processedContent}
-        </div>
-        ${sourcesHTML}
-    `;
-
-    scrollToBottom();
-}
-
 
     function processContentWithReferences(content) {
         let documentCounter = 0;
@@ -825,7 +1770,7 @@
 
         processed = processed.replace(
             /\[\^([^\|\]]+)(?:\|\|([^\|\]]+))?(?:\|\|([^\|\]]+))?\]/g,
-            function (match, filename, page, highlight) {
+            function(match, filename, page, highlight) {
                 if (!documentMap.has(filename)) {
                     documentCounter++;
                     documentMap.set(filename, documentCounter);
@@ -924,7 +1869,7 @@
         json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         return json.replace(
             /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
-            function (match) {
+            function(match) {
                 let cls = 'number';
                 if (/^"/.test(match)) {
                     if (/:$/.test(match)) {
@@ -943,630 +1888,4 @@
     }
 </script>
 
-<style>
-    /* Message styling */
-    .message {
-        display: flex;
-        gap: 1rem;
-        padding: 1rem;
-        margin-bottom: 1rem;
-        border-radius: 8px;
-    }
-
-    .message-user {
-        background-color: #f0f7ff;
-        border: 1px solid #d0e3ff;
-    }
-
-    .message-avatar {
-        flex-shrink: 0;
-        width: 36px;
-        height: 36px;
-        border-radius: 50%;
-        background-color: #e9ecef;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #495057;
-    }
-
-    .message-content {
-        flex-grow: 1;
-        min-width: 0;
-    }
-
-    .message-text {
-        line-height: 1.6;
-        word-wrap: break-word;
-    }
-
-    /* Empty state placeholder */
-    .empty-state {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        height: calc(100% - 100px);
-        text-align: center;
-        padding: 2rem;
-        color: #6c757d;
-    }
-
-    .empty-state.hidden {
-        display: none;
-    }
-
-    .empty-state i.bi {
-        font-size: 3rem;
-        margin-bottom: 1rem;
-        color: #adb5bd;
-    }
-
-    .empty-state h4 {
-        margin-bottom: 0.5rem;
-        color: #495057;
-    }
-
-    .uploaded-files-preview {
-        max-width: 400px;
-        width: 100%;
-        margin: 1rem auto;
-        background: #f8f9fa;
-        border-radius: 8px;
-        padding: 1rem;
-    }
-
-    .file-preview-item {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 0.5rem;
-        text-align: left;
-        border-bottom: 1px solid #e9ecef;
-    }
-
-    .file-preview-item:last-child {
-        border-bottom: none;
-    }
-
-    .file-preview-more {
-        padding: 0.5rem;
-        font-size: 0.9rem;
-        color: #6c757d;
-    }
-
-    .prompt-text {
-        margin-top: 1rem;
-        font-style: italic;
-        color: #6c757d;
-    }
-
-    /* Status message styling */
-    .status-message {
-        margin-bottom: 0.5rem;
-        font-size: 0.95rem;
-        min-height: 1.5em;
-        position: relative;
-        padding-left: 1.5rem;
-    }
-
-    .status-message::before {
-        content: "";
-        position: absolute;
-        left: 0;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 0.8rem;
-        height: 0.8rem;
-        border-radius: 50%;
-        background-color: var(--primary-color);
-        animation: pulse 1.5s infinite ease-in-out;
-    }
-
-    .status-message.error::before {
-        background-color: #dc3545;
-        animation: pulse-error 0.75s infinite ease-in-out;
-    }
-
-    @keyframes pulse {
-        0% {
-            transform: translateY(-50%) scale(1);
-            opacity: 1;
-        }
-
-        50% {
-            transform: translateY(-50%) scale(1.2);
-            opacity: 0.7;
-        }
-
-        100% {
-            transform: translateY(-50%) scale(1);
-            opacity: 1;
-        }
-    }
-
-    @keyframes pulse-error {
-        0% {
-            transform: translateY(-50%) scale(1);
-            opacity: 1;
-        }
-
-        50% {
-            transform: translateY(-50%) scale(1.3);
-            opacity: 0.5;
-        }
-
-        100% {
-            transform: translateY(-50%) scale(1);
-            opacity: 1;
-        }
-    }
-
-    /* Reference styling */
-    .reference-link {
-        cursor: pointer;
-        color: var(--primary-color);
-        text-decoration: underline;
-    }
-
-    .reference-link:hover {
-        color: #0d9488;
-    }
-
-    /* Sources section styling */
-    .message-sources {
-        margin-top: 1rem;
-        font-size: 0.875rem;
-    }
-
-    .sources-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 0.5rem;
-    }
-
-    .supported-files-title {
-        font-weight: 500;
-    }
-
-    .btn-toggle-sources {
-        background: none;
-        border: none;
-        color: var(--primary-color);
-        cursor: pointer;
-        font-size: 0.8rem;
-        padding: 0.25rem 0.5rem;
-        border-radius: 4px;
-    }
-
-    .btn-toggle-sources:hover {
-        background-color: rgba(16, 163, 127, 0.1);
-    }
-
-    .sources-list {
-        max-height: 200px;
-        overflow-y: auto;
-        transition: max-height 0.3s ease;
-    }
-
-    .message-source {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        margin-bottom: 4px;
-        cursor: pointer;
-        padding: 4px;
-        border-radius: 4px;
-    }
-
-    .message-source:hover {
-        background-color: rgba(0, 0, 0, 0.05);
-    }
-
-    .message-source-icon {
-        color: #9ca3af;
-    }
-
-    /* Preview Modal Styles */
-    .preview-modal {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        background: white;
-        border-top: 1px solid #e5e7eb;
-        box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
-        z-index: 1000;
-        display: none;
-        height: 300px;
-        flex-direction: column;
-        transition: height 0.2s ease;
-    }
-
-    .preview-modal-open {
-        --preview-modal-height: 300px;
-    }
-
-    .preview-modal-header {
-        padding: 12px 16px;
-        background: #f9fafb;
-        border-bottom: 1px solid #e5e7eb;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .preview-modal-header h6 {
-        margin: 0;
-        font-size: 1rem;
-        font-weight: 500;
-        color: #333;
-    }
-
-    .preview-actions {
-        display: flex;
-        gap: 8px;
-    }
-
-    .btn-preview-action {
-        background: none;
-        border: none;
-        color: #6b7280;
-        cursor: pointer;
-        padding: 4px;
-        border-radius: 4px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .btn-preview-action:hover {
-        background-color: rgba(0, 0, 0, 0.05);
-    }
-
-    .preview-resize-handle {
-        height: 8px;
-        cursor: ns-resize;
-        background-color: #f9fafb;
-        border-top: 1px solid #e5e7eb;
-        border-bottom: 1px solid #e5e7eb;
-    }
-
-    .preview-resize-handle:hover {
-        background-color: #e5e7eb;
-    }
-
-    .preview-content {
-        flex-grow: 1;
-        overflow-y: auto;
-        padding: 0;
-        background: white;
-    }
-
-    .preview-content .preview-document {
-        padding: 16px;
-    }
-
-    .preview-document pre {
-        white-space: pre-wrap;
-        font-family: 'Courier New', monospace;
-        font-size: 0.9rem;
-        line-height: 1.5;
-        margin: 0;
-        color: #333;
-        background-color: #f8fafc;
-        padding: 1rem;
-        border-radius: 0.5rem;
-        overflow-x: auto;
-    }
-
-    .preview-document mark {
-        background-color: #fef08a;
-        padding: 0 0.2em;
-        border-radius: 0.25em;
-    }
-
-    .preview-meta {
-        padding: 8px 16px;
-        font-size: 0.8rem;
-        color: #6b7280;
-        background: #f9fafb;
-        border-top: 1px solid #e5e7eb;
-        display: flex;
-        gap: 12px;
-        flex-wrap: wrap;
-    }
-
-    .preview-meta-item {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-    }
-
-    .preview-meta-item a {
-        color: #3b82f6;
-        text-decoration: none;
-    }
-
-    .preview-meta-item a:hover {
-        text-decoration: underline;
-    }
-
-    .preview-placeholder {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        height: 100%;
-        color: #9ca3af;
-    }
-
-    .preview-placeholder i {
-        font-size: 2rem;
-        margin-bottom: 8px;
-    }
-
-    .preview-placeholder p {
-        margin: 0;
-        font-size: 0.9rem;
-    }
-
-    .preview-loading {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        height: 100%;
-        gap: 8px;
-        color: #6b7280;
-    }
-
-    .loading-spinner {
-        width: 24px;
-        height: 24px;
-        border: 3px solid rgba(0, 0, 0, 0.1);
-        border-radius: 50%;
-        border-top-color: var(--primary-color);
-        animation: spin 1s linear infinite;
-    }
-
-    .preview-error {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        height: 100%;
-        gap: 8px;
-        color: #dc3545;
-    }
-
-    .preview-error i {
-        font-size: 2rem;
-    }
-
-    /* Adjust chat container when preview is open */
-    .chat-container {
-        padding-bottom: 0;
-        transition: padding-bottom 0.2s ease;
-        max-width: 1000px;
-        width: 100%;
-        margin: 0 auto;
-    }
-
-    /* Chat input */
-    .chat-input-container {
-        position: sticky;
-        bottom: 0;
-        background: white;
-        padding: 1rem;
-        border-top: 1px solid #e5e7eb;
-    }
-
-    .input-group {
-        display: flex;
-        align-items: flex-end;
-        gap: 0.5rem;
-    }
-
-    .chat-input {
-        flex-grow: 1;
-        border: 1px solid #e5e7eb;
-        border-radius: 8px;
-        padding: 0.75rem;
-        resize: none;
-        max-height: 150px;
-        min-height: 44px;
-        font-family: inherit;
-    }
-
-    .chat-input:focus {
-        outline: none;
-        border-color: var(--primary-color);
-        box-shadow: 0 0 0 2px rgba(16, 163, 127, 0.2);
-    }
-
-    .btn-send {
-        height: 44px;
-        width: 44px;
-        border: none;
-        border-radius: 8px;
-        background-color: var(--primary-color);
-        color: white;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .btn-send:hover {
-        background-color: #0d9488;
-    }
-
-    .btn-send:disabled {
-        background-color: #9ca3af;
-        cursor: not-allowed;
-    }
-
-    .btn-stop-active {
-        background-color: #f44336 !important;
-    }
-
-    .btn-stop-active:hover {
-        background-color: #d32f2f !important;
-    }
-
-    .spin {
-        animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-        from {
-            transform: rotate(0deg);
-        }
-
-        to {
-            transform: rotate(360deg);
-        }
-    }
-
-    /* PDF Preview Styles */
-    .pdf-preview-container {
-        width: 100%;
-        height: 100%;
-        overflow: hidden;
-    }
-
-    .pdf-preview-frame {
-        width: 100%;
-        height: 100%;
-        border: none;
-    }
-
-    /* Image Preview Styles */
-    .image-preview-container {
-        width: 100%;
-        height: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        overflow: auto;
-    }
-
-    .image-preview {
-        max-width: 100%;
-        max-height: 100%;
-        object-fit: contain;
-    }
-
-    /* Syntax highlighting for JSON */
-    .preview-document.json .key {
-        color: #d946ef;
-    }
-
-    .preview-document.json .string {
-        color: #65a30d;
-    }
-
-    .preview-document.json .number {
-        color: #2563eb;
-    }
-
-    .preview-document.json .boolean {
-        color: #9333ea;
-    }
-
-    .preview-document.json .null {
-        color: #64748b;
-    }
-
-    .last-clicked-source {
-        background-color: rgba(16, 163, 127, 0.1);
-        border-left: 3px solid var(--primary-color);
-    }
-
-    .loading-file-name {
-        font-size: 0.8rem;
-        margin-top: 0.5rem;
-        color: #6b7280;
-        font-style: italic;
-    }
-
-    .office-preview-container {
-        display: flex;
-        flex-direction: column;
-        height: 100%;
-    }
-
-    .office-preview-frame {
-        flex-grow: 1;
-        border: none;
-    }
-
-    .office-preview-footer {
-        padding: 0.5rem;
-        background: #f8f9fa;
-        border-top: 1px solid #e5e7eb;
-        text-align: center;
-    }
-
-    .btn-retry {
-        background-color: var(--primary-color);
-        color: white;
-        border: none;
-        padding: 0.5rem 1rem;
-        border-radius: 4px;
-        margin-top: 1rem;
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .btn-retry:hover {
-        background-color: #0d9488;
-    }
-
-    .btn-retry i {
-        animation: spin 1s linear infinite;
-    }
-
-    .loading-file-path {
-        font-size: 0.7rem;
-        margin-top: 0.3rem;
-        color: #9ca3af;
-        word-break: break-all;
-        font-family: monospace;
-    }
-
-    /* Add this to your CSS section */
-    .file-progress-container {
-        margin-bottom: 10px;
-        padding: 8px;
-        background: #f8f9fa;
-        border-radius: 4px;
-    }
-
-    .file-progress-label {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 4px;
-        font-size: 0.85rem;
-        color: #495057;
-    }
-
-    .file-progress-bar {
-        width: 100%;
-        height: 8px;
-        border-radius: 4px;
-        background-color: #e9ecef;
-        overflow: hidden;
-    }
-
-    .file-progress-bar-fill {
-        height: 100%;
-        background-color: var(--primary-color);
-        transition: width 0.3s ease;
-    }
-</style>
 {% endblock %}

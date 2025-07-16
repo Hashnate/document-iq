@@ -49,9 +49,6 @@
     <div class="upload-column">
         <div class="upload-card">
             <div class="upload-header">
-                <!-- <div class="upload-icon">
-                    <i class="bi bi-cloud-arrow-up"></i>
-                </div> -->
                 <h2 class="upload-title">Upload Your Documents</h2>
                 <p class="upload-subtitle">Get started in seconds with your first document upload</p>
             </div>
@@ -66,6 +63,19 @@
                     <button class="browse-btn">Browse Files</button>
                 </div>
             </div>
+
+            <div class="progress-container">
+                <div class="progress-info">
+                    <span class="progress-text">Ready to upload</span>
+                    <span class="progress-percent">0%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress"></div>
+                </div>
+            </div>
+
+            <div class="file-list"></div>
+            <p class="error-message"></p>
 
             <div class="supported-files">
                 <div class="supported-files-title">Supported File Types:</div>
@@ -89,18 +99,6 @@
                 </div>
             </div>
 
-            <div class="progress-container">
-                <div class="progress-info">
-                    <span class="progress-text">Ready to upload</span>
-                    <span class="progress-percent">0%</span>
-                </div>
-                <div class="progress-bar">
-                    <div class="progress"></div>
-                </div>
-            </div>
-
-            <div class="file-list"></div>
-            <p class="error-message"></p>
         </div>
     </div>
 </div>
@@ -155,6 +153,31 @@
         }
         100% {
             transform: scale(1);
+        }
+    }
+    /* Processing animations */
+    
+    @keyframes processingPulse {
+        0% {
+            background-color: rgba(76, 201, 240, 0.15);
+            transform: scale(1.02);
+        }
+        50% {
+            background-color: rgba(76, 201, 240, 0.25);
+            transform: scale(1.03);
+        }
+        100% {
+            background-color: rgba(76, 201, 240, 0.15);
+            transform: scale(1.02);
+        }
+    }
+    
+    @keyframes shimmer {
+        0% {
+            transform: translateX(-100%);
+        }
+        100% {
+            transform: translateX(100%);
         }
     }
     /* Main layout with gradient background */
@@ -259,70 +282,6 @@
         margin: 0;
         font-size: 0.95rem;
     }
-    /* Testimonial section */
-    
-    .testimonial {
-        margin-top: 40px;
-        padding: 25px;
-        border-radius: 12px;
-        background: linear-gradient(135deg, rgba(67, 97, 238, 0.1) 0%, rgba(114, 9, 183, 0.1) 100%);
-        position: relative;
-        overflow: hidden;
-    }
-    
-    .testimonial::before {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 4px;
-        height: 100%;
-        background: linear-gradient(to bottom, var(--primary-color), var(--accent-color));
-    }
-    
-    .quote-icon {
-        font-size: 3rem;
-        color: rgba(67, 97, 238, 0.1);
-        position: absolute;
-        top: 10px;
-        right: 20px;
-        line-height: 1;
-    }
-    
-    .quote {
-        font-style: italic;
-        position: relative;
-        z-index: 1;
-        margin-bottom: 20px;
-    }
-    
-    .author {
-        display: flex;
-        align-items: center;
-        gap: 15px;
-    }
-    
-    .author-avatar {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: bold;
-        flex-shrink: 0;
-    }
-    
-    .author-name {
-        font-weight: 600;
-    }
-    
-    .author-title {
-        font-size: 0.8rem;
-        color: var(--light-text);
-    }
     /* Upload column styling */
     
     .upload-column {
@@ -348,19 +307,6 @@
     .upload-header {
         text-align: center;
         margin-bottom: 25px;
-    }
-    
-    .upload-icon {
-        width: 60px;
-        height: 60px;
-        margin: 0 auto 15px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.8rem;
-        color: white;
-        background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
     }
     
     .upload-title {
@@ -460,6 +406,177 @@
         transform: translateY(-2px);
         box-shadow: 0 6px 20px rgba(67, 97, 238, 0.4);
     }
+    /* Progress bar */
+    
+    .progress-container {
+        margin-top: 25px;
+        display: none;
+    }
+    
+    .progress-info {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+    }
+    
+    .progress-text {
+        font-size: 0.9rem;
+        color: var(--text-color);
+        font-weight: 500;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .progress-percent {
+        font-size: 0.9rem;
+        color: var(--primary-color);
+        font-weight: 600;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+    
+    .progress-bar {
+        height: 8px;
+        background-color: rgba(67, 97, 238, 0.1);
+        border-radius: 4px;
+        overflow: hidden;
+        position: relative;
+        box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    
+    .progress {
+        height: 100%;
+        background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+        width: 0%;
+        transition: width 0.3s ease;
+    }
+    
+    .progress-bar::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+        animation: shimmer 2s infinite;
+        opacity: 0;
+    }
+    
+    .progress-bar.processing::after {
+        opacity: 1;
+    }
+    
+    .progress-bar.completed::after {
+        opacity: 0;
+    }
+    /* File list with enhanced styling */
+    
+    .file-list {
+        margin-top: 20px;
+        max-height: 300px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(67, 97, 238, 0.3) transparent;
+    }
+    
+    .file-list::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    .file-list::-webkit-scrollbar-track {
+        background: rgba(67, 97, 238, 0.1);
+        border-radius: 3px;
+    }
+    
+    .file-list::-webkit-scrollbar-thumb {
+        background: rgba(67, 97, 238, 0.3);
+        border-radius: 3px;
+    }
+    
+    .file-list::-webkit-scrollbar-thumb:hover {
+        background: rgba(67, 97, 238, 0.5);
+    }
+    
+    .file-item {
+        display: flex;
+        align-items: center;
+        padding: 12px 15px;
+        border-radius: 8px;
+        background-color: rgba(67, 97, 238, 0.05);
+        transition: all 0.3s ease;
+        border-left: 3px solid transparent;
+        position: relative;
+    }
+    
+    .file-item:hover {
+        background-color: rgba(67, 97, 238, 0.1);
+    }
+    
+    .file-icon {
+        margin-right: 12px;
+        color: var(--primary-color);
+        font-size: 1.2rem;
+    }
+    
+    .file-info {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        margin-left: 0;
+        margin-right: 12px;
+    }
+    
+    .file-name {
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: var(--text-color);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 250px;
+    }
+    
+    .file-size {
+        font-size: 0.8rem;
+        color: var(--light-text);
+        margin-top: 2px;
+    }
+    
+    .file-status {
+        font-size: 1.2rem;
+        flex-shrink: 0;
+        transition: all 0.3s ease;
+    }
+    /* File processing states */
+    
+    .file-item.waiting {
+        background-color: rgba(141, 153, 174, 0.1);
+        border-left-color: var(--light-text);
+        opacity: 0.7;
+    }
+    
+    .file-item.processing {
+        background-color: rgba(76, 201, 240, 0.15);
+        border-left-color: #4cc9f0;
+        animation: processingPulse 2s infinite;
+        opacity: 1;
+        transform: scale(1.02);
+    }
+    
+    .file-item.completed {
+        background-color: rgba(56, 176, 0, 0.1);
+        border-left-color: #38b000;
+        opacity: 0.8;
+    }
+    
+    .file-item.error {
+        background-color: rgba(249, 65, 68, 0.1);
+        border-left-color: #f94144;
+    }
     /* Supported files */
     
     .supported-files {
@@ -514,85 +631,6 @@
     
     .tip i {
         color: var(--primary-color);
-    }
-    /* Progress bar */
-    
-    .progress-container {
-        margin-top: 25px;
-        display: none;
-    }
-    
-    .progress-info {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 8px;
-    }
-    
-    .progress-text {
-        font-size: 0.9rem;
-        color: var(--light-text);
-    }
-    
-    .progress-percent {
-        font-size: 0.9rem;
-        color: var(--primary-color);
-        font-weight: 600;
-    }
-    
-    .progress-bar {
-        height: 8px;
-        background-color: rgba(67, 97, 238, 0.1);
-        border-radius: 4px;
-        overflow: hidden;
-    }
-    
-    .progress {
-        height: 100%;
-        background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
-        width: 0%;
-        transition: width 0.3s ease;
-    }
-    /* File list */
-    
-    .file-list {
-        margin-top: 20px;
-        max-height: 200px;
-        overflow-y: auto;
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-    }
-    
-    .file-item {
-        display: flex;
-        align-items: center;
-        padding: 12px 15px;
-        border-radius: 8px;
-        background-color: rgba(67, 97, 238, 0.05);
-        transition: all 0.2s ease;
-    }
-    
-    .file-item:hover {
-        background-color: rgba(67, 97, 238, 0.1);
-    }
-    
-    .file-icon {
-        margin-right: 12px;
-        color: var(--primary-color);
-    }
-    
-    .file-name {
-        flex: 1;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        margin-right: 10px;
-        font-size: 0.9rem;
-    }
-    
-    .file-size {
-        color: var(--light-text);
-        font-size: 0.8rem;
     }
     
     .error-message {
@@ -745,6 +783,20 @@
         .btn {
             width: 100%;
         }
+        .file-info {
+            margin-left: 8px;
+            margin-right: 8px;
+        }
+        .file-name {
+            max-width: 180px;
+            font-size: 0.85rem;
+        }
+        .file-size {
+            font-size: 0.75rem;
+        }
+        .file-status {
+            font-size: 1rem;
+        }
     }
 </style>
 
@@ -890,20 +942,27 @@
             uploadFiles(validFiles);
         }
 
-        // Upload files to server
+        // Enhanced upload function with processing progress
         function uploadFiles(files) {
             // Clear previous results
             fileList.innerHTML = '';
             errorMessage.style.display = 'none';
 
-            // Show files
-            files.forEach(file => {
+            // Store files for later reference
+            window.uploadedFiles = files;
+
+            // Show files with initial status
+            files.forEach((file, index) => {
                 const fileItem = document.createElement('div');
                 fileItem.className = 'file-item';
+                fileItem.setAttribute('data-file-index', index);
                 fileItem.innerHTML = `
                     <span class="file-icon">📄</span>
-                    <span class="file-name">${file.filepath || file.name}</span>
-                    <span class="file-size">${formatFileSize(file.size)}</span>
+                    <div class="file-info">
+                        <span class="file-name">${file.filepath || file.name}</span>
+                        <span class="file-size">${formatFileSize(file.size)}</span>
+                    </div>
+                    <span class="file-status">⏳</span>
                 `;
                 fileList.appendChild(fileItem);
             });
@@ -932,13 +991,17 @@
                     progressBar.style.width = percent + '%';
                     progressPercent.textContent = percent + '%';
                     progressText.textContent = `Uploading... (${formatFileSize(e.loaded)} of ${formatFileSize(e.total)})`;
+                    updateProgressBarStyle('upload');
                 }
             };
 
             xhr.onload = function() {
                 if (xhr.status === 200) {
                     const response = JSON.parse(xhr.responseText);
-                    if (response.redirect) {
+
+                    if (response.job_id) {
+                        startProcessingProgress(response.job_id, response.total_files);
+                    } else if (response.redirect) {
                         window.location.href = response.redirect;
                     }
                 } else {
@@ -956,6 +1019,176 @@
             };
 
             xhr.send(formData);
+        }
+
+        // Start processing progress tracking
+        function startProcessingProgress(jobId, totalFiles) {
+            // Update UI to show processing phase
+            progressBar.style.width = '0%';
+            progressPercent.textContent = '0%';
+            progressText.textContent = 'Starting document processing...';
+            updateProgressBarStyle('processing');
+
+            // Reset all files to waiting status
+            const fileItems = document.querySelectorAll('.file-item');
+            fileItems.forEach(item => {
+                item.classList.remove('processing', 'completed', 'error');
+                item.classList.add('waiting');
+                const statusSpan = item.querySelector('.file-status');
+                if (statusSpan) {
+                    statusSpan.textContent = '⏳';
+                }
+            });
+
+            // Start polling for processing status
+            pollProcessingStatus(jobId, totalFiles);
+        }
+
+        // Poll processing status
+        function pollProcessingStatus(jobId, totalFiles) {
+            const pollInterval = 1000; // Poll every second
+
+            const poll = async() => {
+                try {
+                    const response = await fetch(`/upload_status/${jobId}`, {
+                        method: 'GET',
+                        credentials: 'include'
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Failed to get processing status');
+                    }
+
+                    const status = await response.json();
+                    updateProcessingProgress(status);
+
+                    if (status.status === 'completed') {
+                        // Show completion message
+                        progressText.textContent = `Processing complete! Redirecting to chat...`;
+                        updateProgressBarStyle('completed');
+
+                        // Mark all files as completed
+                        const fileItems = document.querySelectorAll('.file-item');
+                        fileItems.forEach(item => {
+                            item.classList.remove('processing', 'waiting');
+                            item.classList.add('completed');
+                            const statusSpan = item.querySelector('.file-status');
+                            if (statusSpan) {
+                                statusSpan.textContent = '✅';
+                            }
+                        });
+
+                        // Redirect after a short delay
+                        setTimeout(() => {
+                            window.location.href = '/new_chat';
+                        }, 2000);
+                    } else if (status.status === 'error') {
+                        updateProgressBarStyle('error');
+                        showError(status.error_message || 'Processing failed');
+                    } else {
+                        // Continue polling
+                        setTimeout(poll, pollInterval);
+                    }
+
+                } catch (error) {
+                    console.error('Error polling status:', error);
+                    showError('Error checking processing status');
+                }
+            };
+
+            // Start polling
+            poll();
+        }
+
+        // Update processing progress UI
+        function updateProcessingProgress(status) {
+            const {
+                processed_files,
+                total_files,
+                current_file,
+                progress_percent
+            } = status;
+
+            // Update progress bar
+            progressBar.style.width = progress_percent + '%';
+            progressPercent.textContent = progress_percent + '%';
+
+            // Update progress text
+            const progressCount = `${processed_files}/${total_files}`;
+            let statusText = `Processing documents... (${progressCount})`;
+
+            if (current_file && current_file !== 'Processing complete') {
+                // Show current file being processed
+                statusText = `Processing: ${current_file} (${progressCount})`;
+                updateCurrentFileStatus(current_file, processed_files);
+            }
+
+            if (status.status === 'completed') {
+                statusText = `Processing complete! (${total_files}/${total_files})`;
+            }
+
+            progressText.textContent = statusText;
+        }
+
+        // Update individual file status
+        function updateCurrentFileStatus(currentFileName, processedCount) {
+            const fileItems = document.querySelectorAll('.file-item');
+
+            fileItems.forEach((item, index) => {
+                const fileNameSpan = item.querySelector('.file-name');
+                const statusSpan = item.querySelector('.file-status');
+
+                if (!fileNameSpan || !statusSpan) return;
+
+                const fileName = fileNameSpan.textContent;
+                const fileNameOnly = fileName.split('/').pop(); // Get just the filename
+                const currentFileNameOnly = currentFileName.split('/').pop();
+
+                // Remove all status classes
+                item.classList.remove('waiting', 'processing', 'completed', 'error');
+
+                if (index < processedCount - 1) {
+                    // Already processed
+                    item.classList.add('completed');
+                    statusSpan.textContent = '✅';
+                } else if (fileNameOnly === currentFileNameOnly || fileName === currentFileName) {
+                    // Currently processing
+                    item.classList.add('processing');
+                    statusSpan.textContent = '⚙️';
+                } else if (index >= processedCount) {
+                    // Waiting to be processed
+                    item.classList.add('waiting');
+                    statusSpan.textContent = '⏳';
+                }
+            });
+        }
+
+        // Enhanced progress bar styling
+        function updateProgressBarStyle(phase) {
+            const progressBar = document.querySelector('.progress');
+            const progressBarContainer = document.querySelector('.progress-bar');
+
+            switch (phase) {
+                case 'upload':
+                    progressBar.style.background = 'linear-gradient(90deg, var(--primary-color), var(--accent-color))';
+                    progressBarContainer.classList.remove('processing', 'completed', 'error');
+                    break;
+                case 'processing':
+                    progressBar.style.background = 'linear-gradient(90deg, #4cc9f0, #7209b7)';
+                    progressBarContainer.classList.add('processing');
+                    progressBarContainer.classList.remove('completed', 'error');
+                    break;
+                case 'completed':
+                    progressBar.style.background = 'linear-gradient(90deg, #4cc9f0, #38b000)';
+                    progressBarContainer.classList.add('completed');
+                    progressBarContainer.classList.remove('processing', 'error');
+                    break;
+                case 'error':
+                    progressBar.style.background = 'linear-gradient(90deg, #f94144, #ff006e)';
+                    progressBarContainer.classList.add('error');
+                    progressBarContainer.classList.remove('processing', 'completed');
+                    break;
+            }
         }
 
         function showSubscriptionModal(status) {
@@ -1044,10 +1277,39 @@
             return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
         }
 
+        // Enhanced error handling
         function showError(message) {
             errorMessage.textContent = message;
             errorMessage.style.display = 'block';
-            setTimeout(() => errorMessage.style.display = 'none', 5000);
+
+            // Hide progress bar on error
+            progressContainer.style.display = 'none';
+
+            // Mark all files as error
+            const fileItems = document.querySelectorAll('.file-item');
+            fileItems.forEach(item => {
+                item.classList.remove('waiting', 'processing', 'completed');
+                item.classList.add('error');
+                const statusSpan = item.querySelector('.file-status');
+                if (statusSpan) {
+                    statusSpan.textContent = '❌';
+                }
+            });
+
+            // Reset progress bar
+            updateProgressBarStyle('error');
+
+            setTimeout(() => {
+                errorMessage.style.display = 'none';
+                // Reset file states
+                fileItems.forEach(item => {
+                    item.classList.remove('error');
+                    const statusSpan = item.querySelector('.file-status');
+                    if (statusSpan) {
+                        statusSpan.textContent = '📄';
+                    }
+                });
+            }, 8000);
         }
 
         // Event listeners
