@@ -1,46 +1,600 @@
 {% extends "base.html" %}
 
+{% block title %}Billing - DocumentIQ{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* Main Billing Container */
+    .billing-container {
+        background: linear-gradient(135deg, 
+            rgba(67, 97, 238, 0.03) 0%, 
+            rgba(58, 12, 163, 0.03) 50%, 
+            rgba(255, 215, 0, 0.01) 100%);
+        min-height: calc(100vh - 120px);
+        padding: 2rem 0;
+    }
+    
+    .billing-content {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 2rem;
+    }
+    
+    /* Modern Card Design */
+    .modern-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(67, 97, 238, 0.1);
+        border: 1px solid rgba(67, 97, 238, 0.1);
+        transition: all 0.3s ease;
+        margin-bottom: 2rem;
+        overflow: hidden;
+    }
+    
+    .modern-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 40px rgba(67, 97, 238, 0.15);
+    }
+    
+    .card-header {
+        background: linear-gradient(135deg, #4361ee, #3a0ca3);
+        color: white;
+        padding: 1.5rem 2rem;
+        margin: 0;
+        border-bottom: none;
+    }
+    
+    .card-header h4 {
+        margin: 0;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .card-header h4::before {
+        content: '';
+        width: 4px;
+        height: 24px;
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 2px;
+    }
+    
+    .card-body {
+        padding: 2rem;
+    }
+    
+    /* Subscription Status */
+    .subscription-status {
+        padding: 1.5rem;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+        border: 2px solid;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .subscription-status::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(90deg, transparent, currentColor, transparent);
+        animation: shimmer 2s infinite;
+    }
+    
+    @keyframes shimmer {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+    }
+    
+    .status-trial {
+        background: linear-gradient(135deg, #d1ecf1, #bee5eb);
+        border-color: #17a2b8;
+        color: #0c5460;
+    }
+    
+    .status-active {
+        background: linear-gradient(135deg, #d4edda, #c3e6cb);
+        border-color: #28a745;
+        color: #155724;
+    }
+    
+    .status-inactive {
+        background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+        border-color: #ffc107;
+        color: #856404;
+    }
+    
+    /* Modern Badges */
+    .modern-badge {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        border: 2px solid;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+    }
+    
+    .badge-trial {
+        background: linear-gradient(135deg, #17a2b8, #138496);
+        color: white;
+        border-color: #17a2b8;
+    }
+    
+    .badge-active {
+        background: linear-gradient(135deg, #28a745, #218838);
+        color: white;
+        border-color: #28a745;
+    }
+    
+    .badge-inactive {
+        background: linear-gradient(135deg, #ffc107, #e0a800);
+        color: white;
+        border-color: #ffc107;
+    }
+    
+    /* Modern Buttons */
+    .modern-btn {
+        padding: 0.75rem 1.5rem;
+        border-radius: 25px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        text-decoration: none;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .modern-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.5s ease;
+    }
+    
+    .modern-btn:hover::before {
+        left: 100%;
+    }
+    
+    .btn-primary-modern {
+        background: linear-gradient(135deg, #4361ee, #3a0ca3);
+        color: white;
+        box-shadow: 0 4px 15px rgba(67, 97, 238, 0.3);
+    }
+    
+    .btn-primary-modern:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(67, 97, 238, 0.4);
+        color: white;
+    }
+    
+    .btn-secondary-modern {
+        background: rgba(67, 97, 238, 0.1);
+        color: #4361ee;
+        border: 2px solid #4361ee;
+    }
+    
+    .btn-secondary-modern:hover {
+        background: #4361ee;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(67, 97, 238, 0.3);
+    }
+    
+    .btn-danger-modern {
+        background: linear-gradient(135deg, #dc3545, #c82333);
+        color: white;
+        box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+    }
+    
+    .btn-danger-modern:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(220, 53, 69, 0.4);
+        color: white;
+    }
+    
+    /* Usage Statistics */
+    .usage-stats {
+        margin-top: 2rem;
+    }
+    
+    .stat-card {
+        background: rgba(67, 97, 238, 0.05);
+        border: 1px solid rgba(67, 97, 238, 0.1);
+        border-radius: 15px;
+        padding: 1.5rem;
+        height: 100%;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background: linear-gradient(90deg, #4361ee, #3a0ca3);
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(67, 97, 238, 0.15);
+    }
+    
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(135deg, #4361ee, #3a0ca3);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .progress-modern {
+        height: 8px;
+        background: rgba(67, 97, 238, 0.1);
+        border-radius: 4px;
+        overflow: hidden;
+    }
+    
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #4361ee, #3a0ca3);
+        border-radius: 4px;
+        transition: width 0.8s ease;
+        position: relative;
+    }
+    
+    .progress-fill::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+        animation: progressShimmer 2s infinite;
+    }
+    
+    @keyframes progressShimmer {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+    }
+    
+    /* Payment History Table */
+    .modern-table {
+        background: rgba(255, 255, 255, 0.8);
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 5px 15px rgba(67, 97, 238, 0.1);
+    }
+    
+    .modern-table table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .modern-table th {
+        background: linear-gradient(135deg, #4361ee, #3a0ca3);
+        color: white;
+        padding: 1rem;
+        font-weight: 600;
+        text-align: left;
+        border: none;
+    }
+    
+    .modern-table td {
+        padding: 1rem;
+        border-bottom: 1px solid rgba(67, 97, 238, 0.1);
+        vertical-align: middle;
+    }
+    
+    .modern-table tbody tr:hover {
+        background: rgba(67, 97, 238, 0.05);
+    }
+    
+    .modern-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+    
+    /* Status Badges in Table */
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        display: inline-block;
+    }
+    
+    .status-success {
+        background: linear-gradient(135deg, #28a745, #218838);
+        color: white;
+    }
+    
+    .status-failed {
+        background: linear-gradient(135deg, #dc3545, #c82333);
+        color: white;
+    }
+    
+    /* Dropdown Menu */
+    .dropdown-modern {
+        position: relative;
+        display: inline-block;
+    }
+    
+    .dropdown-menu-modern {
+        position: absolute;
+        top: 100%;
+        right: 0;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(67, 97, 238, 0.15);
+        border: 1px solid rgba(67, 97, 238, 0.1);
+        min-width: 200px;
+        z-index: 1000;
+        opacity: 0;
+        transform: translateY(-10px);
+        transition: all 0.3s ease;
+        pointer-events: none;
+    }
+    
+    .dropdown-modern.active .dropdown-menu-modern {
+        opacity: 1;
+        transform: translateY(0);
+        pointer-events: all;
+    }
+    
+    .dropdown-item-modern {
+        padding: 0.75rem 1rem;
+        color: #333;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+        border-radius: 0;
+    }
+    
+    .dropdown-item-modern:hover {
+        background: rgba(67, 97, 238, 0.1);
+        color: #4361ee;
+    }
+    
+    .dropdown-item-modern:first-child {
+        border-radius: 15px 15px 0 0;
+    }
+    
+    .dropdown-item-modern:last-child {
+        border-radius: 0 0 15px 15px;
+    }
+    
+    /* Payment Method Card */
+    .payment-card {
+        background: rgba(67, 97, 238, 0.05);
+        border: 1px solid rgba(67, 97, 238, 0.1);
+        border-radius: 15px;
+        padding: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .payment-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(67, 97, 238, 0.15);
+    }
+    
+    .payment-icon {
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(135deg, #4361ee, #3a0ca3);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.2rem;
+    }
+    
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: #666;
+    }
+    
+    .empty-state i {
+        font-size: 4rem;
+        color: #4361ee;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+    
+    /* Responsive Grid */
+    .grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+    }
+    
+    .grid-3 {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 2rem;
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .billing-content {
+            padding: 0 1rem;
+        }
+        
+        .grid-2,
+        .grid-3 {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+        
+        .card-body {
+            padding: 1rem;
+        }
+        
+        .modern-btn {
+            width: 100%;
+            justify-content: center;
+        }
+        
+        .subscription-status {
+            padding: 1rem;
+        }
+    }
+    
+    /* Modal Styles */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 2000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(5px);
+    }
+    
+    .modal-content {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        margin: 5% auto;
+        padding: 0;
+        border-radius: 20px;
+        max-width: 500px;
+        box-shadow: 0 20px 40px rgba(67, 97, 238, 0.2);
+        border: 1px solid rgba(67, 97, 238, 0.1);
+        animation: modalSlideIn 0.3s ease;
+    }
+    
+    @keyframes modalSlideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-50px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .modal-header {
+        background: linear-gradient(135deg, #4361ee, #3a0ca3);
+        color: white;
+        padding: 1.5rem;
+        border-radius: 20px 20px 0 0;
+    }
+    
+    .modal-body {
+        padding: 2rem;
+    }
+    
+    .modal-footer {
+        padding: 1rem 2rem 2rem;
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+    }
+    
+    .close {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background: none;
+        border: none;
+        color: white;
+        font-size: 1.5rem;
+        cursor: pointer;
+        padding: 0.5rem;
+        border-radius: 50%;
+        transition: all 0.3s ease;
+    }
+    
+    .close:hover {
+        background: rgba(255, 255, 255, 0.1);
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="billing-container">
-    <div class="container">
-        <div class="row">
-            <!-- Main Content Column -->
-            <div class="col-lg-8">
+    <div class="billing-content">
+        <div class="grid-3">
+            <!-- Main Content -->
+            <div class="main-column">
                 <!-- Subscription Status Card -->
-                <div class="card shadow-sm mb-4">
-                    <div class="card-header bg-white border-bottom-0">
-                        <h4 class="mb-0">Subscription Overview</h4>
+                <div class="modern-card">
+                    <div class="card-header">
+                        <h4><i class="bi bi-credit-card"></i> Subscription Overview</h4>
                     </div>
-                    <div class="card-body pt-0">
+                    <div class="card-body">
                         {% if current_user.is_subscribed %}
                             {% if current_user.subscription_plan == 'trial' %}
                             <!-- Trial Active State -->
-                            <div class="subscription-status alert alert-info border-left-4 border-left-info">
-                                <div class="d-flex justify-content-between align-items-start">
+                            <div class="subscription-status status-trial">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                                     <div>
-                                        <div class="d-flex align-items-center mb-2">
-                                            <h5 class="mb-0 mr-2">Free Trial Active</h5>
-                                            <span class="badge badge-pill badge-info">Trial</span>
+                                        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                                            <h3 style="margin: 0;">Free Trial Active</h3>
+                                            <span class="modern-badge badge-trial">
+                                                <i class="bi bi-lightning-charge"></i> Trial
+                                            </span>
                                         </div>
                                         
-                                        <div class="d-flex flex-wrap align-items-center text-muted">
-                                            <div class="mr-3 mb-1">
-                                                <i class="fas fa-calendar-check mr-1"></i>
-                                                Ends on {{ current_user.trial_end_date.strftime('%b %d, %Y') }}
-                                                ({{ current_user.trial_end_date|days_remaining }} days left)
+                                        <div style="display: flex; align-items: center; gap: 1rem; color: #0c5460;">
+                                            <div>
+                                                <i class="bi bi-calendar-check"></i>
+                                                {% if current_user.trial_end_date %}
+                                                Ends {{ current_user.trial_end_date.strftime('%b %d, %Y') }}
+                                                ({{ current_user.trial_days_remaining }} days left)
+                                                {% else %}
+                                                Trial period active
+                                                {% endif %}
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="dropdown">
-                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="trialActions" data-toggle="dropdown">
-                                            Actions
+                                    
+                                    <div class="dropdown-modern">
+                                        <button class="modern-btn btn-secondary-modern" onclick="toggleDropdown(this)">
+                                            <i class="bi bi-gear"></i> Actions
                                         </button>
-                                        <div class="dropdown-menu dropdown-menu-right">
-                                            <a href="{{ url_for('pricing') }}" class="dropdown-item">
-                                                <i class="fas fa-arrow-up mr-2"></i>Upgrade Now
+                                        <div class="dropdown-menu-modern">
+                                            <a href="{{ url_for('pricing') }}" class="dropdown-item-modern">
+                                                <i class="bi bi-arrow-up"></i> Upgrade Now
                                             </a>
-                                            <a href="#" class="dropdown-item" data-toggle="modal" data-target="#cancelTrialModal">
-                                                <i class="fas fa-times-circle mr-2"></i>End Trial Early
+                                            <a href="#" class="dropdown-item-modern" onclick="showModal('cancelTrialModal')">
+                                                <i class="bi bi-x-circle"></i> End Trial Early
                                             </a>
                                         </div>
                                     </div>
@@ -48,47 +602,52 @@
                             </div>
                             {% else %}
                             <!-- Paid Subscription Active State -->
-                            <div class="subscription-status alert alert-success border-left-4 border-left-success">
-                                <div class="d-flex justify-content-between align-items-start">
+                            <div class="subscription-status status-active">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                                     <div>
-                                        <div class="d-flex align-items-center mb-2">
-                                            <h5 class="mb-0 mr-2">{{ plan.name }} Plan</h5>
-                                            <span class="badge badge-pill badge-success">Active</span>
+                                        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                                            <h3 style="margin: 0;">{{ plan.name }} Plan</h3>
+                                            <span class="modern-badge badge-active">
+                                                <i class="bi bi-check-circle"></i> Active
+                                            </span>
                                         </div>
                                         
-                                        <div class="d-flex flex-wrap align-items-center text-muted">
-                                            <div class="mr-3 mb-1">
-                                                <i class="fas fa-calendar-check mr-1"></i>
-                                                {% if current_user.cancel_at_period_end %}
-                                                Ends on {{ current_user.current_period_end.strftime('%b %d, %Y') }}
+                                        <div style="display: flex; align-items: center; gap: 1rem; color: #155724;">
+                                            <div>
+                                                <i class="bi bi-calendar-check"></i>
+                                                {% if current_user.current_period_end %}
+                                                    {% if current_user.cancel_at_period_end %}
+                                                    Ends {{ current_user.current_period_end.strftime('%b %d, %Y') }}
+                                                    {% else %}
+                                                    Renews {{ current_user.current_period_end.strftime('%b %d, %Y') }}
+                                                    {% endif %}
                                                 {% else %}
-                                                Renews on {{ current_user.current_period_end.strftime('%b %d, %Y') }}
+                                                    Active subscription
                                                 {% endif %}
                                             </div>
-                                            <div class="mb-1">
-                                                <i class="fas fa-credit-card mr-1"></i>
+                                            <div>
+                                                <i class="bi bi-currency-dollar"></i>
                                                 {{ plan.price }} QAR / {{ 'year' if current_user.billing_type == 'annual' else 'month' }}
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="dropdown">
-                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="subscriptionActions" data-toggle="dropdown">
-                                            Actions
+                                    
+                                    <div class="dropdown-modern">
+                                        <button class="modern-btn btn-secondary-modern" onclick="toggleDropdown(this)">
+                                            <i class="bi bi-gear"></i> Actions
                                         </button>
-                                        <div class="dropdown-menu dropdown-menu-right">
-                                            <a href="{{ url_for('pricing') }}" class="dropdown-item">
-                                                <i class="fas fa-sync-alt mr-2"></i>Change Plan
+                                        <div class="dropdown-menu-modern">
+                                            <a href="{{ url_for('pricing') }}" class="dropdown-item-modern">
+                                                <i class="bi bi-arrow-repeat"></i> Change Plan
                                             </a>
                                             {% if current_user.cancel_at_period_end %}
-                                            <form method="POST" action="/resume_subscription">
-                                                <button type="submit" class="dropdown-item">
-                                                    <i class="fas fa-undo mr-2"></i>Resume Subscription
-                                                </button>
-                                            </form>
+                                            <a href="/resume_subscription" class="dropdown-item-modern">
+                                                <i class="bi bi-arrow-clockwise"></i> Resume Subscription
+                                            </a>
                                             {% else %}
-                                            <button class="dropdown-item text-danger" data-toggle="modal" data-target="#cancelSubscriptionModal">
-                                                <i class="fas fa-times-circle mr-2"></i>Cancel Subscription
-                                            </button>
+                                            <a href="#" class="dropdown-item-modern" onclick="showModal('cancelSubscriptionModal')" style="color: #dc3545;">
+                                                <i class="bi bi-x-circle"></i> Cancel Subscription
+                                            </a>
                                             {% endif %}
                                         </div>
                                     </div>
@@ -97,16 +656,16 @@
                             {% endif %}
                         {% else %}
                         <!-- No Subscription State -->
-                        <div class="subscription-status alert alert-warning border-left-4 border-left-warning">
-                            <div class="d-flex align-items-center">
-                                <div class="mr-3">
-                                    <i class="fas fa-exclamation-triangle fa-2x text-warning"></i>
+                        <div class="subscription-status status-inactive">
+                            <div style="display: flex; align-items: center; gap: 1rem;">
+                                <div>
+                                    <i class="bi bi-exclamation-triangle" style="font-size: 2rem; color: #856404;"></i>
                                 </div>
                                 <div>
-                                    <h5>No Active Subscription</h5>
-                                    <p class="mb-2">Subscribe to continue using all features of Document IQ</p>
-                                    <a href="{{ url_for('pricing') }}" class="btn btn-primary">
-                                        <i class="fas fa-rocket mr-1"></i>View Plans
+                                    <h3 style="margin: 0 0 0.5rem 0;">No Active Subscription</h3>
+                                    <p style="margin: 0 0 1rem 0;">Subscribe to continue using all features of DocumentIQ</p>
+                                    <a href="{{ url_for('pricing') }}" class="modern-btn btn-primary-modern">
+                                        <i class="bi bi-rocket"></i> View Plans
                                     </a>
                                 </div>
                             </div>
@@ -114,73 +673,60 @@
                         {% endif %}
                         
                         <!-- Usage Statistics -->
-                        <div class="usage-stats mt-4">
-                            <h5 class="mb-3">Your Usage</h5>
-                            <div class="row">
+                        <div class="usage-stats">
+                            <h3 style="margin-bottom: 1.5rem; color: #333;">Your Usage</h3>
+                            <div class="grid-2">
                                 <!-- Documents Uploaded -->
-                                <div class="col-md-6 mb-3">
-                                    <div class="stat-card p-3 border rounded">
-                                        <div class="d-flex justify-content-between align-items-center mb-2">
-                                            <h6 class="mb-0">Documents</h6>
-                                            <small class="text-muted">
-                                                {{ current_user.documents_uploaded }} of 
-                                                {% if plan.limits.max_documents %}{{ plan.limits.max_documents }}{% else %}∞{% endif %}
-                                            </small>
-                                        </div>
-                                        <div class="progress" style="height: 8px;">
-                                            <div class="progress-bar bg-primary" role="progressbar" 
-                                                style="width: {{ (current_user.documents_uploaded / (plan.limits.max_documents or 1)) * 100 }}%"
-                                                aria-valuenow="{{ current_user.documents_uploaded }}" 
-                                                aria-valuemin="0"
-                                                aria-valuemax="{{ plan.limits.max_documents or 1 }}">
-                                            </div>
-                                        </div>
-                                        <small class="text-muted d-block mt-2">
-                                           {{ ((current_user.documents_uploaded / (plan.limits.max_documents or 1)) * 100) | round(1) }}% used
-                                        </small>
+                                <div class="stat-card">
+                                    <div class="stat-icon">
+                                        <i class="bi bi-file-earmark-text"></i>
                                     </div>
+                                    <h4 style="margin: 0 0 0.5rem 0;">Documents</h4>
+                                    <p style="margin: 0 0 1rem 0; color: #666;">
+                                        {{ current_user.documents_uploaded }} of 
+                                        {% if plan.limits.max_documents %}{{ plan.limits.max_documents }}{% else %}∞{% endif %}
+                                    </p>
+                                    <div class="progress-modern">
+                                        <div class="progress-fill" style="width: {{ (current_user.documents_uploaded / (plan.limits.max_documents or 1)) * 100 }}%"></div>
+                                    </div>
+                                    <small style="color: #666; margin-top: 0.5rem; display: block;">
+                                        {{ ((current_user.documents_uploaded / (plan.limits.max_documents or 1)) * 100) | round(1) }}% used
+                                    </small>
                                 </div>
                                 
                                 <!-- File Size Limit -->
-                                <div class="col-md-6 mb-3">
-                                    <div class="stat-card p-3 border rounded">
-                                        <h6 class="mb-2">File Size Limit</h6>
-                                        <div class="d-flex align-items-center">
-                                            <div class="mr-2">
-                                                <i class="fas fa-file-alt fa-2x text-info"></i>
-                                            </div>
-                                            <div>
-                                                <span class="h5 mb-0">
-                                                    {{ (plan.limits.max_file_size / (1024 * 1024)) | round(1) }} MB
-                                                </span>
-                                                <small class="d-block text-muted">per file</small>
-                                            </div>
-                                        </div>
+                                <div class="stat-card">
+                                    <div class="stat-icon">
+                                        <i class="bi bi-hdd"></i>
                                     </div>
+                                    <h4 style="margin: 0 0 0.5rem 0;">File Size Limit</h4>
+                                    <p style="margin: 0; color: #666;">
+                                        <span style="font-size: 1.5rem; font-weight: 700; color: #4361ee;">
+                                            {{ (plan.limits.max_file_size / (1024 * 1024)) | round(1) }} MB
+                                        </span>
+                                        <br>
+                                        <small>per file</small>
+                                    </p>
                                 </div>
                             </div>
                         </div>
                         
                         <!-- Payment Method -->
                         {% if current_user.is_subscribed and current_user.subscription_plan != 'trial' %}
-                        <div class="payment-method mt-4">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h5 class="mb-0">Payment Method</h5>
-                                <button class="btn btn-sm btn-outline-primary" data-toggle="modal" data-target="#updatePaymentModal">
-                                    <i class="fas fa-pencil-alt mr-1"></i>Update
+                        <div style="margin-top: 2rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                                <h3 style="margin: 0;">Payment Method</h3>
+                                <button class="modern-btn btn-secondary-modern" onclick="showModal('updatePaymentModal')">
+                                    <i class="bi bi-pencil"></i> Update
                                 </button>
                             </div>
-                            <div class="card border">
-                                <div class="card-body">
-                                    <div class="d-flex align-items-center">
-                                        <div class="bg-light rounded p-2 mr-3">
-                                            <i class="far fa-credit-card fa-lg text-primary"></i>
-                                        </div>
-                                        <div>
-                                            <h6 class="mb-1">Visa ending in 4242</h6>
-                                            <small class="text-muted">Expires 12/2025</small>
-                                        </div>
-                                    </div>
+                            <div class="payment-card">
+                                <div class="payment-icon">
+                                    <i class="bi bi-credit-card"></i>
+                                </div>
+                                <div>
+                                    <h4 style="margin: 0 0 0.25rem 0;">Visa ending in 4242</h4>
+                                    <small style="color: #666;">Expires 12/2025</small>
                                 </div>
                             </div>
                         </div>
@@ -189,26 +735,21 @@
                 </div>
                 
                 <!-- Payment History -->
-                <div class="card shadow-sm">
-                    <div class="card-header bg-white">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <h4 class="mb-0">Payment History</h4>
-                            <button class="btn btn-sm btn-outline-secondary">
-                                <i class="fas fa-download mr-1"></i>Export
-                            </button>
-                        </div>
+                <div class="modern-card">
+                    <div class="card-header">
+                        <h4><i class="bi bi-clock-history"></i> Payment History</h4>
                     </div>
                     <div class="card-body">
                         {% if payments %}
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead class="thead-light">
+                        <div class="modern-table">
+                            <table>
+                                <thead>
                                     <tr>
                                         <th>Date</th>
                                         <th>Description</th>
                                         <th>Amount</th>
                                         <th>Status</th>
-                                        <th class="text-right">Actions</th>
+                                        <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -216,16 +757,17 @@
                                     <tr>
                                         <td>{{ payment.created_at.strftime('%b %d, %Y') }}</td>
                                         <td>{{ plan.name }} Plan</td>
-                                        <td>{{ payment.amount }} {{ payment.currency }}</td>
+                                        <td><strong>{{ payment.amount }} {{ payment.currency }}</strong></td>
                                         <td>
-                                            <span class="badge badge-pill badge-{% if payment.status == 'succeeded' %}success{% else %}danger{% endif %}">
+                                            <span class="status-badge {% if payment.status == 'succeeded' %}status-success{% else %}status-failed{% endif %}">
+                                                <i class="bi bi-{% if payment.status == 'succeeded' %}check-circle{% else %}x-circle{% endif %}"></i>
                                                 {{ payment.status|capitalize }}
                                             </span>
                                         </td>
-                                        <td class="text-right">
+                                        <td>
                                             {% if payment.receipt_url %}
-                                            <a href="{{ payment.receipt_url }}" target="_blank" class="btn btn-sm btn-outline-secondary">
-                                                <i class="fas fa-receipt mr-1"></i>Receipt
+                                            <a href="{{ payment.receipt_url }}" target="_blank" class="modern-btn btn-secondary-modern" style="padding: 0.5rem 1rem; font-size: 0.9rem;">
+                                                <i class="bi bi-receipt"></i> Receipt
                                             </a>
                                             {% endif %}
                                         </td>
@@ -235,65 +777,67 @@
                             </table>
                         </div>
                         {% else %}
-                        <div class="text-center py-4">
-                            <i class="fas fa-clock fa-3x text-muted mb-3"></i>
-                            <h5>No Payment History</h5>
-                            <p class="text-muted">Your payment records will appear here</p>
+                        <div class="empty-state">
+                            <i class="bi bi-clock-history"></i>
+                            <h3>No Payment History</h3>
+                            <p>Your payment records will appear here</p>
                         </div>
                         {% endif %}
                     </div>
                 </div>
             </div>
             
-            <!-- Sidebar Column -->
-            <div class="col-lg-4">
+            <!-- Sidebar -->
+            <div class="sidebar-column">
                 <!-- Plan Details Card -->
-                <div class="card shadow-sm mb-4">
-                    <div class="card-header bg-white">
-                        <h4 class="mb-0">Plan Details</h4>
+                <div class="modern-card">
+                    <div class="card-header">
+                        <h4><i class="bi bi-star"></i> Plan Details</h4>
                     </div>
                     <div class="card-body">
                         {% if current_user.is_subscribed %}
-                        <div class="text-center mb-4">
-                            <span class="badge badge-primary badge-pill px-3 py-2 mb-2">{{ plan.name }} Plan</span>
-                            <h2 class="my-2">
+                        <div style="text-align: center; margin-bottom: 2rem;">
+                            <span class="modern-badge badge-active" style="font-size: 1rem; padding: 0.75rem 1.5rem;">
+                                {{ plan.name }} Plan
+                            </span>
+                            <h2 style="margin: 1rem 0; color: #4361ee;">
                                 {% if current_user.subscription_plan == 'trial' %}
-                                    0 <small class="text-muted">QAR</small>
+                                    Free
                                 {% else %}
-                                    {{ plan.price }} <small class="text-muted">QAR</small>
+                                    {{ plan.price }} QAR
                                 {% endif %}
                             </h2>
-                            <small class="text-muted">
+                            <p style="color: #666; margin: 0;">
                                 {% if current_user.subscription_plan == 'trial' %}
                                     for 14 days
                                 {% else %}
                                     per {{ 'year' if current_user.billing_type == 'annual' else 'month' }}
                                 {% endif %}
-                            </small>
+                            </p>
                         </div>
                         
-                        <hr class="my-4">
+                        <div style="border-top: 1px solid rgba(67, 97, 238, 0.1); padding-top: 1.5rem;">
+                            <h4 style="margin-bottom: 1rem;">Plan Features</h4>
+                            <ul style="list-style: none; padding: 0;">
+                                {% for feature in plan.features %}
+                                <li style="margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.75rem;">
+                                    <i class="bi bi-check-circle" style="color: #28a745; font-size: 1.1rem;"></i>
+                                    {{ feature }}
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
                         
-                        <h6 class="mb-3">Plan Features</h6>
-                        <ul class="list-unstyled">
-                            {% for feature in plan.features %}
-                            <li class="mb-2 pl-3 position-relative">
-                                <i class="fas fa-check-circle text-success position-absolute" style="left: 0;"></i>
-                                {{ feature }}
-                            </li>
-                            {% endfor %}
-                        </ul>
-                        
-                        <a href="{{ url_for('pricing') }}" class="btn btn-outline-primary btn-block mt-4">
-                            <i class="fas fa-sync-alt mr-1"></i>Change Plan
+                        <a href="{{ url_for('pricing') }}" class="modern-btn btn-primary-modern" style="width: 100%; justify-content: center; margin-top: 1.5rem;">
+                            <i class="bi bi-arrow-repeat"></i> Change Plan
                         </a>
                         {% else %}
-                        <div class="text-center py-4">
-                            <i class="fas fa-gem fa-3x text-primary mb-3"></i>
-                            <h5>No Active Plan</h5>
-                            <p class="text-muted mb-4">Upgrade to unlock all features</p>
-                            <a href="{{ url_for('pricing') }}" class="btn btn-primary btn-block">
-                                <i class="fas fa-rocket mr-1"></i>View Plans
+                        <div class="empty-state">
+                            <i class="bi bi-gem"></i>
+                            <h3>No Active Plan</h3>
+                            <p>Upgrade to unlock all features</p>
+                            <a href="{{ url_for('pricing') }}" class="modern-btn btn-primary-modern" style="margin-top: 1rem;">
+                                <i class="bi bi-rocket"></i> View Plans
                             </a>
                         </div>
                         {% endif %}
@@ -302,18 +846,22 @@
                 
                 <!-- Upgrade Card -->
                 {% if current_user.subscription_plan == 'trial' %}
-                <div class="card shadow-sm border-primary">
-                    <div class="card-header bg-primary text-white">
-                        <h5 class="mb-0"><i class="fas fa-bolt mr-2"></i>Upgrade Now</h5>
+                <div class="modern-card" style="border: 2px solid #4361ee; background: linear-gradient(135deg, rgba(67, 97, 238, 0.05), rgba(58, 12, 163, 0.05));">
+                    <div class="card-header">
+                        <h4><i class="bi bi-lightning-charge"></i> Upgrade Now</h4>
                     </div>
                     <div class="card-body">
-                        <p class="card-text">Upgrade during your trial to get 10% off your first payment!</p>
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <span>Days left in trial:</span>
-                            <span class="badge badge-pill badge-primary">{{ (current_user.trial_end_date - now).days }}</span>
+                        <p style="color: #4361ee; font-weight: 600; margin-bottom: 1rem;">
+                            Upgrade during your trial to get 10% off your first payment!
+                        </p>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding: 1rem; background: rgba(67, 97, 238, 0.1); border-radius: 10px;">
+                            <span style="font-weight: 600;">Days left in trial:</span>
+                            <span class="modern-badge badge-trial">
+                                {{ current_user.trial_days_remaining }}
+                            </span>
                         </div>
-                        <a href="{{ url_for('pricing') }}" class="btn btn-primary btn-block">
-                            <i class="fas fa-arrow-up mr-1"></i>Upgrade Plan
+                        <a href="{{ url_for('pricing') }}" class="modern-btn btn-primary-modern" style="width: 100%; justify-content: center;">
+                            <i class="bi bi-arrow-up"></i> Upgrade Plan
                         </a>
                     </div>
                 </div>
@@ -323,273 +871,160 @@
     </div>
 </div>
 
+<!-- Modals -->
 <!-- Cancel Subscription Modal -->
-<div class="modal fade" id="cancelSubscriptionModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content">
-            <div class="modal-header border-bottom-0">
-                <h5 class="modal-title">Cancel Subscription</h5>
-                <button type="button" class="btn-close" data-dismiss="modal">
+<div id="cancelSubscriptionModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 style="margin: 0;">Cancel Subscription</h3>
+            <button class="close" onclick="hideModal('cancelSubscriptionModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <i class="bi bi-exclamation-triangle" style="font-size: 3rem; color: #dc3545;"></i>
+            </div>
+            <h4 style="text-align: center; margin-bottom: 1rem;">Are you sure you want to cancel?</h4>
+            {% if current_user.current_period_end %}
+            <p style="text-align: center; color: #666;">
+                You'll keep access until <strong>{{ current_user.current_period_end.strftime('%b %d, %Y') }}</strong>.
+                After that, you'll lose access to premium features.
+            </p>
+            {% endif %}
+        </div>
+        <div class="modal-footer">
+            <button class="modern-btn btn-secondary-modern" onclick="hideModal('cancelSubscriptionModal')">
+                Go Back
+            </button>
+            <form method="POST" action="/cancel_subscription" style="display: inline;">
+                <button type="submit" class="modern-btn btn-danger-modern">
+                    <i class="bi bi-x-circle"></i> Cancel Subscription
                 </button>
-            </div>
-            <div class="modal-body py-4">
-                <div class="text-center mb-4">
-                    <i class="fas fa-times-circle fa-3x text-danger"></i>
-                </div>
-                <h5 class="text-center mb-3">Are you sure you want to cancel?</h5>
-                {% if current_user.current_period_end %}
-                <p class="text-center text-muted">
-                    You'll keep access until <strong>{{ current_user.current_period_end.strftime('%b %d, %Y') }}</strong>.
-                    After that, you'll lose access to premium features.
-                </p>
-                {% endif %}
-            </div>
-            <div class="modal-footer border-top-0">
-                <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Go Back</button>
-                <form method="POST" action="/cancel_subscription">
-                    <button type="submit" class="btn btn-danger">
-                        <i class="fas fa-times-circle mr-1"></i>Cancel Subscription
-                    </button>
-                </form>
-            </div>
+            </form>
         </div>
     </div>
 </div>
 
 <!-- Cancel Trial Modal -->
-<div class="modal fade" id="cancelTrialModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content">
-            <div class="modal-header border-bottom-0">
-                <h5 class="modal-title">End Free Trial Early</h5>
-                <button type="button" class="btn-close" data-dismiss="modal">
-                    
-                </button>
+<div id="cancelTrialModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 style="margin: 0;">End Free Trial Early</h3>
+            <button class="close" onclick="hideModal('cancelTrialModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <i class="bi bi-calendar-x" style="font-size: 3rem; color: #ffc107;"></i>
             </div>
-            <div class="modal-body py-4">
-                <div class="text-center mb-4">
-                    <i class="fas fa-calendar-times fa-3x text-warning"></i>
+            <h4 style="text-align: center; margin-bottom: 1rem;">End your trial now?</h4>
+            <p style="text-align: center; color: #666;">
+                You'll immediately lose access to premium features and revert to Basic plan limitations.
+                You have {{ current_user.trial_days_remaining }} days remaining in your trial.
+            </p>
+        </div>
+        <div class="modal-footer">
+            <button class="modern-btn btn-secondary-modern" onclick="hideModal('cancelTrialModal')">
+                Continue Trial
+            </button>
+            <form method="POST" action="/cancel_trial" style="display: inline;">
+                <button type="submit" class="modern-btn btn-danger-modern">
+                    <i class="bi bi-x-circle"></i> End Trial Now
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Update Payment Modal -->
+<div id="updatePaymentModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 style="margin: 0;">Update Payment Method</h3>
+            <button class="close" onclick="hideModal('updatePaymentModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="update-payment-form">
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">New Card Details</label>
+                    <div id="card-element-update" style="padding: 1rem; border: 2px solid rgba(67, 97, 238, 0.2); border-radius: 10px; background: rgba(67, 97, 238, 0.05);"></div>
+                    <div id="card-errors-update" style="color: #dc3545; font-size: 0.9rem; margin-top: 0.5rem;"></div>
                 </div>
-                <h5 class="text-center mb-3">End your trial now?</h5>
-                <p class="text-center text-muted">
-                    You'll immediately lose access to premium features and revert to Basic plan limitations.
-                    You have {{ (current_user.trial_end_date - now).days }} days remaining in your trial.
-                </p>
-            </div>
-            <div class="modal-footer border-top-0">
-                <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Continue Trial</button>
-                <form method="POST" action="/cancel_trial">
-                    <button type="submit" class="btn btn-warning">
-                        <i class="fas fa-times-circle mr-1"></i>End Trial Now
-                    </button>
-                </form>
-            </div>
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Billing Address</label>
+                    <input type="text" style="width: 100%; padding: 0.75rem; border: 2px solid rgba(67, 97, 238, 0.2); border-radius: 10px; background: rgba(67, 97, 238, 0.05);" placeholder="Address line 1">
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <input type="text" style="padding: 0.75rem; border: 2px solid rgba(67, 97, 238, 0.2); border-radius: 10px; background: rgba(67, 97, 238, 0.05);" placeholder="City">
+                    <input type="text" style="padding: 0.75rem; border: 2px solid rgba(67, 97, 238, 0.2); border-radius: 10px; background: rgba(67, 97, 238, 0.05);" placeholder="Postal Code">
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="modern-btn btn-secondary-modern" onclick="hideModal('updatePaymentModal')">
+                Cancel
+            </button>
+            <button class="modern-btn btn-primary-modern" id="submit-payment-update">
+                <span id="update-button-text">Update Payment Method</span>
+                <span id="update-spinner" style="display: none; margin-left: 0.5rem;">
+                    <i class="bi bi-arrow-clockwise" style="animation: spin 1s linear infinite;"></i>
+                </span>
+            </button>
         </div>
     </div>
 </div>
-
-<!-- Update Payment Method Modal -->
-<div class="modal fade" id="updatePaymentModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content">
-            <div class="modal-header border-bottom-0">
-                <h5 class="modal-title">Update Payment Method</h5>
-                <button type="button" class="btn-close" data-dismiss="modal">
-                </button>
-            </div>
-            <div class="modal-body">
-                <form id="update-payment-form">
-                    <div class="form-group">
-                        <label for="card-element-update">New Card Details</label>
-                        <div id="card-element-update" class="form-control p-3 border rounded" style="height: 45px;"></div>
-                        <div id="card-errors-update" class="text-danger small mt-2"></div>
-                    </div>
-                    <div class="form-group mt-4">
-                        <label>Billing Address</label>
-                        <input type="text" class="form-control" placeholder="Address line 1">
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6 form-group">
-                            <input type="text" class="form-control" placeholder="City">
-                        </div>
-                        <div class="col-md-6 form-group">
-                            <input type="text" class="form-control" placeholder="Postal Code">
-                        </div>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer border-top-0">
-                <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" id="submit-payment-update">
-                    <span id="update-button-text">Update Payment Method</span>
-                    <span id="update-spinner" class="spinner-border spinner-border-sm d-none ml-2"></span>
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<style>
-    .billing-container {
-        background-color: #f8f9fa;
-        min-height: calc(100vh - 120px);
-        padding: 2rem 0;
-    }
-    
-    .card {
-        border: none;
-        border-radius: 10px;
-        transition: transform 0.2s;
-    }
-    
-    .card:hover {
-        transform: translateY(-2px);
-    }
-    
-    .card-header {
-        padding: 1.25rem 1.5rem;
-    }
-    
-    .border-left-4 {
-        border-left: 4px solid;
-    }
-    
-    .stat-card {
-        height: 100%;
-    }
-    
-    .progress {
-        border-radius: 4px;
-    }
-    
-    .badge-pill {
-        padding: 0.5em 1em;
-    }
-    
-    .subscription-status {
-        padding: 1.25rem;
-        border-radius: 8px;
-        margin-bottom: 1rem;
-    }
-    
-    .usage-stats h5 {
-        font-weight: 600;
-    }
-    
-    .payment-method .card {
-        border-radius: 8px;
-    }
-    
-    .table th {
-        border-top: none;
-    }
-    
-    .badge-primary {
-        background-color: var(--primary-color);
-        color:white;
-    }
-    
-    .btn-outline-primary {
-        color: var(--primary-color);
-        border-color: var(--primary-color);
-    }
-    
-    .btn-outline-primary:hover {
-        background-color: var(--primary-color);
-        color: white;
-    }
-    
-    @media (max-width: 768px) {
-        .billing-container {
-            padding: 1rem 0;
-        }
-        
-        .card-body {
-            padding: 1rem;
-        }
-    }
-</style>
 
 <script>
-    // Initialize payment method update form
-    $(document).ready(function() {
-        $('#updatePaymentModal').on('shown.bs.modal', function() {
-            const stripe = Stripe('{{ config["STRIPE_PUBLIC_KEY"] }}');
-            const elements = stripe.elements();
-            const card = elements.create('card', {
-                style: {
-                    base: {
-                        fontSize: '16px',
-                        color: '#32325d',
-                        '::placeholder': {
-                            color: '#aab7c4'
-                        }
-                    },
-                    invalid: {
-                        color: '#fa755a'
-                    }
-                }
-            });
-            
-            card.mount('#card-element-update');
-            
-            card.addEventListener('change', function(event) {
-                const displayError = document.getElementById('card-errors-update');
-                if (event.error) {
-                    displayError.textContent = event.error.message;
-                } else {
-                    displayError.textContent = '';
-                }
-            });
-            
-            $('#submit-payment-update').click(async function() {
-                const btn = $(this);
-                const originalText = $('#update-button-text').text();
-                
-                btn.prop('disabled', true);
-                $('#update-button-text').text('Processing...');
-                $('#update-spinner').removeClass('d-none');
-                
-                const { paymentMethod, error } = await stripe.createPaymentMethod({
-                    type: 'card',
-                    card: card,
-                    billing_details: {
-                        name: '{{ current_user.username }}',
-                        email: '{{ current_user.email }}'
-                    }
-                });
-                
-                if (error) {
-                    document.getElementById('card-errors-update').textContent = error.message;
-                    btn.prop('disabled', false);
-                    $('#update-button-text').text(originalText);
-                    $('#update-spinner').addClass('d-none');
-                } else {
-                    fetch('/update_payment_method', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            payment_method_id: paymentMethod.id
-                        })
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.error) {
-                            throw new Error(data.error);
-                        }
-                        window.location.reload();
-                    })
-                    .catch(error => {
-                        document.getElementById('card-errors-update').textContent = error.message;
-                        btn.prop('disabled', false);
-                        $('#update-button-text').text(originalText);
-                        $('#update-spinner').addClass('d-none');
-                    });
-                }
-            });
-        });
+// Dropdown functionality
+function toggleDropdown(button) {
+    const dropdown = button.parentElement;
+    const isActive = dropdown.classList.contains('active');
+    
+    // Close all dropdowns
+    document.querySelectorAll('.dropdown-modern').forEach(d => d.classList.remove('active'));
+    
+    // Toggle current dropdown
+    if (!isActive) {
+        dropdown.classList.add('active');
+    }
+}
+
+// Close dropdowns when clicking outside
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.dropdown-modern')) {
+        document.querySelectorAll('.dropdown-modern').forEach(d => d.classList.remove('active'));
+    }
+});
+
+// Modal functionality
+function showModal(modalId) {
+    document.getElementById(modalId).style.display = 'block';
+    document.body.style.overflow = 'hidden';
+}
+
+function hideModal(modalId) {
+    document.getElementById(modalId).style.display = 'none';
+    document.body.style.overflow = 'auto';
+}
+
+// Close modal when clicking outside
+document.querySelectorAll('.modal').forEach(modal => {
+    modal.addEventListener('click', function(e) {
+        if (e.target === this) {
+            hideModal(this.id);
+        }
     });
+});
+
+// Payment method update functionality
+document.addEventListener('DOMContentLoaded', function() {
+    // Add spin animation
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    `;
+    document.head.appendChild(style);
+});
 </script>
 {% endblock %}

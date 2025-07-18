@@ -1,16 +1,1667 @@
-{% extends "base.html" %} {% block content %}
-<div class="app-container">
-    <div class="sidebar">
-        <button class="btn-new-chat" onclick="location.href='{{ url_for('index') }}'">
-            <i class="bi bi-plus-lg"></i> New Upload
-        </button>
+{% extends "base.html" %} 
+
+{% block title %}Chat - DocumentIQ{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* DocumentIQ Theme Variables */
+    :root {
+        --primary-color: #4361ee;
+        --secondary-color: #3a0ca3;
+        --accent-color: #7209b7;
+        --light-accent: #f72585;
+        --text-color: #2b2d42;
+        --light-text: #8d99ae;
+        --background-light: #f8f9fa;
+        --card-bg: #ffffff;
+        --success-color: #d8dada;
+        --warning-color: #f8961e;
+        --error-color: #f94144;
+        --glassmorphism-bg: rgba(255, 255, 255, 0.95);
+        --glassmorphism-border: rgba(67, 97, 238, 0.1);
+        --sidebar-width: 280px;
+    }
+
+    /* Global Page Styling */
+    body {
+        background: linear-gradient(135deg, 
+            rgba(67, 97, 238, 0.03) 0%, 
+            rgba(58, 12, 163, 0.03) 50%, 
+            rgba(255, 215, 0, 0.01) 100%);
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        color: var(--text-color);
+        line-height: 1.6;
+        min-height: 100vh;
+        margin: 0;
+        padding: 0;
+        overflow-x: hidden;
+    }
+
+    /* DeepSeek-Style Main Container */
+    .deepseek-container {
+        display: flex;
+        height: 100vh;
+        background: transparent;
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* Modern Sidebar */
+    .modern-sidebar {
+        width: var(--sidebar-width);
+        background: rgba(255, 255, 255, 0.98);
+        backdrop-filter: blur(25px);
+        border-right: 1px solid rgba(67, 97, 238, 0.08);
+        display: flex;
+        flex-direction: column;
+        box-shadow: 2px 0 25px rgba(67, 97, 238, 0.06);
+        position: relative;
+        z-index: 100;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .modern-sidebar::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: 
+            radial-gradient(circle at 20% 20%, rgba(67, 97, 238, 0.03) 0%, transparent 50%),
+            radial-gradient(circle at 80% 80%, rgba(114, 9, 183, 0.03) 0%, transparent 50%);
+        pointer-events: none;
+    }
+
+    /* Sidebar Header */
+    .sidebar-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid rgba(67, 97, 238, 0.05);
+        background: rgba(255, 255, 255, 0.5);
+        backdrop-filter: blur(10px);
+        flex-shrink: 0;
+        position: relative;
+        z-index: 2;
+    }
+
+    .new-chat-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        padding: 0.875rem 1.25rem;
+        border-radius: 12px;
+        border: none;
+        background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+        color: white;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 4px 20px rgba(67, 97, 238, 0.25);
+        position: relative;
+        overflow: hidden;
+        font-size: 0.95rem;
+        width: 100%;
+        text-decoration: none;
+    }
+
+    .new-chat-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.6s ease;
+    }
+
+    .new-chat-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 30px rgba(67, 97, 238, 0.35);
+        color: white;
+        text-decoration: none;
+    }
+
+    .new-chat-btn:hover::before {
+        left: 100%;
+    }
+
+    /* Chat History */
+    .chat-history {
+        flex: 1;
+        overflow-y: auto;
+        padding: 1rem;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(67, 97, 238, 0.2) transparent;
+        position: relative;
+        z-index: 2;
+    }
+
+    .chat-history::-webkit-scrollbar {
+        width: 4px;
+    }
+
+    .chat-history::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .chat-history::-webkit-scrollbar-thumb {
+        background: rgba(67, 97, 238, 0.2);
+        border-radius: 2px;
+    }
+
+    .chat-history::-webkit-scrollbar-thumb:hover {
+        background: rgba(67, 97, 238, 0.3);
+    }
+
+    /* Chat History Items */
+    .chat-item-container {
+        margin-bottom: 0.5rem;
+        border-radius: 10px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow: hidden;
+        background: rgba(255, 255, 255, 0.4);
+        border: 1px solid rgba(67, 97, 238, 0.05);
+    }
+
+    .chat-item-container:hover {
+        background: rgba(67, 97, 238, 0.06);
+        transform: translateX(3px);
+        box-shadow: 0 2px 15px rgba(67, 97, 238, 0.1);
+        border-color: rgba(67, 97, 238, 0.1);
+    }
+
+    .chat-item-container.active {
+        background: rgba(67, 97, 238, 0.1);
+        border-color: var(--primary-color);
+        transform: translateX(3px);
+        box-shadow: 0 2px 15px rgba(67, 97, 238, 0.15);
+    }
+
+    .chat-item {
+        display: flex;
+        align-items: center;
+        padding: 0.875rem;
+        text-decoration: none;
+        color: var(--text-color);
+        transition: all 0.3s ease;
+    }
+
+    .chat-item-icon {
+        margin-right: 0.75rem;
+        color: var(--primary-color);
+        font-size: 1.1rem;
+        transition: all 0.3s ease;
+        flex-shrink: 0;
+    }
+
+    .chat-item-container:hover .chat-item-icon {
+        transform: scale(1.05);
+        color: var(--accent-color);
+    }
+
+    .chat-item-title {
+        flex: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+
+    .delete-chat-btn {
+        background: none;
+        border: none;
+        color: var(--light-text);
+        cursor: pointer;
+        padding: 0.375rem;
+        border-radius: 6px;
+        opacity: 0;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .chat-item-container:hover .delete-chat-btn {
+        opacity: 1;
+    }
+
+    .delete-chat-btn:hover {
+        color: var(--error-color);
+        background: rgba(249, 65, 68, 0.1);
+        transform: scale(1.05);
+    }
+
+    /* Main Chat Area */
+    .main-chat-area {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background: rgba(255, 255, 255, 0.97);
+        backdrop-filter: blur(25px);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .main-chat-area::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, var(--primary-color), var(--accent-color), var(--light-accent));
+        z-index: 10;
+    }
+
+    /* Chat Header */
+    .chat-header {
+        padding: 1.25rem 2rem;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(15px);
+        border-bottom: 1px solid rgba(67, 97, 238, 0.06);
+        flex-shrink: 0;
+        position: relative;
+        z-index: 50;
+    }
+
+    .chat-title {
+        margin: 0;
+        color: var(--text-color);
+        font-size: 1.1rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .chat-title-icon {
+        color: var(--primary-color);
+        font-size: 1.2rem;
+    }
+
+    /* Documents Panel */
+    .documents-panel {
+        width: 260px;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-left: 1px solid rgba(67, 97, 238, 0.08);
+        overflow-y: auto;
+        padding: 1rem;
+        position: relative;
+        z-index: 90;
+        box-shadow: -2px 0 25px rgba(67, 97, 238, 0.06);
+    }
+
+    .documents-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid rgba(67, 97, 238, 0.08);
+    }
+
+    .documents-title {
+        margin: 0;
+        font-size: 0.95rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--text-color);
+        font-weight: 600;
+    }
+
+    .document-count {
+        font-size: 0.8rem;
+        background: rgba(67, 97, 238, 0.1);
+        padding: 0.2rem 0.5rem;
+        border-radius: 12px;
+        color: var(--primary-color);
+        font-weight: 500;
+    }
+
+    .document-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .document-item {
+        display: flex;
+        align-items: center;
+        padding: 0.5rem 0.75rem;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        position: relative;
+        background: rgba(255, 255, 255, 0.5);
+        border: 1px solid rgba(67, 97, 238, 0.05);
+    }
+
+    .document-item:hover {
+        background: rgba(67, 97, 238, 0.06);
+        transform: translateX(2px);
+        border-color: rgba(67, 97, 238, 0.1);
+    }
+
+    .document-item.active {
+        background: rgba(67, 97, 238, 0.1);
+        border-color: var(--primary-color);
+    }
+
+    .document-icon {
+        margin-right: 0.75rem;
+        color: var(--primary-color);
+        font-size: 1rem;
+        flex-shrink: 0;
+    }
+
+    .document-name {
+        flex: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+
+    .document-preview-btn {
+        opacity: 0;
+        transition: all 0.2s ease;
+        color: var(--primary-color);
+        padding: 0.25rem;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    .document-item:hover .document-preview-btn {
+        opacity: 1;
+    }
+
+    .document-preview-btn:hover {
+        background: rgba(67, 97, 238, 0.1);
+    }
+
+    /* Chat Messages */
+    .chat-messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 1.5rem 2rem;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(67, 97, 238, 0.2) transparent;
+        background: transparent;
+        scroll-behavior: smooth;
+        min-height: 0;
+        padding-bottom: 140px;
+    }
+
+    .chat-messages::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .chat-messages::-webkit-scrollbar-track {
+        background: rgba(67, 97, 238, 0.03);
+        border-radius: 3px;
+        margin: 8px;
+    }
+
+    .chat-messages::-webkit-scrollbar-thumb {
+        background: rgba(67, 97, 238, 0.2);
+        border-radius: 3px;
+    }
+
+    .chat-messages::-webkit-scrollbar-thumb:hover {
+        background: rgba(67, 97, 238, 0.3);
+    }
+
+    /* Enhanced Message Styling */
+    .message {
+        display: flex;
+        gap: 1rem;
+        padding: 1.25rem;
+        margin-bottom: 1.25rem;
+        border-radius: 16px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        animation: messageSlideIn 0.4s ease-out;
+        position: relative;
+        overflow: hidden;
+    }
+
+    @keyframes messageSlideIn {
+        from {
+            opacity: 0;
+            transform: translateY(15px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .message-user {
+        background: rgba(67, 97, 238, 0.06);
+        border: 1px solid rgba(67, 97, 238, 0.1);
+        border-radius: 16px 16px 4px 16px;
+        margin-left: 3rem;
+    }
+
+    .message-assistant {
+        background: rgba(114, 9, 183, 0.04);
+        border: 1px solid rgba(114, 9, 183, 0.08);
+        border-radius: 16px 16px 16px 4px;
+        margin-right: 3rem;
+    }
+
+    .message:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 20px rgba(67, 97, 238, 0.08);
+    }
+
+    .message:hover .message-actions {
+        opacity: 1;
+    }
+
+    .message-avatar {
+        flex-shrink: 0;
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.1rem;
+        box-shadow: 0 2px 12px rgba(67, 97, 238, 0.25);
+        transition: all 0.3s ease;
+    }
+
+    .message:hover .message-avatar {
+        transform: scale(1.03);
+        box-shadow: 0 4px 16px rgba(67, 97, 238, 0.3);
+    }
+
+    .message-content {
+        flex: 1;
+        min-width: 0;
+        position: relative;
+    }
+
+    .message-actions {
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        opacity: 0;
+        transition: all 0.3s ease;
+        display: flex;
+        gap: 0.375rem;
+        z-index: 10;
+    }
+
+    .copy-message-btn {
+        background: rgba(255, 255, 255, 0.98);
+        border: 1px solid rgba(67, 97, 238, 0.15);
+        border-radius: 8px;
+        padding: 0.375rem;
+        cursor: pointer;
+        color: var(--primary-color);
+        font-size: 0.85rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(67, 97, 238, 0.1);
+        backdrop-filter: blur(10px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 2.25rem;
+        height: 2.25rem;
+    }
+
+    .copy-message-btn:hover {
+        background: var(--primary-color);
+        color: white;
+        transform: scale(1.05);
+        box-shadow: 0 4px 12px rgba(67, 97, 238, 0.25);
+    }
+
+    .copy-message-btn.copied {
+        background: var(--success-color);
+        color: white;
+        animation: copySuccess 0.3s ease;
+    }
+
+    @keyframes copySuccess {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.15); }
+        100% { transform: scale(1); }
+    }
+
+    .message-text {
+        line-height: 1.6;
+        word-wrap: break-word;
+        font-size: 0.95rem;
+    }
+
+    .message-text h1, .message-text h2, .message-text h3 {
+        color: var(--text-color);
+        margin: 0.875rem 0 0.5rem 0;
+        font-weight: 600;
+    }
+
+    .message-text strong {
+        color: var(--primary-color);
+        font-weight: 600;
+    }
+
+    .message-text em {
+        color: var(--accent-color);
+        font-style: italic;
+    }
+
+    .message-text pre {
+        background: rgba(67, 97, 238, 0.08);
+        padding: 1rem;
+        border-radius: 10px;
+        overflow-x: auto;
+        border-left: 3px solid var(--primary-color);
+        margin: 0.875rem 0;
+        font-size: 0.9rem;
+    }
+
+    .message-text code {
+        font-family: 'Courier New', monospace;
+        background: rgba(67, 97, 238, 0.08);
+        padding: 0.15rem 0.375rem;
+        border-radius: 4px;
+        color: var(--primary-color);
+        font-weight: 500;
+        font-size: 0.9em;
+    }
+
+    /* Empty State */
+    .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        text-align: center;
+        padding: 3rem;
+        color: var(--light-text);
+        animation: fadeIn 0.8s ease-out;
+    }
+
+    .empty-state.hidden {
+        display: none;
+    }
+
+    .empty-state i.bi {
+        font-size: 3.5rem;
+        margin-bottom: 1.25rem;
+        color: var(--primary-color);
+        animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.03); opacity: 0.8; }
+    }
+
+    .empty-state h4 {
+        margin-bottom: 0.875rem;
+        color: var(--text-color);
+        font-size: 1.6rem;
+        font-weight: 700;
+    }
+
+    .uploaded-files-preview {
+        max-width: 450px;
+        width: 100%;
+        margin: 1.5rem auto;
+        background: rgba(67, 97, 238, 0.06);
+        border-radius: 12px;
+        padding: 1.25rem;
+        border: 1px solid rgba(67, 97, 238, 0.1);
+        backdrop-filter: blur(10px);
+    }
+
+    .file-preview-item {
+        display: flex;
+        align-items: center;
+        gap: 0.625rem;
+        padding: 0.625rem;
+        text-align: left;
+        border-bottom: 1px solid rgba(67, 97, 238, 0.08);
+        transition: all 0.3s ease;
+        border-radius: 6px;
+    }
+
+    .file-preview-item:hover {
+        background: rgba(67, 97, 238, 0.08);
+    }
+
+    .file-preview-item:last-child {
+        border-bottom: none;
+    }
+
+    .file-preview-item i {
+        color: var(--primary-color);
+        font-size: 1rem;
+    }
+
+    .file-preview-more {
+        padding: 0.875rem;
+        font-size: 0.9rem;
+        color: var(--light-text);
+        text-align: center;
+        font-style: italic;
+    }
+
+    .prompt-text {
+        margin-top: 1.25rem;
+        font-style: italic;
+        color: var(--light-text);
+        font-size: 1.05rem;
+    }
+
+    /* Status Messages */
+    .status-message {
+        margin-bottom: 0.875rem;
+        font-size: 0.95rem;
+        min-height: 2em;
+        position: relative;
+        padding-left: 1.75rem;
+        font-weight: 500;
+        animation: statusPulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes statusPulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.75; }
+    }
+
+    .status-message::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 0.875rem;
+        height: 0.875rem;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+        animation: statusIndicator 1.5s infinite ease-in-out;
+    }
+
+    @keyframes statusIndicator {
+        0%, 100% {
+            transform: translateY(-50%) scale(1);
+            opacity: 1;
+        }
+        50% {
+            transform: translateY(-50%) scale(1.15);
+            opacity: 0.75;
+        }
+    }
+
+    .status-message.error::before {
+        background: linear-gradient(135deg, var(--error-color), #ff006e);
+        animation: errorIndicator 0.75s infinite ease-in-out;
+    }
+
+    @keyframes errorIndicator {
+        0%, 100% {
+            transform: translateY(-50%) scale(1);
+            opacity: 1;
+        }
+        50% {
+            transform: translateY(-50%) scale(1.2);
+            opacity: 0.6;
+        }
+    }
+
+    /* References */
+    .reference-link {
+        cursor: pointer;
+        color: var(--primary-color);
+        text-decoration: none;
+        font-weight: 600;
+        padding: 0.15rem 0.375rem;
+        border-radius: 4px;
+        background: rgba(67, 97, 238, 0.08);
+        transition: all 0.3s ease;
+        border: 1px solid rgba(67, 97, 238, 0.15);
+        font-size: 0.85em;
+    }
+
+    .reference-link:hover {
+        color: white;
+        background: var(--primary-color);
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(67, 97, 238, 0.25);
+    }
+
+    /* Sources Section */
+    .message-sources {
+        margin-top: 1.25rem;
+        font-size: 0.85rem;
+        background: rgba(67, 97, 238, 0.06);
+        padding: 1.25rem;
+        border-radius: 12px;
+        border: 1px solid rgba(67, 97, 238, 0.1);
+        backdrop-filter: blur(10px);
+    }
+
+    .sources-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.875rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid rgba(67, 97, 238, 0.15);
+    }
+
+    .sources-title {
+        font-weight: 600;
+        color: var(--text-color);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+    }
+
+    .sources-title::before {
+        content: "📂";
+        font-size: 1rem;
+    }
+
+    .toggle-sources-btn {
+        background: rgba(67, 97, 238, 0.08);
+        border: 1px solid rgba(67, 97, 238, 0.15);
+        color: var(--primary-color);
+        cursor: pointer;
+        font-size: 0.8rem;
+        padding: 0.375rem 0.75rem;
+        border-radius: 6px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+
+    .toggle-sources-btn:hover {
+        background: var(--primary-color);
+        color: white;
+        transform: translateY(-1px);
+    }
+
+    .sources-list {
+        max-height: 280px;
+        overflow-y: auto;
+        transition: all 0.3s ease;
+    }
+
+    .message-source {
+        display: flex;
+        align-items: center;
+        gap: 0.625rem;
+        margin-bottom: 0.5rem;
+        cursor: pointer;
+        padding: 0.875rem;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        background: rgba(255, 255, 255, 0.6);
+        border: 1px solid rgba(67, 97, 238, 0.08);
+    }
+
+    .message-source:hover {
+        background: rgba(67, 97, 238, 0.1);
+        transform: translateX(3px);
+        box-shadow: 0 2px 12px rgba(67, 97, 238, 0.15);
+        border-color: rgba(67, 97, 238, 0.2);
+    }
+
+    .message-source-icon {
+        color: var(--primary-color);
+        font-size: 1.1rem;
+    }
+
+    .message-source span {
+        font-weight: 500;
+        color: var(--text-color);
+    }
+
+    .last-clicked-source {
+        background: rgba(67, 97, 238, 0.15) !important;
+        border-color: var(--primary-color) !important;
+        transform: translateX(3px);
+    }
+
+    /* Chat Input Container */
+    .chat-input-container {
+        position: fixed;
+        bottom: 0;
+        left: var(--sidebar-width);
+        right: 260px;
+        background: rgba(255, 255, 255, 0.98);
+        backdrop-filter: blur(30px);
+        padding: 1.25rem 2rem;
+        border-top: 1px solid rgba(67, 97, 238, 0.1);
+        box-shadow: 0 -4px 25px rgba(67, 97, 238, 0.1);
+        z-index: 999;
+        transition: all 0.3s ease;
+    }
+
+    .input-group {
+        display: flex;
+        align-items: flex-end;
+        gap: 0.875rem;
+        max-width: 100%;
+    }
+
+    .chat-input {
+        flex: 1;
+        border: 1px solid rgba(67, 97, 238, 0.15);
+        border-radius: 12px;
+        padding: 0.875rem 1.125rem;
+        resize: none;
+        max-height: 120px;
+        min-height: 2.75rem;
+        font-family: inherit;
+        background: rgba(255, 255, 255, 0.95);
+        transition: all 0.3s ease;
+        font-size: 0.95rem;
+        line-height: 1.5;
+    }
+
+    .chat-input:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+        background: white;
+        transform: translateY(-1px);
+    }
+
+    .chat-input::placeholder {
+        color: var(--light-text);
+        font-style: italic;
+    }
+
+    .send-btn {
+        height: 2.75rem;
+        width: 2.75rem;
+        border: none;
+        border-radius: 12px;
+        background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+        color: white;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        font-size: 1rem;
+        box-shadow: 0 2px 12px rgba(67, 97, 238, 0.25);
+        position: relative;
+        overflow: hidden;
+        flex-shrink: 0;
+    }
+
+    .send-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.5s ease;
+    }
+
+    .send-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 20px rgba(67, 97, 238, 0.35);
+    }
+
+    .send-btn:hover::before {
+        left: 100%;
+    }
+
+    .send-btn:disabled {
+        background: var(--light-text);
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+
+    .stop-btn {
+        background: linear-gradient(135deg, var(--error-color), #ff006e) !important;
+    }
+
+    .stop-btn:hover {
+        box-shadow: 0 4px 20px rgba(249, 65, 68, 0.35) !important;
+    }
+
+    /* Progress Bar */
+    .file-progress-container {
+        margin-bottom: 0.875rem;
+        padding: 0.875rem;
+        background: rgba(67, 97, 238, 0.06);
+        border-radius: 10px;
+        border: 1px solid rgba(67, 97, 238, 0.1);
+    }
+
+    .file-progress-label {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.625rem;
+        font-size: 0.85rem;
+        color: var(--text-color);
+        font-weight: 500;
+    }
+
+    .file-progress-bar {
+        width: 100%;
+        height: 8px;
+        border-radius: 4px;
+        background: rgba(67, 97, 238, 0.1);
+        overflow: hidden;
+        position: relative;
+    }
+
+    .file-progress-bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+        transition: width 0.3s ease;
+        border-radius: 4px;
+        position: relative;
+    }
+
+    .file-progress-bar-fill::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+        animation: shimmer 2s infinite;
+    }
+
+    @keyframes shimmer {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+    }
+
+    /* Copy Toast */
+    .copy-toast {
+        position: fixed;
+        top: 2rem;
+        right: 2rem;
+        background: var(--success-color);
+        color: rgb(0, 0, 0);
+        padding: 0.875rem 1.25rem;
+        border-radius: 10px;
+        box-shadow: 0 4px 20px rgba(76, 201, 240, 0.25);
+        z-index: 9999;
+        opacity: 0;
+        transform: translateY(-15px);
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 500;
+    }
+
+    .copy-toast.show {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    /* Mobile Responsive */
+    .mobile-sidebar-toggle {
+        display: none;
+        position: fixed;
+        top: 1rem;
+        left: 1rem;
+        z-index: 200;
+        background: var(--primary-color);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 2.75rem;
+        height: 2.75rem;
+        cursor: pointer;
+        box-shadow: 0 2px 12px rgba(67, 97, 238, 0.25);
+        transition: all 0.3s ease;
+    }
+
+    .mobile-sidebar-toggle:hover {
+        transform: scale(1.05);
+        box-shadow: 0 4px 16px rgba(67, 97, 238, 0.35);
+    }
+
+    .mobile-sidebar-backdrop {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.4);
+        z-index: 140;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .mobile-sidebar-backdrop.show {
+        display: block;
+        opacity: 1;
+    }
+
+    /* Enhanced Preview Modal */
+    .preview-modal {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: var(--glassmorphism-bg);
+        backdrop-filter: blur(25px);
+        border-top: 1px solid var(--glassmorphism-border);
+        box-shadow: 0 -8px 30px rgba(67, 97, 238, 0.12);
+        z-index: 1000;
+        display: none;
+        height: 400px;
+        flex-direction: column;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border-radius: 16px 16px 0 0;
+        min-height: 200px;
+        max-height: 80vh;
+    }
+
+    .preview-modal.minimized {
+        height: 60px;
+        box-shadow: 0 -4px 15px rgba(67, 97, 238, 0.08);
+    }
+
+    .preview-modal.maximized {
+        height: 90vh;
+        border-radius: 12px;
+        margin: 2vh;
+        left: 2vh;
+        right: 2vh;
+        bottom: 2vh;
+        top: 2vh;
+    }
+
+    .preview-modal-header {
+        padding: 1rem 1.5rem;
+        background: rgba(67, 97, 238, 0.06);
+        border-bottom: 1px solid rgba(67, 97, 238, 0.1);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-radius: 16px 16px 0 0;
+        flex-shrink: 0;
+        cursor: move;
+        user-select: none;
+        position: relative;
+    }
+
+    .preview-modal.maximized .preview-modal-header {
+        border-radius: 12px 12px 0 0;
+    }
+
+    .preview-modal.minimized .preview-modal-header {
+        border-radius: 16px;
+        border-bottom: none;
+        cursor: pointer;
+    }
+
+    .preview-modal-title {
+        margin: 0;
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: var(--text-color);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex: 1;
+        min-width: 0;
+    }
+
+    .preview-modal-title .preview-icon {
+        font-size: 1rem;
+        flex-shrink: 0;
+    }
+
+    .preview-modal-title .preview-filename {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        min-width: 0;
+    }
+
+    .preview-modal-actions {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+        flex-shrink: 0;
+    }
+
+    .preview-action-btn {
+        background: rgba(255, 255, 255, 0.8);
+        border: 1px solid rgba(67, 97, 238, 0.15);
+        border-radius: 6px;
+        padding: 0.4rem;
+        cursor: pointer;
+        color: var(--primary-color);
+        font-size: 0.85rem;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 2rem;
+        height: 2rem;
+        backdrop-filter: blur(10px);
+    }
+
+    .preview-action-btn:hover {
+        background: var(--primary-color);
+        color: white;
+        transform: scale(1.05);
+        box-shadow: 0 2px 8px rgba(67, 97, 238, 0.25);
+    }
+
+    .preview-action-btn.close-btn:hover {
+        background: var(--error-color);
+        border-color: var(--error-color);
+    }
+
+    /* Resize Handle */
+    .preview-resize-handle {
+        height: 4px;
+        cursor: ns-resize;
+        background: transparent;
+        border-top: 1px solid rgba(67, 97, 238, 0.1);
+        position: relative;
+        flex-shrink: 0;
+        transition: all 0.2s ease;
+    }
+
+    .preview-resize-handle:hover {
+        background: rgba(67, 97, 238, 0.1);
+        height: 6px;
+    }
+
+    .preview-resize-handle::before {
+        content: "⋯";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: var(--primary-color);
+        font-size: 1rem;
+        font-weight: bold;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+    }
+
+    .preview-resize-handle:hover::before {
+        opacity: 1;
+    }
+
+    .preview-modal.minimized .preview-resize-handle {
+        display: none;
+    }
+
+    .preview-modal.maximized .preview-resize-handle {
+        display: none;
+    }
+
+    /* Preview Content */
+    .preview-content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 0;
+        background: white;
+        border-radius: 0 0 16px 16px;
+        transition: all 0.3s ease;
+        min-height: 0;
+    }
+
+    .preview-modal.minimized .preview-content {
+        display: none;
+    }
+
+    .preview-modal.maximized .preview-content {
+        border-radius: 0 0 12px 12px;
+    }
+
+    .preview-content::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .preview-content::-webkit-scrollbar-track {
+        background: rgba(67, 97, 238, 0.03);
+        border-radius: 3px;
+    }
+
+    .preview-content::-webkit-scrollbar-thumb {
+        background: rgba(67, 97, 238, 0.2);
+        border-radius: 3px;
+    }
+
+    .preview-content::-webkit-scrollbar-thumb:hover {
+        background: rgba(67, 97, 238, 0.3);
+    }
+
+    .preview-content .preview-document {
+        padding: 1.5rem;
+    }
+
+    .preview-document pre {
+        white-space: pre-wrap;
+        font-family: 'Courier New', monospace;
+        font-size: 0.85rem;
+        line-height: 1.6;
+        margin: 0;
+        color: var(--text-color);
+        background: rgba(67, 97, 238, 0.04);
+        padding: 1.25rem;
+        border-radius: 10px;
+        overflow-x: auto;
+        border-left: 3px solid var(--primary-color);
+    }
+
+    .preview-document mark {
+        background: linear-gradient(135deg, #fef08a, #fbbf24);
+        padding: 0.1em 0.3em;
+        border-radius: 0.2em;
+        color: var(--text-color);
+        font-weight: 500;
+    }
+
+    /* Preview States */
+    .preview-placeholder {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: var(--light-text);
+        padding: 2rem;
+        text-align: center;
+    }
+
+    .preview-placeholder i {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        color: var(--primary-color);
+        animation: pulse 2s ease-in-out infinite;
+    }
+
+    .preview-placeholder p {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 500;
+    }
+
+    .preview-loading, .preview-error {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        gap: 1rem;
+        padding: 2rem;
+        text-align: center;
+    }
+
+    .loading-spinner {
+        width: 2rem;
+        height: 2rem;
+        border: 3px solid rgba(67, 97, 238, 0.2);
+        border-radius: 50%;
+        border-top-color: var(--primary-color);
+        animation: spin 1s linear infinite;
+    }
+
+    .preview-error {
+        color: var(--error-color);
+    }
+
+    .preview-error i {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .btn-retry {
+        background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        margin-top: 1rem;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+        font-weight: 500;
+    }
+
+    .btn-retry:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(67, 97, 238, 0.3);
+    }
+
+    /* Preview Meta Information */
+    .preview-meta {
+        padding: 1rem 1.5rem;
+        font-size: 0.8rem;
+        color: var(--light-text);
+        background: rgba(67, 97, 238, 0.03);
+        border-top: 1px solid rgba(67, 97, 238, 0.1);
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        align-items: center;
+        flex-shrink: 0;
+    }
+
+    .preview-modal.minimized .preview-meta {
+        display: none;
+    }
+
+    .preview-meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.4rem 0.6rem;
+        background: rgba(255, 255, 255, 0.8);
+        border-radius: 6px;
+        border: 1px solid rgba(67, 97, 238, 0.1);
+        backdrop-filter: blur(5px);
+    }
+
+    .preview-meta-item i {
+        color: var(--primary-color);
+        font-size: 0.9rem;
+    }
+
+    .preview-meta-item a {
+        color: var(--primary-color);
+        text-decoration: none;
+        font-weight: 500;
+    }
+
+    .preview-meta-item a:hover {
+        text-decoration: underline;
+    }
+
+    /* Keyboard shortcuts indicator */
+    .preview-shortcuts {
+        position: absolute;
+        top: 0.5rem;
+        right: 6rem;
+        font-size: 0.7rem;
+        color: var(--light-text);
+        opacity: 0;
+        transition: opacity 0.2s ease;
+        pointer-events: none;
+    }
+
+    .preview-modal-header:hover .preview-shortcuts {
+        opacity: 1;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 1024px) {
+        :root {
+            --sidebar-width: 260px;
+        }
+        
+        .documents-panel {
+            width: 240px;
+        }
+        
+        .chat-input-container {
+            left: 260px;
+            right: 240px;
+        }
+        
+        .chat-messages {
+            padding: 1.25rem 1.5rem 140px 1.5rem;
+        }
+
+        .preview-modal.maximized {
+            margin: 1vh;
+            left: 1vh;
+            right: 1vh;
+            bottom: 1vh;
+            top: 1vh;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .mobile-sidebar-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modern-sidebar {
+            position: fixed;
+            top: 0;
+            left: -280px;
+            width: 280px;
+            height: 100vh;
+            z-index: 150;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+        }
+        
+        .modern-sidebar.mobile-open {
+            transform: translateX(0);
+        }
+        
+        .documents-panel {
+            display: none;
+        }
+        
+        .main-chat-area {
+            width: 100%;
+            margin-left: 0;
+        }
+        
+        .chat-input-container {
+            left: 0;
+            right: 0;
+        }
+        
+        .chat-messages {
+            padding: 1rem 1rem 140px 1rem;
+        }
+        
+        .message {
+            flex-direction: column;
+            gap: 0.875rem;
+            padding: 1rem;
+            margin-left: 0;
+            margin-right: 0;
+        }
+        
+        .message-avatar {
+            align-self: flex-start;
+            width: 36px;
+            height: 36px;
+        }
+        
+        .message-actions {
+            position: relative;
+            top: 0;
+            right: 0;
+            opacity: 1;
+            margin-top: 0.875rem;
+            justify-content: flex-end;
+        }
+        
+        .preview-modal {
+            height: 60vh;
+        }
+
+        .preview-modal.maximized {
+            margin: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            top: 0;
+            border-radius: 0;
+        }
+
+        .preview-modal.minimized {
+            height: 50px;
+        }
+
+        .preview-modal-header {
+            padding: 0.75rem 1rem;
+        }
+
+        .preview-modal-title {
+            font-size: 0.85rem;
+        }
+
+        .preview-action-btn {
+            width: 1.75rem;
+            height: 1.75rem;
+            font-size: 0.75rem;
+        }
+
+        .preview-shortcuts {
+            display: none;
+        }
+        
+        .chat-input-container {
+            padding: 1rem 1.25rem;
+        }
+        
+        .chat-header {
+            padding: 1rem 1.25rem;
+        }
+        
+        .sidebar-header {
+            padding: 1.25rem;
+        }
+
+        .copy-toast {
+            top: 1rem;
+            right: 1rem;
+            left: 1rem;
+            text-align: center;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .modern-sidebar {
+            width: 100%;
+            left: -100%;
+        }
+        
+        .sidebar-header {
+            padding: 1rem;
+        }
+        
+        .chat-history {
+            padding: 1rem;
+        }
+        
+        .send-btn {
+            height: 2.5rem;
+            width: 2.5rem;
+        }
+        
+        .chat-input {
+            padding: 0.75rem 1rem;
+            font-size: 0.9rem;
+            min-height: 2.5rem;
+        }
+        
+        .message {
+            padding: 0.875rem;
+        }
+        
+        .message-avatar {
+            width: 32px;
+            height: 32px;
+        }
+        
+        .chat-messages {
+            padding: 1rem 1rem 140px 1rem;
+        }
+
+        .chat-input-container {
+            padding: 0.875rem 1rem;
+        }
+
+        .preview-modal-actions {
+            gap: 0.25rem;
+        }
+
+        .preview-action-btn {
+            width: 1.5rem;
+            height: 1.5rem;
+            font-size: 0.7rem;
+        }
+    }
+
+    /* Animation utilities */
+    .spin {
+        animation: spin 1s linear infinite;
+    }
+
+    .fadeIn {
+        animation: fadeIn 0.5s ease-out;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Mobile Sidebar Toggle -->
+<button class="mobile-sidebar-toggle" onclick="toggleMobileSidebar()">
+    <i class="bi bi-list"></i>
+</button>
+
+<!-- Mobile Sidebar Backdrop -->
+<div class="mobile-sidebar-backdrop" onclick="closeMobileSidebar()"></div>
+
+<!-- Copy Toast Notification -->
+<div id="copy-toast" class="copy-toast">
+    <i class="bi bi-check-circle"></i>
+    <span>Message copied to clipboard!</span>
+</div>
+
+<div class="deepseek-container">
+    <!-- Modern Sidebar -->
+    <div class="modern-sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <a href="{{ url_for('index') }}" class="new-chat-btn">
+                <i class="bi bi-plus-lg"></i> New Upload
+            </a>
+        </div>
+        
         <div class="chat-history">
             {% for conversation in conversations %}
-            <div class="chat-item-wrapper {% if conversation.id == chat_id %}active{% endif %}" data-chat-id="{{ conversation.id }}">
+            <div class="chat-item-container {% if conversation.id == chat_id %}active{% endif %}" data-chat-id="{{ conversation.id }}">
                 <a href="{{ url_for('chat', chat_id=conversation.id) }}" class="chat-item">
                     <i class="bi bi-chat-left chat-item-icon"></i>
                     <span class="chat-item-title" id="chat-title-{{ conversation.id }}">{{ conversation.title }}</span>
-                    <button class="btn-delete-chat" data-chat-id="{{ conversation.id }}" title="Delete chat">
+                    <button class="delete-chat-btn" data-chat-id="{{ conversation.id }}" title="Delete chat">
                         <i class="bi bi-trash"></i>
                     </button>
                 </a>
@@ -19,26 +1670,47 @@
         </div>
     </div>
 
-    <div class="chat-container" id="chat-container">
+    <!-- Main Chat Area -->
+    <div class="main-chat-area" id="chat-container">
+        <div class="chat-header">
+            <h3 class="chat-title">
+                <i class="bi bi-chat-dots chat-title-icon"></i>
+                Chat Session
+            </h3>
+        </div>
+       
         <div class="chat-messages" id="chat-messages">
             {% for message in conversation.messages|default([]) %}
             <div class="message {% if message.role == 'assistant' %}message-assistant{% else %}message-user{% endif %}">
                 <div class="message-avatar">
                     {% if message.role == 'user' %}
-                    <i class="bi bi-person-fill"></i> {% else %}
-                    <i class="bi bi-robot"></i> {% endif %}
+                    <i class="bi bi-person-fill"></i> 
+                    {% else %}
+                    <i class="bi bi-robot"></i> 
+                    {% endif %}
                 </div>
                 <div class="message-content">
+                    <div class="message-actions">
+                        <button class="copy-message-btn" onclick="copyMessageToClipboard(this)" title="Copy message">
+                            <i class="bi bi-copy"></i>
+                        </button>
+                    </div>
                     <div class="message-text">
-                        {% if message.role == 'assistant' %} {{ message.content|process_references|safe }} {% else %} {{ message.content|replace('\n', '<br>')|safe }} {% endif %}
+                        {% if message.role == 'assistant' %} 
+                        {{ message.content|process_references|safe }} 
+                        {% else %} 
+                        {{ message.content|replace('\n', '<br>')|safe }} 
+                        {% endif %}
                     </div>
                     {% if message.role == 'assistant' and message.sources %}
                     <div class="message-sources">
                         <div class="sources-header">
-                            <span class="supported-files-title">Sources:</span> {% if message.sources|length > 2 %}
-                            <button class="btn-toggle-sources" onclick="toggleSources(this)">
+                            <span class="sources-title">Sources</span> 
+                            {% if message.sources|length > 2 %}
+                            <button class="toggle-sources-btn" onclick="toggleSources(this)">
                                 Show more
-                            </button> {% endif %}
+                            </button> 
+                            {% endif %}
                         </div>
                         <div class="sources-list" style="{% if message.sources|length > 2 %}display: none;{% endif %}">
                             {% for source in message.sources %}
@@ -73,7 +1745,8 @@
                             <i class="bi bi-file-text"></i>
                             <span>{{ file }}</span>
                         </div>
-                        {% endfor %} {% if uploaded_files|length > 3 %}
+                        {% endfor %} 
+                        {% if uploaded_files|length > 3 %}
                         <div class="file-preview-more">
                             +{{ uploaded_files|length - 3 }} more files
                         </div>
@@ -85,17 +1758,27 @@
             </div>
         </div>
 
-        <!-- Preview Modal Bottom Sheet -->
+        <!-- Enhanced Preview Modal -->
         <div id="preview-modal" class="preview-modal">
-            <div class="preview-modal-header">
-                <h6 id="preview-title">Document Preview</h6>
-                <div class="preview-actions">
-                    <button class="btn-preview-action" onclick="togglePreviewModal()">
+            <div class="preview-modal-header" id="preview-header">
+                <h6 class="preview-modal-title">
+                    <span class="preview-icon">👁️</span>
+                    <span class="preview-filename" id="preview-title">Document Preview</span>
+                </h6>
+                <div class="preview-shortcuts">ESC to close • Double-click to maximize</div>
+                <div class="preview-modal-actions">
+                    <button class="preview-action-btn" onclick="minimizePreview()" title="Minimize (Ctrl+M)">
+                        <i class="bi bi-dash"></i>
+                    </button>
+                    <button class="preview-action-btn" onclick="toggleMaximizePreview()" title="Maximize/Restore (Ctrl+↑)" id="maximize-btn">
+                        <i class="bi bi-arrows-fullscreen"></i>
+                    </button>
+                    <button class="preview-action-btn close-btn" onclick="closePreview()" title="Close (ESC)">
                         <i class="bi bi-x-lg"></i>
                     </button>
                 </div>
             </div>
-            <div class="preview-resize-handle"></div>
+            <div class="preview-resize-handle" id="preview-resize-handle"></div>
             <div id="preview-content" class="preview-content">
                 <div class="preview-placeholder">
                     <i class="bi bi-file-earmark-text"></i>
@@ -104,960 +1787,251 @@
             </div>
             <div id="preview-meta" class="preview-meta"></div>
         </div>
+    </div>
 
-        <div class="chat-input-container">
-            <form id="chat-form" method="POST" class="chat-input-wrapper">
-                <div class="input-group">
-                    <textarea name="question" class="chat-input" placeholder="Ask a query..." required></textarea>
-                    <button type="submit" class="btn-send" id="send-button">
-                        <i class="bi bi-send"></i>
-                    </button>
+    <!-- Documents Panel -->
+    <div class="documents-panel">
+        <div class="documents-header">
+            <h4 class="documents-title">
+                <i class="bi bi-folder2-open"></i> Files
+            </h4>
+            <span class="document-count">{{ documents|length }}</span>
+        </div>
+        <div class="document-list">
+            {% for document in documents %}
+            <div class="document-item" data-path="{{ document.file_path }}">
+                <div class="document-icon">
+                    {% if document.file_type == '.pdf' %}
+                    <i class="bi bi-file-earmark-pdf"></i>
+                    {% elif document.file_type == '.docx' %}
+                    <i class="bi bi-file-earmark-word"></i>
+                    {% elif document.file_type == '.xlsx' %}
+                    <i class="bi bi-file-earmark-excel"></i>
+                    {% elif document.file_type == '.pptx' %}
+                    <i class="bi bi-file-earmark-ppt"></i>
+                    {% elif document.file_type in ['.jpg', '.jpeg', '.png'] %}
+                    <i class="bi bi-file-earmark-image"></i>
+                    {% else %}
+                    <i class="bi bi-file-earmark-text"></i>
+                    {% endif %}
                 </div>
-            </form>
+                <div class="document-name">{{ document.file_path.split('/')[-1] }}</div>
+                <div class="document-preview-btn" title="Preview document">
+                    <i class="bi bi-eye"></i>
+                </div>
+            </div>
+            {% endfor %}
         </div>
     </div>
+
+    <!-- Chat Input Container -->
+    <div class="chat-input-container">
+        <form id="chat-form" method="POST" class="chat-input-wrapper">
+            <div class="input-group">
+                <textarea name="question" class="chat-input" placeholder="Ask a question about your documents..." required></textarea>
+                <button type="submit" class="send-btn" id="send-button">
+                    <i class="bi bi-send"></i>
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
+{% endblock %}
 
-<style>
-    /* Modern color scheme with gradients */
-    
-     :root {
-        --primary-color: #4361ee;
-        --secondary-color: #3a0ca3;
-        --accent-color: #7209b7;
-        --light-accent: #f72585;
-        --text-color: #2b2d42;
-        --light-text: #8d99ae;
-        --background-light: #f8f9fa;
-        --card-bg: #ffffff;
-        --success-color: #4cc9f0;
-        --warning-color: #f8961e;
-        --error-color: #f94144;
-    }
-    /* Gradient text effect */
-    
-    .gradient-text {
-        background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
-        -webkit-background-clip: text;
-        background-clip: text;
-        color: transparent;
-        display: inline-block;
-    }
-    /* Main app container */
-    
-    .app-container {
-        display: flex;
-        min-height: 100vh;
-        background: linear-gradient(135deg, var(--background-light) 0%, #e9ecef 100%);
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        color: var(--text-color);
-        line-height: 1.6;
-    }
-    /* Sidebar styling */
-    
-    .sidebar {
-        width: 280px;
-        background-color: var(--card-bg);
-        border-right: 1px solid rgba(0, 0, 0, 0.1);
-        padding: 20px;
-        display: flex;
-        flex-direction: column;
-        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
-    }
-    
-    .btn-new-chat {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        padding: 12px 16px;
-        border-radius: 8px;
-        border: none;
-        background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
-        color: white;
-        font-weight: 500;
-        cursor: pointer;
-        margin-bottom: 20px;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 15px rgba(67, 97, 238, 0.3);
-    }
-    
-    .btn-new-chat:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(67, 97, 238, 0.4);
-    }
-    
-    .btn-new-chat i {
-        font-size: 1.1rem;
-    }
-    
-    .chat-history {
-        flex-grow: 1;
-        overflow-y: auto;
-        scrollbar-width: thin;
-        scrollbar-color: rgba(67, 97, 238, 0.3) transparent;
-    }
-    
-    .chat-history::-webkit-scrollbar {
-        width: 6px;
-    }
-    
-    .chat-history::-webkit-scrollbar-track {
-        background: rgba(67, 97, 238, 0.1);
-        border-radius: 3px;
-    }
-    
-    .chat-history::-webkit-scrollbar-thumb {
-        background: rgba(67, 97, 238, 0.3);
-        border-radius: 3px;
-    }
-    
-    .chat-history::-webkit-scrollbar-thumb:hover {
-        background: rgba(67, 97, 238, 0.5);
-    }
-    
-    .chat-item-wrapper {
-        margin-bottom: 8px;
-        border-radius: 8px;
-        transition: all 0.3s ease;
-    }
-    
-    .chat-item-wrapper:hover {
-        background-color: rgba(67, 97, 238, 0.05);
-    }
-    
-    .chat-item-wrapper.active {
-        background-color: rgba(67, 97, 238, 0.1);
-        border-left: 3px solid var(--primary-color);
-    }
-    
-    .chat-item {
-        display: flex;
-        align-items: center;
-        padding: 12px;
-        text-decoration: none;
-        color: var(--text-color);
-        border-radius: 8px;
-    }
-    
-    .chat-item-icon {
-        margin-right: 12px;
-        color: var(--primary-color);
-        font-size: 1.1rem;
-    }
-    
-    .chat-item-title {
-        flex-grow: 1;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        font-size: 0.95rem;
-    }
-    
-    .btn-delete-chat {
-        background: none;
-        border: none;
-        color: var(--light-text);
-        cursor: pointer;
-        padding: 4px;
-        border-radius: 4px;
-        opacity: 0;
-        transition: all 0.3s ease;
-    }
-    
-    .chat-item-wrapper:hover .btn-delete-chat {
-        opacity: 1;
-    }
-    
-    .btn-delete-chat:hover {
-        color: var(--error-color);
-        background-color: rgba(249, 65, 68, 0.1);
-    }
-    /* Chat container */
-    
-    .chat-container {
-        flex-grow: 1;
-        display: flex;
-        flex-direction: column;
-        max-width: 1000px;
-        width: 100%;
-        margin: 0 auto;
-        padding: 20px;
-    }
-    
-    .chat-messages {
-        flex-grow: 1;
-        overflow-y: auto;
-        padding: 20px;
-        scrollbar-width: thin;
-        scrollbar-color: rgba(67, 97, 238, 0.3) transparent;
-    }
-    
-    .chat-messages::-webkit-scrollbar {
-        width: 6px;
-    }
-    
-    .chat-messages::-webkit-scrollbar-track {
-        background: rgba(67, 97, 238, 0.1);
-        border-radius: 3px;
-    }
-    
-    .chat-messages::-webkit-scrollbar-thumb {
-        background: rgba(67, 97, 238, 0.3);
-        border-radius: 3px;
-    }
-    
-    .chat-messages::-webkit-scrollbar-thumb:hover {
-        background: rgba(67, 97, 238, 0.5);
-    }
-    /* Message styling */
-    
-    .message {
-        display: flex;
-        gap: 1rem;
-        padding: 1rem;
-        margin-bottom: 1rem;
-        border-radius: 12px;
-    }
-    
-    .message-user {
-        border-left: 4px solid var(--primary-color);
-    }
-    
-    
-    .message-avatar {
-        flex-shrink: 0;
-        width: 36px;
-        height: 36px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-    }
-    
-    .message-content {
-        flex-grow: 1;
-        min-width: 0;
-    }
-    
-    .message-text {
-        line-height: 1.6;
-        word-wrap: break-word;
-    }
-    
-    .message-text pre {
-        background-color: rgba(67, 97, 238, 0.1);
-        padding: 12px;
-        border-radius: 8px;
-        overflow-x: auto;
-    }
-    
-    .message-text code {
-        font-family: 'Courier New', monospace;
-        background-color: rgba(67, 97, 238, 0.1);
-        padding: 2px 4px;
-        border-radius: 4px;
-    }
-    /* Empty state placeholder */
-    
-    .empty-state {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        height: calc(100% - 100px);
-        text-align: center;
-        padding: 2rem;
-        color: var(--light-text);
-    }
-    
-    .empty-state.hidden {
-        display: none;
-    }
-    
-    .empty-state i.bi {
-        font-size: 3rem;
-        margin-bottom: 1rem;
-        color: var(--primary-color);
-    }
-    
-    .empty-state h4 {
-        margin-bottom: 0.5rem;
-        color: var(--text-color);
-        font-size: 1.5rem;
-    }
-    
-    .uploaded-files-preview {
-        max-width: 400px;
-        width: 100%;
-        margin: 1rem auto;
-        background: rgba(67, 97, 238, 0.05);
-        border-radius: 12px;
-        padding: 1rem;
-        border: 1px dashed rgba(67, 97, 238, 0.2);
-    }
-    
-    .file-preview-item {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 0.5rem;
-        text-align: left;
-        border-bottom: 1px solid rgba(67, 97, 238, 0.1);
-    }
-    
-    .file-preview-item:last-child {
-        border-bottom: none;
-    }
-    
-    .file-preview-more {
-        padding: 0.5rem;
-        font-size: 0.9rem;
-        color: var(--light-text);
-    }
-    
-    .prompt-text {
-        margin-top: 1rem;
-        font-style: italic;
-        color: var(--light-text);
-    }
-    /* Status message styling */
-    
-    .status-message {
-        margin-bottom: 0.5rem;
-        font-size: 0.95rem;
-        min-height: 1.5em;
-        position: relative;
-        padding-left: 1.5rem;
-    }
-    
-    .status-message::before {
-        content: "";
-        position: absolute;
-        left: 0;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 0.8rem;
-        height: 0.8rem;
-        border-radius: 50%;
-        background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
-        animation: pulse 1.5s infinite ease-in-out;
-    }
-    
-    .status-message.error::before {
-        background: linear-gradient(135deg, var(--error-color), #ff006e);
-        animation: pulse-error 0.75s infinite ease-in-out;
-    }
-    
-    @keyframes pulse {
-        0% {
-            transform: translateY(-50%) scale(1);
-            opacity: 1;
-        }
-        50% {
-            transform: translateY(-50%) scale(1.2);
-            opacity: 0.7;
-        }
-        100% {
-            transform: translateY(-50%) scale(1);
-            opacity: 1;
-        }
-    }
-    
-    @keyframes pulse-error {
-        0% {
-            transform: translateY(-50%) scale(1);
-            opacity: 1;
-        }
-        50% {
-            transform: translateY(-50%) scale(1.3);
-            opacity: 0.5;
-        }
-        100% {
-            transform: translateY(-50%) scale(1);
-            opacity: 1;
-        }
-    }
-    /* Reference styling */
-    
-    .reference-link {
-        cursor: pointer;
-        color: var(--primary-color);
-        text-decoration: underline;
-    }
-    
-    .reference-link:hover {
-        color: var(--accent-color);
-    }
-    /* Sources section styling */
-    
-    .message-sources {
-        margin-top: 1rem;
-        font-size: 0.875rem;
-        background-color: rgba(67, 97, 238, 0.05);
-        padding: 12px;
-        border-radius: 8px;
-    }
-    
-    .sources-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 0.5rem;
-    }
-    
-    .supported-files-title {
-        font-weight: 500;
-        color: var(--text-color);
-    }
-    
-    .btn-toggle-sources {
-        background: none;
-        border: none;
-        color: var(--primary-color);
-        cursor: pointer;
-        font-size: 0.8rem;
-        padding: 0.25rem 0.5rem;
-        border-radius: 4px;
-    }
-    
-    .btn-toggle-sources:hover {
-        background-color: rgba(67, 97, 238, 0.1);
-    }
-    
-    .sources-list {
-        max-height: 200px;
-        overflow-y: auto;
-        transition: max-height 0.3s ease;
-    }
-    
-    .message-source {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        margin-bottom: 4px;
-        cursor: pointer;
-        padding: 8px;
-        border-radius: 4px;
-        transition: all 0.3s ease;
-    }
-    
-    .message-source:hover {
-        background-color: rgba(67, 97, 238, 0.1);
-    }
-    
-    .message-source-icon {
-        color: var(--primary-color);
-    }
-    /* Preview Modal Styles */
-    
-    .preview-modal {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        background: var(--card-bg);
-        border-top: 1px solid rgba(0, 0, 0, 0.1);
-        box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.1);
-        z-index: 1000;
-        display: none;
-        height: 300px;
-        flex-direction: column;
-        transition: height 0.2s ease;
-    }
-    
-    .preview-modal-open {
-        --preview-modal-height: 300px;
-    }
-    
-    .preview-modal-header {
-        padding: 12px 16px;
-        background: rgba(67, 97, 238, 0.05);
-        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-    
-    .preview-modal-header h6 {
-        margin: 0;
-        font-size: 1rem;
-        font-weight: 500;
-        color: var(--text-color);
-    }
-    
-    .preview-actions {
-        display: flex;
-        gap: 8px;
-    }
-    
-    .btn-preview-action {
-        background: none;
-        border: none;
-        color: var(--light-text);
-        cursor: pointer;
-        padding: 4px;
-        border-radius: 4px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    
-    .btn-preview-action:hover {
-        background-color: rgba(0, 0, 0, 0.05);
-    }
-    
-    .preview-resize-handle {
-        height: 8px;
-        cursor: ns-resize;
-        background-color: rgba(67, 97, 238, 0.05);
-        border-top: 1px solid rgba(0, 0, 0, 0.1);
-        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-    }
-    
-    .preview-resize-handle:hover {
-        background-color: rgba(67, 97, 238, 0.1);
-    }
-    
-    .preview-content {
-        flex-grow: 1;
-        overflow-y: auto;
-        padding: 0;
-        background: var(--card-bg);
-    }
-    
-    .preview-content .preview-document {
-        padding: 16px;
-    }
-    
-    .preview-document pre {
-        white-space: pre-wrap;
-        font-family: 'Courier New', monospace;
-        font-size: 0.9rem;
-        line-height: 1.5;
-        margin: 0;
-        color: var(--text-color);
-        background-color: rgba(67, 97, 238, 0.05);
-        padding: 1rem;
-        border-radius: 0.5rem;
-        overflow-x: auto;
-    }
-    
-    .preview-document mark {
-        background-color: #fef08a;
-        padding: 0 0.2em;
-        border-radius: 0.25em;
-    }
-    
-    .preview-meta {
-        padding: 8px 16px;
-        font-size: 0.8rem;
-        color: var(--light-text);
-        background: rgba(67, 97, 238, 0.05);
-        border-top: 1px solid rgba(0, 0, 0, 0.1);
-        display: flex;
-        gap: 12px;
-        flex-wrap: wrap;
-    }
-    
-    .preview-meta-item {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-    }
-    
-    .preview-meta-item a {
-        color: var(--primary-color);
-        text-decoration: none;
-    }
-    
-    .preview-meta-item a:hover {
-        text-decoration: underline;
-    }
-    
-    .preview-placeholder {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        height: 100%;
-        color: var(--light-text);
-    }
-    
-    .preview-placeholder i {
-        font-size: 2rem;
-        margin-bottom: 8px;
-        color: var(--primary-color);
-    }
-    
-    .preview-placeholder p {
-        margin: 0;
-        font-size: 0.9rem;
-    }
-    
-    .preview-loading {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        height: 100%;
-        gap: 8px;
-        color: var(--text-color);
-    }
-    
-    .loading-spinner {
-        width: 24px;
-        height: 24px;
-        border: 3px solid rgba(67, 97, 238, 0.1);
-        border-radius: 50%;
-        border-top-color: var(--primary-color);
-        animation: spin 1s linear infinite;
-    }
-    
-    .preview-error {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        height: 100%;
-        gap: 8px;
-        color: var(--error-color);
-        padding: 20px;
-        text-align: center;
-    }
-    
-    .preview-error i {
-        font-size: 2rem;
-    }
-    /* Adjust chat container when preview is open */
-    
-    .chat-container {
-        padding-bottom: 0;
-        transition: padding-bottom 0.2s ease;
-    }
-    /* Chat input */
-    
-    .chat-input-container {
-        position: sticky;
-        bottom: 0;
-        background: var(--card-bg);
-        padding: 1rem;
-        border-top: 1px solid rgba(0, 0, 0, 0.1);
-        box-shadow: 0 -5px 15px rgba(0, 0, 0, 0.05);
-    }
-    
-    .input-group {
-        display: flex;
-        align-items: flex-end;
-        gap: 0.5rem;
-    }
-    
-    .chat-input {
-        flex-grow: 1;
-        border: 1px solid rgba(0, 0, 0, 0.1);
-        border-radius: 12px;
-        padding: 0.75rem;
-        resize: none;
-        max-height: 150px;
-        min-height: 44px;
-        font-family: inherit;
-        background-color: var(--card-bg);
-        transition: all 0.3s ease;
-    }
-    
-    .chat-input:focus {
-        outline: none;
-        border-color: var(--primary-color);
-        box-shadow: 0 0 0 2px rgba(67, 97, 238, 0.2);
-    }
-    
-    .btn-send {
-        height: 44px;
-        width: 44px;
-        border: none;
-        border-radius: 12px;
-        background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
-        color: white;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.3s ease;
-    }
-    
-    .btn-send:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 15px rgba(67, 97, 238, 0.3);
-    }
-    
-    .btn-send:disabled {
-        background: var(--light-text);
-        cursor: not-allowed;
-    }
-    
-    .btn-stop-active {
-        background: linear-gradient(135deg, var(--error-color), #ff006e) !important;
-    }
-    
-    .btn-stop-active:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 15px rgba(249, 65, 68, 0.3) !important;
-    }
-    
-    .spin {
-        animation: spin 1s linear infinite;
-    }
-    
-    @keyframes spin {
-        from {
-            transform: rotate(0deg);
-        }
-        to {
-            transform: rotate(360deg);
-        }
-    }
-    /* PDF Preview Styles */
-    
-    .pdf-preview-container {
-        width: 100%;
-        height: 100%;
-        overflow: hidden;
-    }
-    
-    .pdf-preview-frame {
-        width: 100%;
-        height: 100%;
-        border: none;
-    }
-    /* Image Preview Styles */
-    
-    .image-preview-container {
-        width: 100%;
-        height: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        overflow: auto;
-    }
-    
-    .image-preview {
-        max-width: 100%;
-        max-height: 100%;
-        object-fit: contain;
-    }
-    /* Syntax highlighting for JSON */
-    
-    .preview-document.json .key {
-        color: #d946ef;
-    }
-    
-    .preview-document.json .string {
-        color: #65a30d;
-    }
-    
-    .preview-document.json .number {
-        color: #2563eb;
-    }
-    
-    .preview-document.json .boolean {
-        color: #9333ea;
-    }
-    
-    .preview-document.json .null {
-        color: #64748b;
-    }
-    
-    .last-clicked-source {
-        background-color: rgba(67, 97, 238, 0.1);
-        border-left: 3px solid var(--primary-color);
-    }
-    
-    .loading-file-name {
-        font-size: 0.8rem;
-        margin-top: 0.5rem;
-        color: var(--light-text);
-        font-style: italic;
-    }
-    
-    .office-preview-container {
-        display: flex;
-        flex-direction: column;
-        height: 100%;
-    }
-    
-    .office-preview-frame {
-        flex-grow: 1;
-        border: none;
-    }
-    
-    .office-preview-footer {
-        padding: 0.5rem;
-        background: rgba(67, 97, 238, 0.05);
-        border-top: 1px solid rgba(0, 0, 0, 0.1);
-        text-align: center;
-    }
-    
-    .btn-retry {
-        background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
-        color: white;
-        border: none;
-        padding: 0.5rem 1rem;
-        border-radius: 4px;
-        margin-top: 1rem;
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        transition: all 0.3s ease;
-    }
-    
-    .btn-retry:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 15px rgba(67, 97, 238, 0.3);
-    }
-    
-    .btn-retry i {
-        animation: spin 1s linear infinite;
-    }
-    
-    .loading-file-path {
-        font-size: 0.7rem;
-        margin-top: 0.3rem;
-        color: var(--light-text);
-        word-break: break-all;
-        font-family: monospace;
-    }
-    /* Progress bar styling */
-    
-    .file-progress-container {
-        margin-bottom: 10px;
-        padding: 8px;
-        background: rgba(67, 97, 238, 0.05);
-        border-radius: 8px;
-    }
-    
-    .file-progress-label {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 4px;
-        font-size: 0.85rem;
-        color: var(--text-color);
-    }
-    
-    .file-progress-bar {
-        width: 100%;
-        height: 8px;
-        border-radius: 4px;
-        background-color: rgba(67, 97, 238, 0.1);
-        overflow: hidden;
-    }
-    
-    .file-progress-bar-fill {
-        height: 100%;
-        background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
-        transition: width 0.3s ease;
-    }
-    /* Responsive styles */
-    
-    @media (max-width: 768px) {
-        .app-container {
-            flex-direction: column;
-        }
-        .sidebar {
-            width: 100%;
-            border-right: none;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-            padding: 15px;
-        }
-        .chat-container {
-            padding: 15px;
-        }
-        .message {
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-        .message-avatar {
-            align-self: flex-start;
-        }
-    }
-    
-    @media (max-width: 480px) {
-        .preview-modal {
-            height: 60vh;
-        }
-        .chat-input-container {
-            padding: 0.75rem;
-        }
-        .btn-send {
-            height: 40px;
-            width: 40px;
-        }
-    }
-</style>
-
+{% block extra_scripts %}
 <script>
-   
-     // Make user ID available to JavaScript
-   window.currentUserId = {{ current_user.id | tojson }};
+    // Make user ID available to JavaScript
+    window.currentUserId = "{{ current_user.id|tojson|safe }}";
 
     // Global variables
     let currentRequestController = null;
     let isPreviewModalOpen = false;
-    let previewModalHeight = 300; // Default height in pixels
+    let previewModalHeight = 400;
+    let isMobileSidebarOpen = false;
+    let isPreviewMinimized = false;
+    let isPreviewMaximized = false;
+    let previewDragState = { isDragging: false, startY: 0, startHeight: 0 };
 
     // DOM elements
     const previewContent = document.getElementById('preview-content');
-    const previewTitle = document.getElementById('preview-title');
+    const previewTitle = document.querySelector('.preview-filename');
     const previewMeta = document.getElementById('preview-meta');
+    const sidebar = document.getElementById('sidebar');
+    const backdrop = document.querySelector('.mobile-sidebar-backdrop');
+    const copyToast = document.getElementById('copy-toast');
+    const previewModal = document.getElementById('preview-modal');
+    const previewResizeHandle = document.getElementById('preview-resize-handle');
+    const previewHeader = document.getElementById('preview-header');
+    const maximizeBtn = document.getElementById('maximize-btn');
 
-    // Debug function to help troubleshoot file paths
-    window.debugFilePaths = function() {
-        console.log('Current user ID:', window.currentUserId);
-        console.log('Available sources in current conversation:');
-
-        document.querySelectorAll('.message-source').forEach((source, index) => {
-            const path = source.getAttribute('data-source');
-            const display = source.querySelector('span').textContent;
-            console.log(`${index + 1}. Display: "${display}", Path: "${path}"`);
-        });
-    };
-
-    // Enhanced error logging
-    const originalFetch = window.fetch;
-    window.fetch = function(...args) {
-        const url = args[0];
-        if (url.includes('/get_file_content')) {
-            console.log('Fetching file:', url);
-        }
-        return originalFetch.apply(this, args).then(response => {
-            if (!response.ok && url.includes('/get_file_content')) {
-                console.error('File fetch failed:', url, response.status, response.statusText);
+    // Copy to clipboard functionality
+    async function copyMessageToClipboard(button) {
+        const messageContent = button.closest('.message-content');
+        const messageTextElement = messageContent.querySelector('.message-text');
+        
+        let textToCopy = getPlainTextFromElement(messageTextElement);
+        
+        try {
+            await navigator.clipboard.writeText(textToCopy);
+            
+            const originalIcon = button.innerHTML;
+            button.innerHTML = '<i class="bi bi-check"></i>';
+            button.classList.add('copied');
+            
+            showCopyToast();
+            
+            setTimeout(() => {
+                button.innerHTML = originalIcon;
+                button.classList.remove('copied');
+            }, 2000);
+            
+        } catch (err) {
+            console.error('Failed to copy: ', err);
+            
+            const textArea = document.createElement('textarea');
+            textArea.value = textToCopy;
+            textArea.style.position = 'fixed';
+            textArea.style.opacity = '0';
+            document.body.appendChild(textArea);
+            textArea.select();
+            
+            try {
+                document.execCommand('copy');
+                showCopyToast();
+                
+                const originalIcon = button.innerHTML;
+                button.innerHTML = '<i class="bi bi-check"></i>';
+                button.classList.add('copied');
+                
+                setTimeout(() => {
+                    button.innerHTML = originalIcon;
+                    button.classList.remove('copied');
+                }, 2000);
+                
+            } catch (fallbackErr) {
+                console.error('Fallback copy failed: ', fallbackErr);
+                showCopyToast('Failed to copy message', true);
             }
-            return response;
+            
+            document.body.removeChild(textArea);
+        }
+    }
+
+    function getPlainTextFromElement(element) {
+        const clone = element.cloneNode(true);
+        
+        const refLinks = clone.querySelectorAll('.reference-link');
+        refLinks.forEach(link => {
+            link.replaceWith(link.textContent);
         });
-    };
+        
+        clone.innerHTML = clone.innerHTML
+            .replace(/<br\s*\/?>/gi, '\n')
+            .replace(/<\/p>/gi, '\n\n')
+            .replace(/<\/div>/gi, '\n')
+            .replace(/<\/h[1-6]>/gi, '\n\n')
+            .replace(/<li>/gi, '• ')
+            .replace(/<\/li>/gi, '\n')
+            .replace(/<strong>(.*?)<\/strong>/gi, '$1')
+            .replace(/<em>(.*?)<\/em>/gi, '$1')
+            .replace(/<code>(.*?)<\/code>/gi, '$1');
+        
+        let text = clone.textContent || clone.innerText || '';
+        text = text.replace(/\n\s*\n\s*\n/g, '\n\n');
+        text = text.trim();
+        
+        return text;
+    }
+
+    function showCopyToast(message = 'Message copied to clipboard!', isError = false) {
+        const toast = document.getElementById('copy-toast');
+        const icon = toast.querySelector('i');
+        const text = toast.querySelector('span');
+        
+        text.textContent = message;
+        
+        if (isError) {
+            icon.className = 'bi bi-exclamation-triangle';
+            toast.style.background = 'var(--error-color)';
+        } else {
+            icon.className = 'bi bi-check-circle';
+            toast.style.background = 'var(--success-color)';
+        }
+        
+        toast.classList.add('show');
+        
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, 3000);
+    }
+
+    // Mobile sidebar functions
+    function toggleMobileSidebar() {
+        isMobileSidebarOpen = !isMobileSidebarOpen;
+        if (isMobileSidebarOpen) {
+            sidebar.classList.add('mobile-open');
+            backdrop.classList.add('show');
+            document.body.style.overflow = 'hidden';
+        } else {
+            closeMobileSidebar();
+        }
+    }
+
+    function closeMobileSidebar() {
+        isMobileSidebarOpen = false;
+        sidebar.classList.remove('mobile-open');
+        backdrop.classList.remove('show');
+        document.body.style.overflow = 'auto';
+    }
 
     function getCurrentUserId() {
         return window.currentUserId || '1';
     }
 
     document.addEventListener('DOMContentLoaded', function() {
-        // Initialize all components
         initChatForm();
         initReferenceHandlers();
         initPreviewModal();
         initChatHistory();
+        initResponsiveHandlers();
+        initDocumentTree();
         scrollToBottom();
 
-        // Focus the input field for better UX
         const chatInput = document.querySelector('.chat-input');
         if (chatInput) {
             chatInput.focus();
         }
     });
 
+    function initResponsiveHandlers() {
+        window.addEventListener('resize', function() {
+            if (window.innerWidth > 768 && isMobileSidebarOpen) {
+                closeMobileSidebar();
+            }
+        });
+
+        document.getElementById('chat-messages').addEventListener('click', function() {
+            if (window.innerWidth <= 768 && isMobileSidebarOpen) {
+                closeMobileSidebar();
+            }
+        });
+    }
+
+    function initDocumentTree() {
+        document.querySelectorAll('.document-item').forEach(item => {
+            item.addEventListener('click', function(e) {
+                if (e.target.closest('.document-preview-btn')) {
+                    const path = this.getAttribute('data-path');
+                    showFilePreview(path);
+                } else {
+                    document.querySelectorAll('.document-item').forEach(i => {
+                        i.classList.remove('active');
+                    });
+                    this.classList.add('active');
+                }
+            });
+        });
+    }
 
     function initChatForm() {
         const chatForm = document.getElementById('chat-form');
@@ -1066,14 +2040,11 @@
         const textarea = chatForm.querySelector('textarea');
         const sendButton = document.getElementById('send-button');
 
-        // Auto-resize textarea
         textarea.addEventListener('input', function() {
             this.style.height = 'auto';
-            this.style.height = Math.min(this.scrollHeight, 150) + 'px';
+            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
         });
-        textarea.style.height = 'auto';
 
-        // Handle Enter key submission
         textarea.addEventListener('keydown', function(e) {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
@@ -1081,31 +2052,29 @@
             }
         });
 
-        // Form submission handler
         chatForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             const question = textarea.value.trim();
             if (!question) return;
 
-            // Hide empty state placeholder
+            if (isMobileSidebarOpen) {
+                closeMobileSidebar();
+            }
+
             const placeholder = document.getElementById('empty-state-placeholder');
             if (placeholder) {
                 placeholder.classList.add('hidden');
             }
 
-            // Change send button to stop button
             sendButton.innerHTML = '<i class="bi bi-stop-circle"></i>';
-            sendButton.classList.add('btn-stop-active');
+            sendButton.classList.add('stop-btn');
             sendButton.onclick = stopProcessing;
 
-            // Disable form during processing
             textarea.disabled = true;
             sendButton.disabled = false;
 
-            // Add user message
-            const userMessageId = addMessageToUI('user', question);
+            addMessageToUI('user', question);
 
-            // Add dynamic status container for processing updates
             const assistantMessageId = addMessageToUI('assistant',
                 `<div class="dynamic-status-container">
                     <div class="status-message" id="status-message">🔍 Starting processing...</div>
@@ -1113,11 +2082,9 @@
             );
 
             try {
-                // Create an AbortController for the request
                 const controller = new AbortController();
                 currentRequestController = controller;
 
-                // Send to server
                 const chatId = window.location.pathname.split('/').pop();
                 const response = await fetch(`/chat/${chatId}`, {
                     method: 'POST',
@@ -1138,18 +2105,12 @@
                 let fullAnswer = '';
 
                 while (true) {
-                    const {
-                        done,
-                        value
-                    } = await reader.read();
+                    const { done, value } = await reader.read();
                     if (done) break;
 
-                    buffer += decoder.decode(value, {
-                        stream: true
-                    });
+                    buffer += decoder.decode(value, { stream: true });
                     const lines = buffer.split('\n');
 
-                    // Process all complete lines (leave incomplete line in buffer)
                     for (let i = 0; i < lines.length - 1; i++) {
                         const line = lines[i].trim();
                         if (!line) continue;
@@ -1158,9 +2119,7 @@
                             const data = JSON.parse(line);
 
                             if (data.status === 'status_update') {
-                                // Only show progress for file processing messages
                                 if (data.message.startsWith('📄 Processing')) {
-                                    // Extract progress from message if available (e.g., "1/3")
                                     const progressMatch = data.message.match(/\((\d+)\/(\d+)\)/);
                                     if (progressMatch) {
                                         const current = parseInt(progressMatch[1]);
@@ -1170,7 +2129,6 @@
                                 }
                                 updateProcessingStatus(data.message, null, data.error);
                             } else if (data.status === 'stream_chunk') {
-                                // Replace the status container with the actual answer
                                 const statusContainer = document.querySelector('.dynamic-status-container');
                                 if (statusContainer) {
                                     statusContainer.remove();
@@ -1178,7 +2136,6 @@
                                 fullAnswer += data.content;
                                 updateMessageInUI(assistantMessageId, 'assistant', fullAnswer);
                             } else if (data.status === 'stream_end') {
-                                // Finalize the message with sources if available
                                 updateMessageInUI(
                                     assistantMessageId,
                                     'assistant',
@@ -1186,7 +2143,6 @@
                                     data.sources || []
                                 );
 
-                                // Update chat title with first question if it's still the default
                                 const chatId = window.location.pathname.split('/').pop();
                                 const chatTitleElement = document.querySelector(`#chat-title-${chatId}`);
                                 if (chatTitleElement && chatTitleElement.textContent.trim() === 'New Query') {
@@ -1195,19 +2151,13 @@
                                         question;
                                     updateChatTitle(chatId, shortTitle);
                                 }
-                            } else if (data.status === 'title_update') {
-                                // Update chat title in sidebar
-                                const chatItem = document.querySelector(`.chat-item-wrapper[data-chat-id="${data.chat_id}"] .chat-item-title`);
-                                if (chatItem) {
-                                    chatItem.textContent = data.title;
-                                }
                             }
                         } catch (e) {
                             console.error('Error parsing chunk:', e);
                         }
                     }
 
-                    buffer = lines[lines.length - 1]; // Keep incomplete line in buffer
+                    buffer = lines[lines.length - 1];
                 }
 
             } catch (error) {
@@ -1226,10 +2176,7 @@
             if (currentRequestController) {
                 currentRequestController.abort();
                 currentRequestController = null;
-
-                // Update the status message
                 updateProcessingStatus('🛑 Processing stopped by user', 100, true);
-
                 resetForm();
             }
         }
@@ -1238,13 +2185,11 @@
             const sendButton = document.getElementById('send-button');
             const textarea = document.querySelector('.chat-input');
 
-            // Reset the button to send state
             sendButton.innerHTML = '<i class="bi bi-send"></i>';
-            sendButton.classList.remove('btn-stop-active');
+            sendButton.classList.remove('stop-btn');
             sendButton.onclick = null;
             sendButton.disabled = false;
 
-            // Reset other form elements
             currentRequestController = null;
             textarea.disabled = false;
             textarea.value = '';
@@ -1254,17 +2199,14 @@
     }
 
     function updateChatTitle(chatId, newTitle) {
-        // Update ALL instances of the title in the UI immediately
         document.querySelectorAll(`#chat-title-${chatId}`).forEach(el => {
             el.textContent = newTitle;
         });
 
-        // Also update any other potential instances (like in the chat history)
-        document.querySelectorAll(`.chat-item-wrapper[data-chat-id="${chatId}"] .chat-item-title`).forEach(el => {
+        document.querySelectorAll(`.chat-item-container[data-chat-id="${chatId}"] .chat-item-title`).forEach(el => {
             el.textContent = newTitle;
         });
 
-        // Update the server asynchronously
         fetch(`/update_chat_title/${chatId}`, {
                 method: 'POST',
                 headers: {
@@ -1280,231 +2222,316 @@
     }
 
     function initPreviewModal() {
-        const modal = document.getElementById('preview-modal');
-        const resizeHandle = document.querySelector('.preview-resize-handle');
-        const chatContainer = document.getElementById('chat-container');
+        if (!previewModal || !previewResizeHandle) return;
 
-        // Toggle modal visibility
-        window.togglePreviewModal = function() {
-            isPreviewModalOpen = !isPreviewModalOpen;
+        // Initialize resize functionality
+        initPreviewResize();
+        
+        // Initialize drag functionality for maximized mode
+        initPreviewDrag();
+        
+        // Initialize keyboard shortcuts
+        initPreviewKeyboardShortcuts();
 
-            if (isPreviewModalOpen) {
-                modal.style.display = 'flex';
-                modal.style.height = `${previewModalHeight}px`;
-                chatContainer.style.paddingBottom = `${previewModalHeight}px`;
-                document.body.classList.add('preview-modal-open');
-            } else {
-                modal.style.display = 'none';
-                chatContainer.style.paddingBottom = '0';
-                document.body.classList.remove('preview-modal-open');
+        // Double-click header to maximize/restore
+        previewHeader.addEventListener('dblclick', function(e) {
+            if (!isPreviewMinimized) {
+                toggleMaximizePreview();
             }
-        };
-
-        // Make modal resizable
-        resizeHandle.addEventListener('mousedown', function(e) {
-            e.preventDefault();
-            document.addEventListener('mousemove', resize);
-            document.addEventListener('mouseup', stopResize);
         });
 
-        function resize(e) {
-            const newHeight = window.innerHeight - e.clientY;
-            if (newHeight > 150 && newHeight < window.innerHeight - 100) {
-                previewModalHeight = newHeight;
-                modal.style.height = `${newHeight}px`;
-                chatContainer.style.paddingBottom = `${newHeight}px`;
+        // Click minimized header to restore
+        previewHeader.addEventListener('click', function(e) {
+            if (isPreviewMinimized) {
+                restorePreview();
             }
+        });
+
+        window.togglePreviewModal = function() {
+            isPreviewModalOpen = !isPreviewModalOpen;
+            updatePreviewModalState();
+        };
+
+        window.closePreview = function() {
+            isPreviewModalOpen = false;
+            isPreviewMinimized = false;
+            isPreviewMaximized = false;
+            updatePreviewModalState();
+        };
+
+        window.minimizePreview = function() {
+            if (!isPreviewModalOpen) return;
+            isPreviewMinimized = true;
+            isPreviewMaximized = false;
+            updatePreviewModalState();
+        };
+
+        window.restorePreview = function() {
+            if (!isPreviewModalOpen) return;
+            isPreviewMinimized = false;
+            isPreviewMaximized = false;
+            updatePreviewModalState();
+        };
+
+        window.toggleMaximizePreview = function() {
+            if (!isPreviewModalOpen || isPreviewMinimized) return;
+            isPreviewMaximized = !isPreviewMaximized;
+            updatePreviewModalState();
+        };
+
+        function updatePreviewModalState() {
+            if (!isPreviewModalOpen) {
+                previewModal.style.display = 'none';
+                previewModal.classList.remove('minimized', 'maximized');
+                return;
+            }
+
+            previewModal.style.display = 'flex';
+
+            // Update classes
+            previewModal.classList.toggle('minimized', isPreviewMinimized);
+            previewModal.classList.toggle('maximized', isPreviewMaximized);
+
+            // Update maximize button icon
+            if (maximizeBtn) {
+                const icon = maximizeBtn.querySelector('i');
+                if (isPreviewMaximized) {
+                    icon.className = 'bi bi-arrows-angle-contract';
+                    maximizeBtn.title = 'Restore (Ctrl+↓)';
+                } else {
+                    icon.className = 'bi bi-arrows-fullscreen';
+                    maximizeBtn.title = 'Maximize (Ctrl+↑)';
+                }
+            }
+
+            // Set appropriate height for non-maximized, non-minimized state
+            if (!isPreviewMinimized && !isPreviewMaximized) {
+                previewModal.style.height = `${previewModalHeight}px`;
+            }
+        }
+    }
+
+    function initPreviewResize() {
+        let isResizing = false;
+
+        previewResizeHandle.addEventListener('mousedown', function(e) {
+            if (isPreviewMinimized || isPreviewMaximized) return;
+            
+            isResizing = true;
+            previewDragState.startY = e.clientY;
+            previewDragState.startHeight = previewModal.offsetHeight;
+            
+            document.addEventListener('mousemove', handleResize);
+            document.addEventListener('mouseup', stopResize);
+            
+            previewModal.style.userSelect = 'none';
+            document.body.style.cursor = 'ns-resize';
+            
+            e.preventDefault();
+        });
+
+        function handleResize(e) {
+            if (!isResizing) return;
+            
+            const deltaY = previewDragState.startY - e.clientY;
+            const newHeight = Math.max(200, Math.min(window.innerHeight * 0.8, previewDragState.startHeight + deltaY));
+            
+            previewModalHeight = newHeight;
+            previewModal.style.height = `${newHeight}px`;
         }
 
         function stopResize() {
-            document.removeEventListener('mousemove', resize);
+            isResizing = false;
+            document.removeEventListener('mousemove', handleResize);
             document.removeEventListener('mouseup', stopResize);
+            
+            previewModal.style.userSelect = '';
+            document.body.style.cursor = '';
         }
     }
 
-    async function showFilePreview(filename, page = '', highlight = '') {
-        // Validate filename
-        if (!filename || typeof filename !== 'string') {
-            handlePreviewError('Invalid filename provided');
-            return;
+    function initPreviewDrag() {
+        let isDragging = false;
+        let dragStart = { x: 0, y: 0 };
+        let modalStart = { x: 0, y: 0 };
+
+        previewHeader.addEventListener('mousedown', function(e) {
+            if (!isPreviewMaximized || e.target.closest('.preview-modal-actions')) return;
+            
+            isDragging = true;
+            dragStart.x = e.clientX;
+            dragStart.y = e.clientY;
+            
+            const rect = previewModal.getBoundingClientRect();
+            modalStart.x = rect.left;
+            modalStart.y = rect.top;
+            
+            document.addEventListener('mousemove', handleDrag);
+            document.addEventListener('mouseup', stopDrag);
+            
+            previewModal.style.userSelect = 'none';
+            previewHeader.style.cursor = 'grabbing';
+            
+            e.preventDefault();
+        });
+
+        function handleDrag(e) {
+            if (!isDragging) return;
+            
+            const deltaX = e.clientX - dragStart.x;
+            const deltaY = e.clientY - dragStart.y;
+            
+            let newX = modalStart.x + deltaX;
+            let newY = modalStart.y + deltaY;
+            
+            // Keep modal within viewport bounds
+            const maxX = window.innerWidth - previewModal.offsetWidth;
+            const maxY = window.innerHeight - previewModal.offsetHeight;
+            
+            newX = Math.max(0, Math.min(maxX, newX));
+            newY = Math.max(0, Math.min(maxY, newY));
+            
+            previewModal.style.left = `${newX}px`;
+            previewModal.style.top = `${newY}px`;
+            previewModal.style.right = 'auto';
+            previewModal.style.bottom = 'auto';
         }
 
-        // Clean the filename path - ensure it's relative from extract folder
-        filename = filename.replace(/\\/g, '/').trim();
-
-        // Remove any anchor tags or query parameters from the filename
-        filename = filename.split('#')[0].split('?')[0];
-
-        const shortName = filename.split('/').pop();
-
-        // Show loading state
-        previewContent.innerHTML = `
-            <div class="preview-loading">
-                <div class="loading-spinner"></div>
-                <span>Loading document...</span>
-                <div class="loading-file-name">${escapeHtml(shortName)}</div>
-                <div class="loading-file-path">${escapeHtml(filename)}</div>
-            </div>
-        `;
-
-        // Show the modal if not already open
-        if (!isPreviewModalOpen) {
-            togglePreviewModal();
+        function stopDrag() {
+            isDragging = false;
+            document.removeEventListener('mousemove', handleDrag);
+            document.removeEventListener('mouseup', stopDrag);
+            
+            previewModal.style.userSelect = '';
+            previewHeader.style.cursor = 'move';
         }
+    }
 
-        try {
-            // Update title immediately
-            previewTitle.textContent = `Preview: ${shortName}`;
+    function initPreviewKeyboardShortcuts() {
+        document.addEventListener('keydown', function(e) {
+            if (!isPreviewModalOpen) return;
 
-            // Build URL - filename should already be the correct relative path
-            let url = `/get_file_content?path=${encodeURIComponent(filename)}`;
-            console.log(url);
-            if (page) url += `&page=${encodeURIComponent(page)}`;
-            if (highlight) url += `&highlight=${encodeURIComponent(highlight)}`;
-
-            console.log('Requesting file:', url); // Debug log
-
-            // First check if file exists
-            const checkResponse = await fetch(url, {
-                method: 'HEAD'
-            });
-
-            if (!checkResponse.ok) {
-                // Try alternative path construction if the first attempt fails
-                const alternativePath = `${getCurrentUserId()}/${filename}`;
-                const alternativeUrl = `/get_file_content?path=${encodeURIComponent(alternativePath)}`;
-
-                console.log('Trying alternative path:', alternativeUrl); // Debug log
-
-                const altCheckResponse = await fetch(alternativeUrl, {
-                    method: 'HEAD'
-                });
-
-                if (altCheckResponse.ok) {
-                    url = alternativeUrl;
+            // ESC to close
+            if (e.key === 'Escape') {
+                closePreview();
+                e.preventDefault();
+            }
+            
+            // Ctrl+M to minimize
+            if (e.ctrlKey && e.key === 'm') {
+                if (isPreviewMinimized) {
+                    restorePreview();
                 } else {
-                    const errorData = await checkResponse.json().catch(() => null);
-                    throw new Error(errorData ?.error || 'File not found on server');
+                    minimizePreview();
                 }
+                e.preventDefault();
             }
-
-            // Get the content
-            const response = await fetch(url);
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => null);
-                throw new Error(errorData ?.error || 'Failed to load file');
-            }
-
-            // Check content type
-            const contentType = response.headers.get('content-type') || '';
-
-            if (contentType.includes('application/pdf')) {
-                // Handle PDF response
-                const blob = await response.blob();
-                const objectUrl = URL.createObjectURL(blob);
-                renderPdfPreview(objectUrl, shortName);
-            } else if (contentType.startsWith('image/')) {
-                // Handle image response
-                const blob = await response.blob();
-                const objectUrl = URL.createObjectURL(blob);
-                renderImagePreview(objectUrl, shortName);
-            } else if (contentType.includes('application/json')) {
-                // Handle JSON response
-                const data = await response.json();
-                if (data.error) throw new Error(data.error);
-
-                let content = data.content || 'No content available';
-
-                // Apply highlighting if specified
-                if (highlight) {
-                    try {
-                        const escapedHighlight = highlight.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                        const highlightRegex = new RegExp(`(${escapedHighlight})`, 'gi');
-                        content = content.replace(highlightRegex, '<mark>$1</mark>');
-                    } catch (e) {
-                        console.warn('Failed to apply highlight:', e);
-                    }
+            
+            // Ctrl+ArrowUp to maximize, Ctrl+ArrowDown to restore
+            if (e.ctrlKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+                if (e.key === 'ArrowUp' && !isPreviewMaximized) {
+                    toggleMaximizePreview();
+                } else if (e.key === 'ArrowDown' && isPreviewMaximized) {
+                    toggleMaximizePreview();
                 }
+                e.preventDefault();
+            }
+        });
+    }
 
-                // Format the content
-                let formattedContent = escapeHtml(content)
-                    .replace(/\n/g, '<br>')
-                    .replace(/\t/g, '&nbsp;&nbsp;&nbsp;&nbsp;');
+   async function showFilePreview(filename, page = '', highlight = '') {
+    if (!filename || typeof filename !== 'string') {
+        handlePreviewError('Invalid filename provided');
+        return;
+    }
 
-                // Check if content is JSON
-                if (filename.toLowerCase().endsWith('.json')) {
-                    try {
-                        const jsonObj = JSON.parse(content);
-                        formattedContent = syntaxHighlight(jsonObj);
-                    } catch (e) {
-                        console.warn('Failed to parse as JSON:', e);
-                    }
-                }
+    filename = filename.replace(/\\/g, '/').trim();
+    filename = filename.split('#')[0].split('?')[0];
+    const shortName = filename.split('/').pop();
 
-                previewContent.innerHTML = `
-                    <div class="preview-document">
-                        <pre>${formattedContent}</pre>
-                    </div>
-                `;
-            } else {
-                // Fallback for other content types
-                const text = await response.text();
-                previewContent.innerHTML = `
-                    <div class="preview-document">
-                        <pre>${escapeHtml(text)}</pre>
-                    </div>
-                `;
+    previewContent.innerHTML = `
+        <div class="preview-loading">
+            <div class="loading-spinner"></div>
+            <span>Loading document...</span>
+            <div class="loading-file-name">${escapeHtml(shortName)}</div>
+        </div>
+    `;
+
+    if (!isPreviewModalOpen) {
+        togglePreviewModal();
+    } else if (isPreviewMinimized) {
+        restorePreview();
+    }
+
+    try {
+        previewTitle.textContent = `Preview: ${shortName}`;
+
+        let url = `/get_file_content?path=${encodeURIComponent(filename)}`;
+        if (page) url += `&page=${encodeURIComponent(page)}`;
+        if (highlight) url += `&highlight=${encodeURIComponent(highlight)}`;
+
+        let response = await fetch(url);
+
+        // Try alternative path if not OK
+        if (!response.ok) {
+            const alternativePath = `${getCurrentUserId()}/${filename}`;
+            const alternativeUrl = `/get_file_content?path=${encodeURIComponent(alternativePath)}`;
+            const altResponse = await fetch(alternativeUrl);
+
+            if (!altResponse.ok) {
+                throw new Error('File not found');
             }
 
-            // Update metadata section
-            updatePreviewMeta(shortName, page, highlight, url);
-
-        } catch (error) {
-            console.error('Error loading preview:', error);
-
-            // More detailed error messages
-            let errorMessage = error.message;
-            if (error.message.includes('not found')) {
-                errorMessage = `File not found: ${shortName}`;
-                errorMessage += `<br><small>Path attempted: ${filename}</small>`;
-                errorMessage += `<br><small>Please verify the file exists in the extracted documents.</small>`;
-            }
-
-            handlePreviewError(errorMessage);
+            url = alternativeUrl;
+            response = altResponse;
         }
-    }
 
-    // Helper functions for different preview types
-    function renderPdfPreview(url, title) {
-        previewContent.innerHTML = `
-            <div class="pdf-preview-container">
-                <iframe 
-                    src="${url}" 
-                    class="pdf-preview-frame"
-                    title="PDF Preview: ${escapeHtml(title)}"
-                    onload="handleIframeLoad(this)"
-                    onerror="handleIframeError(this)"
-                ></iframe>
-            </div>
-        `;
-    }
+        const contentType = response.headers.get('content-type') || '';
 
-    function renderImagePreview(url, altText) {
-        previewContent.innerHTML = `
-            <div class="image-preview-container">
-                <img 
-                    src="${url}" 
-                    alt="${escapeHtml(altText)}" 
-                    class="image-preview"
-                    onload="handleImageLoad(this)"
-                    onerror="handleImageError(this)"
-                >
-                <div class="image-loading" style="display: none;">
-                    <div class="loading-spinner"></div>
+        if (contentType.includes('application/json')) {
+            const data = await response.json();
+            if (data.error) throw new Error(data.error);
+
+            let content = data.content || 'No content available';
+
+            // Highlight if needed
+            if (highlight) {
+                try {
+                    const escapedHighlight = highlight.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                    const highlightRegex = new RegExp(`(${escapedHighlight})`, 'gi');
+                    content = content.replace(highlightRegex, '<mark>$1</mark>');
+                } catch (e) {
+                    console.warn('Failed to apply highlight:', e);
+                }
+            }
+
+            const formattedContent = escapeHtml(content)
+                .replace(/\n/g, '<br>')
+                .replace(/\t/g, '&nbsp;&nbsp;&nbsp;&nbsp;');
+
+            previewContent.innerHTML = `
+                <div class="preview-document">
+                    <pre>${formattedContent}</pre>
                 </div>
-            </div>
-        `;
+            `;
+        } else {
+            // For plain text or other types
+            const text = await response.text();
+            previewContent.innerHTML = `
+                <div class="preview-document">
+                    <pre>${escapeHtml(text)}</pre>
+                </div>
+            `;
+        }
+
+        updatePreviewMeta(shortName, page, highlight, url);
+
+    } catch (error) {
+        console.error('Error loading preview:', error);
+        handlePreviewError(`Failed to load ${shortName}: ${error.message}`);
     }
+}
+
 
     function updatePreviewMeta(filename, page, highlight, url) {
         previewMeta.innerHTML = `
@@ -1524,74 +2551,29 @@
                 <i class="bi bi-download"></i>
                 <a href="${url}&download=true" download="${escapeHtml(filename)}">Download</a>
             </div>
+            <div class="preview-meta-item">
+                <i class="bi bi-info-circle"></i>
+                <span>Use ESC to close, Ctrl+M to minimize</span>
+            </div>
         `;
     }
 
-    // Error handling functions
     function handlePreviewError(message) {
         previewContent.innerHTML = `
             <div class="preview-error">
                 <i class="bi bi-exclamation-triangle"></i>
                 <p>${message}</p>
-                <button class="btn-retry" onclick="retryPreview()">
-                    <i class="bi bi-arrow-clockwise"></i> Try Again
-                </button>
             </div>
         `;
     }
 
-    function handleIframeLoad(iframe) {
-        console.log('Iframe loaded successfully');
-    }
-
-    function handleIframeError(iframe) {
-        handlePreviewError('Failed to load document preview');
-    }
-
-    function handleImageLoad(img) {
-        const loadingDiv = img.parentElement.querySelector('.image-loading');
-        if (loadingDiv) {
-            loadingDiv.style.display = 'none';
-        }
-    }
-
-    function handleImageError(img) {
-        const loadingDiv = img.parentElement.querySelector('.image-loading');
-        if (loadingDiv) {
-            loadingDiv.style.display = 'none';
-        }
-        handlePreviewError('Failed to load image');
-    }
-
-
-
-
-
-
-    
-
-    function retryPreview() {
-        // Get the last clicked element to retry
-        const lastClicked = document.querySelector('.last-clicked-source');
-        if (lastClicked) {
-            const source = lastClicked.dataset.source ||
-                lastClicked.closest('.message-source')?.dataset.source;
-            if (source) {
-                showFilePreview(source);
-            }
-        }
-    }
-
-    // Initialize reference handlers
     function initReferenceHandlers() {
         document.addEventListener('click', function(e) {
-            // Handle message source clicks
             const sourceElement = e.target.closest('.message-source');
             if (sourceElement) {
                 e.preventDefault();
                 e.stopPropagation();
 
-                // Mark as last clicked
                 document.querySelectorAll('.last-clicked-source').forEach(el => {
                     el.classList.remove('last-clicked-source');
                 });
@@ -1603,13 +2585,11 @@
                 return;
             }
 
-            // Handle reference link clicks
             const refLink = e.target.closest('.reference-link');
             if (refLink) {
                 e.preventDefault();
                 e.stopPropagation();
 
-                // Mark as last clicked
                 document.querySelectorAll('.last-clicked-source').forEach(el => {
                     el.classList.remove('last-clicked-source');
                 });
@@ -1624,13 +2604,13 @@
     }
 
     function initChatHistory() {
-        document.querySelectorAll('.btn-delete-chat').forEach(button => {
+        document.querySelectorAll('.delete-chat-btn').forEach(button => {
             button.addEventListener('click', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
 
                 const chatId = this.getAttribute('data-chat-id');
-                const chatItem = this.closest('.chat-item-wrapper');
+                const chatItem = this.closest('.chat-item-container');
 
                 if (confirm('Are you sure you want to delete this chat?')) {
                     const originalHTML = this.innerHTML;
@@ -1693,6 +2673,11 @@
                 <i class="bi ${role === 'user' ? 'bi-person-fill' : 'bi-robot'}"></i>
             </div>
             <div class="message-content">
+                <div class="message-actions">
+                    <button class="copy-message-btn" onclick="copyMessageToClipboard(this)" title="Copy message">
+                        <i class="bi bi-copy"></i>
+                    </button>
+                </div>
                 <div class="message-text">
                     ${role === 'assistant' ? processContentWithReferences(content) : content.replace(/\n/g, '<br>')}
                 </div>
@@ -1716,12 +2701,11 @@
             sourcesHTML = `
                 <div class="message-sources">
                     <div class="sources-header">
-                        <span class="supported-files-title">Sources:</span>
-                        ${showToggle ? '<button class="btn-toggle-sources" onclick="toggleSources(this)">Show more</button>' : ''}
+                        <span class="sources-title">Sources</span>
+                        ${showToggle ? '<button class="toggle-sources-btn" onclick="toggleSources(this)">Show more</button>' : ''}
                     </div>
                     <div class="sources-list" style="${showToggle ? 'display: none;' : ''}">
                         ${sources.map(source => {
-                            // Handle both string and object sources
                             let sourcePath, displayName;
                             
                             if (typeof source === 'string') {
@@ -1745,6 +2729,11 @@
         }
 
         messageDiv.querySelector('.message-content').innerHTML = `
+            <div class="message-actions">
+                <button class="copy-message-btn" onclick="copyMessageToClipboard(this)" title="Copy message">
+                    <i class="bi bi-copy"></i>
+                </button>
+            </div>
             <div class="message-text">
                 ${processedContent}
             </div>
@@ -1790,11 +2779,10 @@
 
     function updateProcessingStatus(message, progress, isError = false) {
         const statusEl = document.getElementById('status-message');
-
         if (statusEl) {
             statusEl.textContent = message;
             if (isError) {
-                statusEl.style.color = '#dc3545';
+                statusEl.style.color = 'var(--error-color)';
                 statusEl.classList.add('error');
             } else {
                 statusEl.style.color = '';
@@ -1806,7 +2794,6 @@
     function updateFileProgress(processed, total) {
         const percent = Math.floor((processed / total) * 100);
 
-        // Create or update progress container
         let progressContainer = document.getElementById('file-progress-container');
         if (!progressContainer) {
             progressContainer = document.createElement('div');
@@ -1814,7 +2801,7 @@
             progressContainer.className = 'file-progress-container';
             progressContainer.innerHTML = `
                 <div class="file-progress-label">
-                    <span>Analysing files for response. This may take a while.</span>
+                    <span>Analyzing files for response...</span>
                     <span id="file-progress-percent">0%</span>
                 </div>
                 <div class="file-progress-bar">
@@ -1822,18 +2809,15 @@
                 </div>
             `;
 
-            // Insert before the status message
             const statusEl = document.getElementById('status-message');
             if (statusEl && statusEl.parentNode) {
                 statusEl.parentNode.insertBefore(progressContainer, statusEl);
             }
         }
 
-        // Update progress
         document.getElementById('file-progress-bar-fill').style.width = `${percent}%`;
         document.getElementById('file-progress-percent').textContent = `${percent}%`;
 
-        // Remove when complete
         if (percent === 100) {
             setTimeout(() => {
                 progressContainer.style.opacity = '0';
@@ -1845,7 +2829,7 @@
     function escapeHtml(unsafe) {
         if (typeof unsafe !== 'string') {
             console.warn('Non-string value passed to escapeHtml:', unsafe);
-            return '';  // Return empty string or handle appropriately
+            return '';
         }
         return unsafe
             .replace(/&/g, "&amp;")
@@ -1862,30 +2846,15 @@
         }
     }
 
-    function syntaxHighlight(json) {
-        if (typeof json != 'string') {
-            json = JSON.stringify(json, null, 2);
-        }
-        json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-        return json.replace(
-            /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
-            function(match) {
-                let cls = 'number';
-                if (/^"/.test(match)) {
-                    if (/:$/.test(match)) {
-                        cls = 'key';
-                    } else {
-                        cls = 'string';
-                    }
-                } else if (/true|false/.test(match)) {
-                    cls = 'boolean';
-                } else if (/null/.test(match)) {
-                    cls = 'null';
-                }
-                return '<span class="' + cls + '">' + match + '</span>';
-            }
-        );
-    }
+    // Make functions globally available
+    window.copyMessageToClipboard = copyMessageToClipboard;
+    window.toggleSources = toggleSources;
+    window.toggleMobileSidebar = toggleMobileSidebar;
+    window.closeMobileSidebar = closeMobileSidebar;
+    window.togglePreviewModal = togglePreviewModal;
+    window.closePreview = closePreview;
+    window.minimizePreview = minimizePreview;
+    window.restorePreview = restorePreview;
+    window.toggleMaximizePreview = toggleMaximizePreview;
 </script>
-
 {% endblock %}

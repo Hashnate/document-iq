@@ -4,297 +4,410 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document IQ {% block title %}{% endblock %}</title>
-    <!-- Stripe -->
-    <script src="https://js.stripe.com/v3/"></script>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}"> {% block extra_css %}{% endblock %}
+    <title>{% block title %}DocumentIQ - AI-Powered Document Intelligence{% endblock %}</title>
 
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Custom CSS with Sticky Header -->
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f8f9fa;
+        }
+        /* STICKY NAVBAR STYLES */
+        
+        .navbar {
+            background: linear-gradient(135deg, #4361ee, #3a0ca3);
+            padding: 1rem 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            /* Make sticky */
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            /* Modern effects */
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+        /* Enhanced effect when scrolled */
+        
+        .navbar.scrolled {
+            background: linear-gradient(135deg, rgba(67, 97, 238, 0.95), rgba(58, 12, 163, 0.95));
+            backdrop-filter: blur(15px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            padding: 0.75rem 0;
+        }
+        
+        .navbar-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 2rem;
+        }
+        
+        .navbar-brand {
+            color: white;
+            text-decoration: none;
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: transform 0.2s ease;
+        }
+        
+        .navbar-brand:hover {
+            transform: scale(1.05);
+            color: white;
+        }
+        
+        .navbar-brand i {
+            font-size: 1.8rem;
+            color: #ffd700;
+        }
+        
+        .navbar-nav {
+            display: flex;
+            list-style: none;
+            gap: 1.5rem;
+            align-items: center;
+        }
+        
+        .nav-link {
+            color: rgba(255, 255, 255, 0.9);
+            text-decoration: none;
+            transition: all 0.3s;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 500;
+            position: relative;
+        }
+        
+        .nav-link:hover {
+            color: white;
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-1px);
+        }
+        
+        .nav-link.active {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+        
+        .user-info {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 0.9rem;
+        }
+        
+        .btn {
+            padding: 0.5rem 1.5rem;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+            border: none;
+            cursor: pointer;
+            display: inline-block;
+        }
+        
+        .btn-primary {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .btn-primary:hover {
+            background: rgba(255, 255, 255, 0.3);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(255, 255, 255, 0.2);
+        }
+        
+        .btn-logout {
+            background: rgba(249, 65, 68, 0.8);
+            color: white;
+            border: 1px solid rgba(249, 65, 68, 0.5);
+        }
+        
+        .btn-logout:hover {
+            background: rgba(249, 65, 68, 1);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(249, 65, 68, 0.3);
+        }
+        /* MAIN CONTENT */
+        
+        .main-content {
+            flex: 1;
+            min-height: calc(100vh - 60px);
+        }
+        /* FLASH MESSAGES */
+        
+        .flash-messages {
+            max-width: 1200px;
+            margin: 1rem auto;
+            padding: 0 2rem;
+        }
+        
+        .alert {
+            padding: 1rem 1.5rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            border: none;
+            font-weight: 500;
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .alert-success {
+            background: linear-gradient(135deg, #d4edda, #c3e6cb);
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+        
+        .alert-error {
+            background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+            color: #721c24;
+            border-left: 4px solid #dc3545;
+        }
+        
+        .alert-info {
+            background: linear-gradient(135deg, #d1ecf1, #bee5eb);
+            color: #0c5460;
+            border-left: 4px solid #17a2b8;
+        }
+        /* FOOTER */
+        
+        .footer {
+            background: #2b2d42;
+            color: white;
+            text-align: center;
+            padding: 2rem 0;
+            margin-top: 3rem;
+        }
+        
+        .footer p {
+            margin: 0;
+            opacity: 0.8;
+        }
+        /* STATUS INDICATORS */
+        
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+            animation: pulse 2s infinite;
+        }
+        
+        .status-online {
+            background: #28a745;
+        }
+        
+        .status-processing {
+            background: #ffc107;
+        }
+        
+        @keyframes pulse {
+            0% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+            100% {
+                opacity: 1;
+            }
+        }
+        /* RESPONSIVE DESIGN */
+        
+        @media (max-width: 768px) {
+            .navbar {
+                padding: 0.75rem 0;
+            }
+            .navbar.scrolled {
+                padding: 0.5rem 0;
+            }
+            .navbar-content {
+                flex-direction: column;
+                gap: 1rem;
+                padding: 0 1rem;
+            }
+            .navbar-nav {
+                flex-direction: row;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 0.75rem;
+            }
+            .nav-link {
+                font-size: 0.9rem;
+                padding: 0.4rem 0.8rem;
+            }
+            .btn {
+                padding: 0.4rem 1rem;
+                font-size: 0.9rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .navbar-content {
+                padding: 0 0.5rem;
+            }
+            .navbar-brand {
+                font-size: 1.3rem;
+            }
+            .navbar-nav {
+                gap: 0.5rem;
+            }
+        }
+    </style>
+
+    {% block extra_head %}{% endblock %}
 </head>
 
-<body style="height: 100vh; overflow-y: auto;">
-    <nav class="navbar navbar-expand-lg navbar-dark">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="{{ url_for('index') }}">
-                <i class="bi bi-robot"></i> Document IQ
+<body>
+    <!-- STICKY NAVIGATION -->
+    <nav class="navbar" id="navbar">
+        <div class="navbar-content">
+            <a href="{% if current_user.is_authenticated %}/{% else %}/{% endif %}" class="navbar-brand">
+                <i class="bi bi-lightning-charge"></i> DocumentIQ
             </a>
-            <div class="d-flex align-items-center">
-                {% if current_user.is_authenticated %} {% with conversations = current_user.conversations|sort(attribute='updated_at', reverse=True) %} {% if conversations %} {% set last_chat = conversations[0] %}
-                <a href="{{ url_for('chat', chat_id=last_chat.id) }}" class="btn btn-sm btn-outline-light me-2" id="go-to-chat-btn">
-                    <i class="bi bi-chat-left-text"></i> Continue Chat
-                </a>
-                {% endif %} {% endwith %}
 
-                <button id="file-explorer-toggle" class="btn btn-sm btn-outline-light me-2">
-                    <i class="bi bi-folder2-open"></i> File Explorer
-                </button>
-
-                <div class="dropdown">
-                    <button class="btn btn-sm btn-outline-light dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown">
-                        <i class="bi bi-person-circle"></i> {{ current_user.username }}
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end">
-                        {% if current_user.subscription_plan == 'trial' and current_user.is_subscribed %}
-                        <li><span class="dropdown-item-text text-info">
-                                <i class="bi bi-clock"></i>
-                                Trial: {{ current_user.trial_days_remaining }} days left
-                            </span></li>
-                        <li>
-                            <hr class="dropdown-divider">
-                        </li>
-                        {% endif %}
-                        <li><a class="dropdown-item" href="{{ url_for('billing') }}">Billing</a></li>
-                        <li><a class="dropdown-item" href="{{ url_for('pricing') }}">Plans</a></li>
-                        <li>
-                            <hr class="dropdown-divider">
-                        </li>
-                        <li>
-                            <form action="{{ url_for('logout') }}" method="POST" style="display: inline;">
-                                <button type="submit" class="dropdown-item" style="background: none; border: none; cursor: pointer;">
-                                    <i class="bi bi-box-arrow-right"></i> Log Out
-                                </button>
-                            </form>
-                        </li>
-                    </ul>
-                </div>
+            <ul class="navbar-nav">
+                {% if current_user.is_authenticated %}
+                <li><a href="/" class="nav-link">Home</a></li>
+                <li>
+                    <a href="/new_chat" class="nav-link">
+                        <i class="bi bi-chat-dots"></i> New Chat
+                    </a>
+                </li>
+                <li>
+                    <a href="/pricing" class="nav-link">
+                        <i class="bi bi-star"></i> Pricing
+                    </a>
+                </li>
+                <li>
+                    <a href="/billing" class="nav-link">
+                        <i class="bi bi-credit-card"></i> Billing
+                    </a>
+                </li>
+                <!-- <li>
+                    <a href="/debug/gpu_status" class="nav-link">
+                        <span class="status-indicator status-online"></span> GPU Status
+                    </a>
+                </li> -->
+                <li>
+                    <span class="user-info">
+                            <i class="bi bi-person-circle"></i> {{ current_user.username }}
+                        </span>
+                </li>
+                <li>
+                    <a href="/logout" class="btn btn-logout">
+                        <i class="bi bi-box-arrow-right"></i> Logout
+                    </a>
+                </li>
                 {% else %}
-                <a href="{{ url_for('login') }}" class="btn btn-sm btn-outline-light me-2">
-                    <i class="bi bi-box-arrow-in-right"></i> Log In
-                </a>
-                <a href="{{ url_for('register') }}" class="btn btn-sm btn-outline-light">
-                    <i class="bi bi-person-plus"></i> Register
-                </a>
+                <li>
+                    <a href="/login" class="nav-link">
+                        <i class="bi bi-box-arrow-in-right"></i> Login
+                    </a>
+                </li>
+                <li>
+                    <a href="/register" class="btn btn-primary">
+                        <i class="bi bi-person-plus"></i> Sign Up
+                    </a>
+                </li>
                 {% endif %}
-
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-            </div>
+            </ul>
         </div>
     </nav>
 
-    {% if current_user.is_authenticated %}
-    <div id="file-explorer" class="file-explorer">
-        <div class="file-explorer-header">
-            <h5><i class="bi bi-folder-fill"></i> Uploaded Files</h5>
-            <button id="close-explorer" class="btn btn-sm btn-close"></button>
+    <!-- FLASH MESSAGES -->
+    {% with messages = get_flashed_messages(with_categories=true) %} {% if messages %}
+    <div class="flash-messages">
+        {% for category, message in messages %}
+        <div class="alert alert-{{ 'error' if category == 'error' else category }}">
+            <i class="bi bi-{% if category == 'error' %}exclamation-triangle{% elif category == 'success' %}check-circle{% else %}info-circle{% endif %}"></i> {{ message }}
         </div>
-        <div class="file-explorer-body">
-            <div id="file-tree" class="file-tree"></div>
-        </div>
+        {% endfor %}
     </div>
-    {% endif %} {% include 'partials/_flash_messages.html' %} {% block content %}{% endblock %}
+    {% endif %} {% endwith %}
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        //  $.ajaxSetup({
-        //     beforeSend: function(xhr, settings) {
-        //         if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type)) {
-        //             xhr.setRequestHeader("X-CSRFToken", $('meta[name="csrf-token"]').attr('content'));
-        //         }
-        //     }
-        // });
-        // Combined all JavaScript in one DOMContentLoaded listener
-        document.addEventListener('DOMContentLoaded', function() {
-            // Auto-scroll to bottom of chat
-            function scrollToBottom() {
-                const chatMessages = document.getElementById('chat-messages');
-                if (chatMessages) {
-                    chatMessages.scrollTop = chatMessages.scrollHeight;
-                }
-            }
-            scrollToBottom();
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
 
-            // Form submission handler
-            const chatForm = document.getElementById('chat-form');
-            if (chatForm) {
-                chatForm.addEventListener('submit', function() {
-                    const loadingIndicator = document.getElementById('loading-indicator');
-                    if (loadingIndicator) loadingIndicator.style.display = 'flex';
-                });
-            }
-
-            // File upload handler
-            const fileUpload = document.getElementById('file-upload');
-            if (fileUpload) {
-                fileUpload.addEventListener('change', function() {
-                    if (this.files.length > 0) {
-                        const loadingIndicator = document.getElementById('loading-indicator');
-                        if (loadingIndicator) loadingIndicator.style.display = 'flex';
-
-                        let formData = new FormData();
-                        formData.append('file', this.files[0]);
-
-                        fetch("{{ url_for('index') }}", {
-                            method: 'POST',
-                            body: formData
-                        }).then(response => {
-                            window.location.reload();
-                        });
-                    }
-                });
-            }
-
-            // File explorer functionality
-            const explorerToggle = document.getElementById('file-explorer-toggle');
-            const fileExplorer = document.getElementById('file-explorer');
-            const closeExplorer = document.getElementById('close-explorer');
-            const fileTree = document.getElementById('file-tree');
-
-            if (explorerToggle && fileExplorer) {
-                explorerToggle.addEventListener('click', function() {
-                    fileExplorer.classList.toggle('open');
-                    if (fileExplorer.classList.contains('open') && fileTree && fileTree.innerHTML === '') {
-                        loadFileTree();
-                    }
-                });
-            }
-
-            if (closeExplorer && fileExplorer) {
-                closeExplorer.addEventListener('click', function() {
-                    fileExplorer.classList.remove('open');
-                });
-            }
-
-            function loadFileTree() {
-                fetch('/get_file_structure')
-                    .then(response => response.json())
-                    .then(data => {
-                        if (fileTree) {
-                            if (data.length === 0) {
-                                fileTree.innerHTML = '<div class="text-muted">No files uploaded in this session</div>';
-                            } else {
-                                fileTree.innerHTML = buildTreeHTML(data);
-                                setupTreeInteractions();
-                            }
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error loading file tree:', error);
-                        if (fileTree) {
-                            fileTree.innerHTML = '<div class="text-muted">Error loading files</div>';
-                        }
-                    });
-            }
-
-            function buildTreeHTML(items, level = 0) {
-                if (!items || items.length === 0) {
-                    return '<div class="text-muted">No files found</div>';
-                }
-
-                let html = '<ul>';
-                items.forEach(item => {
-                    if (item.type === 'directory') {
-                        html += `
-                        <li>
-                            <div class="folder">
-                                <i class="bi ${item.children && item.children.length ? 'bi-folder-fill' : 'bi-folder'}"></i>
-                                <span>${item.name}</span>
-                            </div>
-                            ${item.children ? buildTreeHTML(item.children, level + 1) : ''}
-                        </li>
-                        `;
-                    } else {
-                        const iconClass = getFileIconClass(item.name);
-                        html += `
-                        <li>
-                            <div class="file">
-                                <i class="bi ${iconClass}"></i>
-                                <span>${item.name}</span>
-                            </div>
-                        </li>
-                        `;
-                    }
-                });
-                html += '</ul>';
-                return html;
-            }
-
-            function getFileIconClass(filename) {
-                const ext = filename.split('.').pop().toLowerCase();
-                switch (ext) {
-                    case 'pdf':
-                        return 'bi-file-earmark-pdf-fill file-icon-pdf';
-                    case 'docx':
-                        return 'bi-file-earmark-word-fill file-icon-doc';
-                    case 'txt':
-                        return 'bi-file-earmark-text-fill file-icon-txt';
-                    case 'md':
-                        return 'bi-file-earmark-text-fill file-icon-md';
-                    case 'csv':
-                        return 'bi-file-earmark-excel-fill file-icon-csv';
-                    case 'json':
-                        return 'bi-file-earmark-code-fill file-icon-json';
-                    case 'xml':
-                        return 'bi-file-earmark-code-fill file-icon-xml';
-                    default:
-                        return 'bi-file-earmark-fill file-icon-default';
-                }
-            }
-
-            function setupTreeInteractions() {
-                document.querySelectorAll('.file-tree .folder').forEach(folder => {
-                    folder.addEventListener('click', function(e) {
-                        if (e.target === this || e.target === this.querySelector('span')) {
-                            const ul = this.parentElement.querySelector('ul');
-                            if (ul) {
-                                ul.style.display = ul.style.display === 'none' ? 'block' : 'none';
-                                const icon = this.querySelector('.bi');
-                                if (ul.style.display === 'none') {
-                                    icon.classList.remove('bi-folder-fill');
-                                    icon.classList.add('bi-folder');
-                                } else {
-                                    icon.classList.remove('bi-folder');
-                                    icon.classList.add('bi-folder-fill');
-                                }
-                            }
-                        }
-                    });
-                });
-            }
-        });
-    </script>
-
+    <!-- STICKY HEADER JAVASCRIPT -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Auto-dismiss flash messages after 5 seconds
-            const flashMessages = document.querySelectorAll('.alert-dismissible');
-            flashMessages.forEach(msg => {
-                setTimeout(() => {
-                    msg.style.opacity = '0';
-                    setTimeout(() => msg.remove(), 300);
-                }, 5000);
+            const navbar = document.getElementById('navbar');
+            let lastScrollTop = 0;
+
+            // Add scroll effect to navbar
+            window.addEventListener('scroll', function() {
+                const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+
+                // Add scrolled class when page is scrolled
+                if (scrollTop > 50) {
+                    navbar.classList.add('scrolled');
+                } else {
+                    navbar.classList.remove('scrolled');
+                }
+
+                lastScrollTop = scrollTop;
             });
 
-            // Add smooth transitions for all alerts
-            const style = document.createElement('style');
-            style.textContent = `
-        .alert {
-            transition: opacity 0.3s ease, transform 0.3s ease;
-        }
-        .alert-dismissible {
-            transform: translateY(0);
-        }
-        .alert.hide {
-            opacity: 0;
-            transform: translateY(-20px);
-        }
-    `;
-            document.head.appendChild(style);
+            // Add active class to current page link
+            const currentPath = window.location.pathname;
+            const navLinks = document.querySelectorAll('.nav-link');
+
+            navLinks.forEach(link => {
+                if (link.getAttribute('href') === currentPath) {
+                    link.classList.add('active');
+                }
+            });
+
+            // Auto-hide flash messages after 5 seconds
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                setTimeout(() => {
+                    alert.style.opacity = '0';
+                    alert.style.transform = 'translateY(-10px)';
+                    setTimeout(() => {
+                        alert.remove();
+                    }, 300);
+                }, 5000);
+            });
         });
     </script>
 
-
-    <!-- Load jQuery (first) -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
-    <!-- Then load Bootstrap JS -->
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js"></script>
-    {% block extra_js %}{% endblock %}
+    {% block extra_scripts %}{% endblock %}
 </body>
 
 </html>

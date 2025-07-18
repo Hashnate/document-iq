@@ -1,516 +1,97 @@
 {% extends "base.html" %}
 
-{% block content %}
-<div class="pricing-page">
-    <!-- Hero Section -->
-    <section class="pricing-hero text-center py-5">
-        <div class="container">
-            <h1 class="display-4 mb-3">Find Your Perfect Plan</h1>
-            <p class="lead mb-4">Powerful document analysis tailored to your needs</p>
-            <div class="d-flex justify-content-center">
-                <div class="toggle-wrapper mb-4">
-                    <span class="toggle-label">Monthly</span>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="billingToggle">
-                        <span class="slider round"></span>
-                    </label>
-                    <span class="toggle-label">Annual <span class="badge badge-success">Save 20%</span></span>
-                </div>
-            </div>
-        </div>
-    </section>
+{% block title %}Pricing - DocumentIQ{% endblock %}
 
-    <!-- Pricing Cards -->
-    <div class="container">
-        <div class="row justify-content-center">
-            <!-- Basic Plan -->
-            <div class="col-lg-4 mb-4">
-                <div class="card pricing-card h-100">
-                    <div class="card-body">
-                        <div class="plan-header">
-                            <h3 class="plan-name">Basic</h3>
-                            <p class="plan-description">For individuals getting started</p>
-                        </div>
-                        <div class="price-display">
-                            <span class="price-currency">QAR</span>
-                            <span class="price-amount">99</span>
-                            <span class="price-period">/month</span>
-                            <span class="annual-price d-none">79 <small>/month</small></span>
-                        </div>
-                        <ul class="plan-features">
-                            <li><i class="fas fa-check-circle text-success"></i> <strong>500</strong> documents/month
-                            </li>
-                            <li><i class="fas fa-check-circle text-success"></i> <strong>100MB</strong> max file size
-                            </li>
-                            <li><i class="fas fa-check-circle text-success"></i> Email support</li>
-                            <li><i class="fas fa-check-circle text-success"></i> Basic analytics</li>
-                        </ul>
-                        {% if current_user.is_authenticated %}
-                        {% if current_user.subscription_plan == 'basic' and current_user.is_subscribed %}
-                        <button class="btn btn-current-plan" disabled>
-                            <i class="fas fa-check-circle"></i> Current Plan
-                        </button>
-                        {% else %}
-                        <button class="btn btn-choose-plan" onclick="showPaymentModal('basic')">
-                            Choose Basic
-                        </button>
-                        {% endif %}
-                        {% else %}
-                        <a href="{{ url_for('register') }}" class="btn btn-choose-plan">
-                            Get Started
-                        </a>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-
-            <!-- Pro Plan (Featured) -->
-            <div class="col-lg-4 mb-4">
-                <div class="card pricing-card featured h-100">
-                    <div class="popular-badge">Most Popular</div>
-                    <div class="card-body">
-                        <div class="plan-header">
-                            <h3 class="plan-name">Professional</h3>
-                            <p class="plan-description">For power users and teams</p>
-                        </div>
-                        <div class="price-display">
-                            <span class="price-currency">QAR</span>
-                            <span class="price-amount">199</span>
-                            <span class="price-period">/month</span>
-                            <span class="annual-price d-none">159 <small>/month</small></span>
-                        </div>
-                        <ul class="plan-features">
-                            <li><i class="fas fa-check-circle text-success"></i> <strong>2000</strong> documents/month
-                            </li>
-                            <li><i class="fas fa-check-circle text-success"></i> <strong>500MB</strong> max file size
-                            </li>
-                            <li><i class="fas fa-check-circle text-success"></i> Priority email & chat support</li>
-                            <li><i class="fas fa-check-circle text-success"></i> Advanced analytics</li>
-                            <li><i class="fas fa-check-circle text-success"></i> API access</li>
-                        </ul>
-                        {% if current_user.is_authenticated %}
-                        {% if current_user.subscription_plan == 'pro' and current_user.is_subscribed %}
-                        <button class="btn btn-current-plan" disabled>
-                            <i class="fas fa-check-circle"></i> Current Plan
-                        </button>
-                        {% else %}
-                        <button class="btn btn-featured-plan" onclick="showPaymentModal('pro')">
-                            Choose Professional
-                        </button>
-                        {% endif %}
-                        {% else %}
-                        <a href="{{ url_for('register') }}" class="btn btn-featured-plan">
-                            Get Started
-                        </a>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-
-            <!-- Free Trial Plan -->
-            <div class="col-lg-4 mb-4">
-                <div class="card pricing-card h-100">
-                    <div class="trial-badge">No Credit Card</div>
-                    <div class="card-body">
-                        <div class="plan-header">
-                            <h3 class="plan-name">Free Trial</h3>
-                            <p class="plan-description">Experience all features risk-free</p>
-                        </div>
-                        <div class="price-display">
-                            <span class="price-amount">0</span>
-                            <span class="price-currency">QAR</span>
-                            <span class="price-period">for 14 days</span>
-                        </div>
-                        <ul class="plan-features">
-                            <li><i class="fas fa-check-circle text-success"></i> <strong>Unlimited</strong> documents
-                            </li>
-                            <li><i class="fas fa-check-circle text-success"></i> <strong>100MB</strong> max file size
-                            </li>
-                            <li><i class="fas fa-check-circle text-success"></i> All Professional features</li>
-                            <li><i class="fas fa-check-circle text-success"></i> No credit card required</li>
-                            <li><i class="fas fa-check-circle text-success"></i> Cancel anytime</li>
-                        </ul>
-                        {% if current_user.is_authenticated %}
-                        {% if current_user.subscription_plan == 'trial' and current_user.is_subscribed %}
-                        <button class="btn btn-current-plan" disabled>
-                            <i class="fas fa-check-circle"></i> Trial Active ({{ (current_user.trial_end_date -
-                            now).days }} days left)
-                        </button>
-                        {% else %}
-                        <button class="btn btn-trial-plan" onclick="startTrial()">
-                            <i class="fas fa-rocket"></i> Start Free Trial
-                        </button>
-                        {% endif %}
-                        {% else %}
-                        <a href="{{ url_for('register') }}" class="btn btn-trial-plan">
-                            <i class="fas fa-rocket"></i> Start Free Trial
-                        </a>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Comparison Table -->
-    <section class="comparison-table py-5 bg-light">
-        <div class="container">
-            <h2 class="text-center mb-5">Plan Comparison</h2>
-            <div class="table-responsive">
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th scope="col">Features</th>
-                            <th scope="col">Basic</th>
-                            <th scope="col">Professional</th>
-                            <th scope="col">Free Trial</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <th scope="row">Documents/month</th>
-                            <td>500</td>
-                            <td>2000</td>
-                            <td>Unlimited</td>
-                        </tr>
-                        <tr>
-                            <th scope="row">Max file size</th>
-                            <td>100MB</td>
-                            <td>500MB</td>
-                            <td>100MB</td>
-                        </tr>
-                        <tr>
-                            <th scope="row">Support</th>
-                            <td>Email</td>
-                            <td>Priority email & chat</td>
-                            <td>Priority email & chat</td>
-                        </tr>
-                        <tr>
-                            <th scope="row">Analytics</th>
-                            <td>Basic</td>
-                            <td>Advanced</td>
-                            <td>Advanced</td>
-                        </tr>
-                        <tr>
-                            <th scope="row">API Access</th>
-                            <td><i class="fas fa-times text-danger"></i></td>
-                            <td><i class="fas fa-check text-success"></i></td>
-                            <td><i class="fas fa-check text-success"></i></td>
-                        </tr>
-                        <tr>
-                            <th scope="row">Duration</th>
-                            <td>Ongoing</td>
-                            <td>Ongoing</td>
-                            <td>14 days</td>
-                        </tr>
-                        <tr>
-                            <th scope="row">Payment Required</th>
-                            <td><i class="fas fa-check text-success"></i></td>
-                            <td><i class="fas fa-check text-success"></i></td>
-                            <td><i class="fas fa-times text-danger"></i></td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </section>
-
-    <!-- Testimonials -->
-    <section class="testimonials py-5">
-        <div class="container">
-            <h2 class="text-center mb-5">What Our Customers Say</h2>
-            <div class="row">
-                <div class="col-md-4 mb-4">
-                    <div class="testimonial-card">
-                        <div class="rating mb-2">
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                        </div>
-                        <p class="testimonial-text">"The free trial gave me full access to test the Professional
-                            features. After seeing the value, upgrading was an easy decision."</p>
-                        <div class="testimonial-author">
-                            <strong>Fatima A.</strong>, Small Business Owner
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4 mb-4">
-                    <div class="testimonial-card">
-                        <div class="rating mb-2">
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                        </div>
-                        <p class="testimonial-text">"I was able to process all my documents during the trial period with
-                            no limitations. The perfect way to evaluate the service."</p>
-                        <div class="testimonial-author">
-                            <strong>Khalid R.</strong>, Startup Founder
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4 mb-4">
-                    <div class="testimonial-card">
-                        <div class="rating mb-2">
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star-half-alt"></i>
-                        </div>
-                        <p class="testimonial-text">"The Basic plan exceeded our expectations. Perfect for our small
-                            team's needs after trying the Professional features in the trial."</p>
-                        <div class="testimonial-author">
-                            <strong>Sarah M.</strong>, Marketing Team
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- FAQ Section -->
-    <section class="faq-section py-5 bg-light">
-        <div class="container">
-            <h2 class="text-center mb-5">Frequently Asked Questions</h2>
-            <div class="accordion" id="faqAccordion">
-                <div class="card">
-                    <div class="card-header" id="headingOne">
-                        <h3 class="mb-0">
-                            <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseOne"
-                                aria-expanded="true">
-                                How does the free trial work?
-                                <i class="fas fa-chevron-down float-right"></i>
-                            </button>
-                        </h3>
-                    </div>
-                    <div id="collapseOne" class="collapse show" aria-labelledby="headingOne"
-                        data-parent="#faqAccordion">
-                        <div class="card-body">
-                            Our free trial gives you 14 days of full access to all Professional plan features. No credit
-                            card is required to start.
-                            After 14 days, you can choose to upgrade to a paid plan or your account will be downgraded
-                            to the free Basic plan limitations.
-                        </div>
-                    </div>
-                </div>
-                <div class="card">
-                    <div class="card-header" id="headingTwo">
-                        <h3 class="mb-0">
-                            <button class="btn btn-link collapsed" type="button" data-toggle="collapse"
-                                data-target="#collapseTwo">
-                                What happens when my trial ends?
-                                <i class="fas fa-chevron-down float-right"></i>
-                            </button>
-                        </h3>
-                    </div>
-                    <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#faqAccordion">
-                        <div class="card-body">
-                            When your trial ends, you'll automatically be moved to the Basic plan limitations. Your data
-                            remains intact,
-                            and you can upgrade at any time to regain full access. We'll send you reminders before your
-                            trial ends.
-                        </div>
-                    </div>
-                </div>
-                <div class="card">
-                    <div class="card-header" id="headingThree">
-                        <h3 class="mb-0">
-                            <button class="btn btn-link collapsed" type="button" data-toggle="collapse"
-                                data-target="#collapseThree">
-                                Can I extend my free trial?
-                                <i class="fas fa-chevron-down float-right"></i>
-                            </button>
-                        </h3>
-                    </div>
-                    <div id="collapseThree" class="collapse" aria-labelledby="headingThree" data-parent="#faqAccordion">
-                        <div class="card-body">
-                            Free trials are limited to one per user. If you need more time to evaluate, please contact
-                            our support team -
-                            we may be able to offer an extension in special circumstances.
-                        </div>
-                    </div>
-                </div>
-                <div class="card">
-                    <div class="card-header" id="headingFour">
-                        <h3 class="mb-0">
-                            <button class="btn btn-link collapsed" type="button" data-toggle="collapse"
-                                data-target="#collapseFour">
-                                What payment methods do you accept?
-                                <i class="fas fa-chevron-down float-right"></i>
-                            </button>
-                        </h3>
-                    </div>
-                    <div id="collapseFour" class="collapse" aria-labelledby="headingFour" data-parent="#faqAccordion">
-                        <div class="card-body">
-                            We accept all major credit cards (Visa, Mastercard, American Express) through our secure
-                            payment processor.
-                            We also support bank transfers for annual Professional plans.
-                        </div>
-                    </div>
-                </div>
-                <div class="card">
-                    <div class="card-header" id="headingFive">
-                        <h3 class="mb-0">
-                            <button class="btn btn-link collapsed" type="button" data-toggle="collapse"
-                                data-target="#collapseFive">
-                                Can I switch plans later?
-                                <i class="fas fa-chevron-down float-right"></i>
-                            </button>
-                        </h3>
-                    </div>
-                    <div id="collapseFive" class="collapse" aria-labelledby="headingFive" data-parent="#faqAccordion">
-                        <div class="card-body">
-                            Yes! You can upgrade or downgrade at any time. When upgrading, you'll get immediate access
-                            to the new features.
-                            Downgrades take effect at your next billing cycle. All changes are prorated.
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="text-center mt-5">
-                <p class="lead">Still have questions?</p>
-                <a href="#" class="btn btn-outline-primary">Contact Support</a>
-            </div>
-        </div>
-    </section>
-</div>
-
-<!-- Payment Modal -->
-<div class="modal fade" id="paymentModal" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Subscribe to <span id="planName"></span> Plan</h5>
-                <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"
-                    onclick="$('#paymentModal').modal('hide')">
-                </button>
-            </div>
-            <div class="modal-body">
-                <form id="payment-form">
-                    <div class="form-group">
-                        <label for="card-element">Credit or debit card</label>
-                        <div id="card-element" class="form-control" style="height: 40px; padding: 10px;"></div>
-                        <div id="card-errors" role="alert" class="text-danger"></div>
-                    </div>
-                    <input type="hidden" id="plan-id" name="plan_id">
-                    <input type="hidden" id="billing-type" name="billing_type" value="monthly">
-                </form>
-                <div class="payment-summary mt-3">
-                    <h6>Order Summary</h6>
-                    <div class="d-flex justify-content-between">
-                        <span>Plan:</span>
-                        <span id="summary-plan">Basic</span>
-                    </div>
-                    <div class="d-flex justify-content-between">
-                        <span>Price:</span>
-                        <span id="summary-price">99 QAR/month</span>
-                    </div>
-                    <hr>
-                    <div class="d-flex justify-content-between font-weight-bold">
-                        <span>Total:</span>
-                        <span id="summary-total">99 QAR/month</span>
-                    </div>
-                    <div class="summary-savings text-success d-none" id="annualSavings">
-                        <i class="fas fa-piggy-bank"></i> You save <span id="savingsAmount">240 QAR</span> annually!
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal"
-                    onclick="$('#paymentModal').modal('hide')">Cancel</button>
-                <button type="button" class="btn btn-primary" id="submit-payment">
-                    <span id="submit-text">Subscribe</span>
-                    <span id="spinner" class="spinner-border spinner-border-sm d-none" role="status"
-                        aria-hidden="true"></span>
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Trial Confirmation Modal -->
-<div class="modal fade" id="trialModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content">
-            <div class="modal-header border-bottom-0">
-                <h5 class="modal-title">Start Your Free Trial</h5>
-                <button type="button" class="btn-close" aria-label="Close"
-                    onclick="$('#trialModal').modal('hide')"></button>
-            </div>
-            <div class="modal-body py-4">
-                <div class="text-center mb-4">
-                    <i class="fas fa-gift text-primary" style="font-size: 3rem;"></i>
-                </div>
-                <h4 class="text-center mb-3">14-Day Free Trial</h4>
-                <p class="text-center text-muted">
-                    Get full access to all Professional features for 14 days.
-                    No credit card required. Cancel anytime.
-                </p>
-
-                <div class="trial-features mt-4 p-3 bg-light rounded">
-                    <div class="feature-item mb-2">
-                        <i class="fas fa-check-circle text-success mr-2"></i>
-                        <span>Unlimited document processing</span>
-                    </div>
-                    <div class="feature-item mb-2">
-                        <i class="fas fa-check-circle text-success mr-2"></i>
-                        <span>100MB max file size</span>
-                    </div>
-                    <div class="feature-item mb-2">
-                        <i class="fas fa-check-circle text-success mr-2"></i>
-                        <span>Priority email & chat support</span>
-                    </div>
-                    <div class="feature-item mb-2">
-                        <i class="fas fa-check-circle text-success mr-2"></i>
-                        <span>Advanced analytics</span>
-                    </div>
-                    <div class="feature-item">
-                        <i class="fas fa-check-circle text-success mr-2"></i>
-                        <span>API access</span>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer border-top-0">
-                <button type="button" class="btn btn-outline-secondary" data-dismiss="modal"
-                    onclick="$('#trialModal').modal('hide')">Not Now</button>
-                <button type="button" class="btn btn-primary" id="confirm-trial">
-                    <span id="trial-button-text">Start Free Trial</span>
-                    <span id="trial-spinner" class="spinner-border spinner-border-sm d-none ml-2"></span>
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- CSS -->
+{% block extra_head %}
 <style>
+    /* PRICING PAGE STYLES */
     .pricing-page {
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, 
+            rgba(67, 97, 238, 0.05) 0%, 
+            rgba(58, 12, 163, 0.05) 50%, 
+            rgba(255, 215, 0, 0.02) 100%);
+        min-height: 100vh;
     }
 
+    /* HERO SECTION */
     .pricing-hero {
-        background: linear-gradient(135deg, #6e8efb, #a777e3);
+        background: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);
         color: white;
+        padding: 4rem 0;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .pricing-hero::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+        background-size: 30px 30px;
+        animation: float 25s ease-in-out infinite;
+        z-index: 1;
+    }
+
+    .pricing-hero .container {
+        position: relative;
+        z-index: 2;
     }
 
     .pricing-hero h1 {
         font-weight: 700;
-        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        font-size: 3rem;
+        text-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        margin-bottom: 1rem;
+        animation: slideDown 0.8s ease-out;
     }
 
+    .pricing-hero .lead {
+        font-size: 1.3rem;
+        margin-bottom: 2rem;
+        opacity: 0.95;
+        animation: slideUp 0.8s ease-out 0.2s both;
+    }
+
+    @keyframes slideDown {
+        from { opacity: 0; transform: translateY(-30px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes slideUp {
+        from { opacity: 0; transform: translateY(30px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes float {
+        0%, 100% { transform: translateY(0px) rotate(0deg); }
+        50% { transform: translateY(-15px) rotate(1deg); }
+    }
+
+    /* BILLING TOGGLE */
     .toggle-wrapper {
         display: flex;
         align-items: center;
-        gap: 15px;
+        gap: 1rem;
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(20px);
+        padding: 1rem 2rem;
+        border-radius: 50px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        animation: slideUp 0.8s ease-out 0.4s both;
     }
 
     .toggle-label {
-        font-weight: 500;
-        color: rgb(0, 0, 0);
+        font-weight: 600;
+        color: white;
+        transition: all 0.3s ease;
+    }
+
+    .toggle-label.active {
+        color: #ffd700;
     }
 
     .toggle-switch {
@@ -533,9 +114,10 @@
         left: 0;
         right: 0;
         bottom: 0;
-        background-color: #ccc;
-        transition: .4s;
-        border-radius: 34px;
+        background: rgba(255, 255, 255, 0.3);
+        transition: all 0.4s ease;
+        border-radius: 30px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
     }
 
     .slider:before {
@@ -544,354 +126,1385 @@
         height: 22px;
         width: 22px;
         left: 4px;
-        bottom: 4px;
-        background-color: white;
-        transition: .4s;
+        bottom: 3px;
+        background: white;
+        transition: all 0.4s ease;
         border-radius: 50%;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     }
 
-    input:checked+.slider {
-        background-color: #4CAF50;
+    input:checked + .slider {
+        background: rgba(255, 215, 0, 0.8);
+        border-color: #ffd700;
     }
 
-    input:checked+.slider:before {
+    input:checked + .slider:before {
         transform: translateX(30px);
     }
 
+    .badge {
+        background: linear-gradient(135deg, #ffd700, #ffed4e);
+        color: #333;
+        font-weight: 600;
+        padding: 0.3rem 0.6rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        margin-left: 0.5rem;
+    }
+
+    /* PRICING CARDS SECTION */
+    .pricing-cards-section {
+        padding: 4rem 0;
+    }
+
     .pricing-card {
-        border-radius: 10px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-        border: none;
-        overflow: hidden;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        border: 1px solid rgba(67, 97, 238, 0.1);
+        box-shadow: 0 10px 30px rgba(67, 97, 238, 0.1);
+        transition: all 0.4s ease;
         position: relative;
+        overflow: hidden;
+        height: 100%;
+        animation: fadeInUp 0.8s ease-out;
     }
 
     .pricing-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+        transform: translateY(-10px);
+        box-shadow: 0 20px 40px rgba(67, 97, 238, 0.15);
+        border-color: rgba(67, 97, 238, 0.3);
     }
 
     .pricing-card.featured {
-        border: 2px solid #4e73df;
-        transform: scale(1.03);
+        transform: scale(1.05);
+        border: 2px solid #4361ee;
+        background: rgba(255, 255, 255, 0.98);
     }
 
     .pricing-card.featured:hover {
-        transform: scale(1.05) translateY(-5px);
+        transform: scale(1.05) translateY(-10px);
+    }
+
+    .popular-badge, .trial-badge {
+        position: absolute;
+        top: 15px;
+        right: -35px;
+        padding: 8px 40px;
+        transform: rotate(45deg);
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: white;
+        z-index: 10;
     }
 
     .popular-badge {
-        position: absolute;
-        top: 10px;
-        right: -30px;
-        background: #4e73df;
-        color: white;
-        padding: 5px 30px;
-        transform: rotate(45deg);
-        font-size: 12px;
-        font-weight: bold;
+        background: linear-gradient(135deg, #4361ee, #3a0ca3);
     }
 
     .trial-badge {
-        position: absolute;
-        top: 10px;
-        right: -30px;
         background: linear-gradient(135deg, #10a37f, #1dd1a1);
-        color: white;
-        padding: 5px 30px;
-        transform: rotate(45deg);
-        font-size: 12px;
-        font-weight: bold;
+    }
+
+    .card-body {
+        padding: 2.5rem 2rem;
     }
 
     .plan-header {
-        padding: 20px 0;
-        border-bottom: 1px solid #eee;
+        text-align: center;
+        margin-bottom: 2rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 2px solid rgba(67, 97, 238, 0.1);
     }
 
     .plan-name {
-        font-size: 24px;
+        font-size: 1.8rem;
         font-weight: 700;
-        margin-bottom: 5px;
+        color: #333;
+        margin-bottom: 0.5rem;
     }
 
     .plan-description {
-        color: #6c757d;
-        font-size: 14px;
+        color: #666;
+        font-size: 1rem;
+        margin: 0;
     }
 
     .price-display {
-        padding: 20px 0;
         text-align: center;
+        margin-bottom: 2rem;
+        position: relative;
     }
 
     .price-currency {
-        font-size: 20px;
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #4361ee;
         vertical-align: top;
-        margin-right: 2px;
+        margin-right: 0.25rem;
     }
 
     .price-amount {
-        font-size: 48px;
+        font-size: 3.5rem;
         font-weight: 700;
+        color: #333;
         line-height: 1;
     }
 
     .price-period {
-        font-size: 16px;
-        color: #6c757d;
+        font-size: 1rem;
+        color: #666;
+        margin-left: 0.25rem;
+    }
+
+    .annual-price {
+        display: flex;
+        align-items: baseline;
+        justify-content: center;
+        gap: 0.25rem;
     }
 
     .plan-features {
-        padding: 20px 0;
-        margin: 0;
         list-style: none;
+        padding: 0;
+        margin: 0 0 2rem 0;
     }
 
     .plan-features li {
-        padding: 8px 0;
-        border-bottom: 1px dashed #eee;
+        padding: 0.75rem 0;
+        display: flex;
+        align-items: center;
+        color: #333;
+        border-bottom: 1px solid rgba(67, 97, 238, 0.1);
+        transition: all 0.3s ease;
+    }
+
+    .plan-features li:hover {
+        background: rgba(67, 97, 238, 0.02);
+        padding-left: 0.5rem;
+    }
+
+    .plan-features li:last-child {
+        border-bottom: none;
+    }
+
+    .plan-features i {
+        margin-right: 0.75rem;
+        font-size: 1.1rem;
+        color: #28a745;
+    }
+
+    /* BUTTONS */
+    .btn-choose-plan, .btn-featured-plan, .btn-trial-plan, .btn-current-plan {
+        width: 100%;
+        padding: 1rem 2rem;
+        font-weight: 600;
+        border-radius: 12px;
+        border: none;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        font-size: 1.1rem;
     }
 
     .btn-choose-plan {
-        width: 100%;
-        padding: 12px;
-        font-weight: 600;
-        border-radius: 6px;
-        background: var(--primary-color);
+        background: linear-gradient(135deg, #4361ee, #3a0ca3);
         color: white;
-        border: none;
-        transition: all 0.3s ease;
-    }
-
-    .btn-choose-plan:hover {
-        background: #3a56c0;
-        transform: translateY(-2px);
-        color: white;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     }
 
     .btn-featured-plan {
-        width: 100%;
-        padding: 12px;
-        font-weight: 600;
-        border-radius: 6px;
-        background: linear-gradient(135deg, #6e8efb, #a777e3);
+        background: linear-gradient(135deg, #4361ee, #3a0ca3);
         color: white;
-        border: none;
-        transition: all 0.3s ease;
-    }
-
-    .btn-featured-plan:hover {
-        background: linear-gradient(135deg, #5d7de8, #9666d8);
-        transform: translateY(-2px);
-        color: white;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 4px 15px rgba(67, 97, 238, 0.3);
     }
 
     .btn-trial-plan {
-        width: 100%;
-        padding: 12px;
-        font-weight: 600;
-        border-radius: 6px;
         background: linear-gradient(135deg, #10a37f, #1dd1a1);
         color: white;
-        border: none;
-        transition: all 0.3s ease;
-    }
-
-    .btn-trial-plan:hover {
-        background: linear-gradient(135deg, #0d9488, #10a37f);
-        transform: translateY(-2px);
-        color: white;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     }
 
     .btn-current-plan {
-        width: 100%;
-        padding: 12px;
-        font-weight: 600;
-        border-radius: 6px;
         background: #e9ecef;
         color: #495057;
+        cursor: not-allowed;
+    }
+
+    .btn-choose-plan:hover, .btn-featured-plan:hover, .btn-trial-plan:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(67, 97, 238, 0.4);
+        color: white;
+    }
+
+    .btn-choose-plan::before, .btn-featured-plan::before, .btn-trial-plan::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.5s ease;
+    }
+
+    .btn-choose-plan:hover::before, .btn-featured-plan:hover::before, .btn-trial-plan:hover::before {
+        left: 100%;
+    }
+
+    /* COMPARISON TABLE */
+    .comparison-section {
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(20px);
+        padding: 4rem 0;
+        border-top: 1px solid rgba(67, 97, 238, 0.1);
+    }
+
+    .comparison-section h2 {
+        color: #333;
+        font-weight: 700;
+        margin-bottom: 3rem;
+        text-align: center;
+    }
+
+    .table-container {
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(67, 97, 238, 0.1);
+    }
+
+    .table {
+        margin: 0;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    .table thead th {
+        background: linear-gradient(135deg, #4361ee, #3a0ca3);
+        color: white;
+        font-weight: 600;
         border: none;
+        padding: 1.5rem 1rem;
+        text-align: center;
+    }
+
+    .table tbody td, .table tbody th {
+        padding: 1.25rem 1rem;
+        border-top: 1px solid rgba(67, 97, 238, 0.1);
+        text-align: center;
+        transition: background-color 0.3s ease;
+    }
+
+    .table tbody tr:hover {
+        background: rgba(67, 97, 238, 0.02);
+    }
+
+    .table tbody th {
+        font-weight: 600;
+        color: #333;
+        text-align: left;
+    }
+
+    /* TESTIMONIALS */
+    .testimonials-section {
+        padding: 4rem 0;
+        background: rgba(67, 97, 238, 0.02);
+    }
+
+    .testimonials-section h2 {
+        color: #333;
+        font-weight: 700;
+        margin-bottom: 3rem;
+        text-align: center;
     }
 
     .testimonial-card {
-        background: white;
-        padding: 25px;
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        padding: 2rem;
+        border-radius: 15px;
+        border: 1px solid rgba(67, 97, 238, 0.1);
+        box-shadow: 0 8px 25px rgba(67, 97, 238, 0.08);
         height: 100%;
+        transition: all 0.3s ease;
+    }
+
+    .testimonial-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(67, 97, 238, 0.15);
     }
 
     .rating {
-        color: #ffc107;
+        color: #ffd700;
+        margin-bottom: 1rem;
+        font-size: 1.2rem;
     }
 
     .testimonial-text {
         font-style: italic;
-        margin-bottom: 15px;
+        color: #555;
+        margin-bottom: 1.5rem;
+        line-height: 1.6;
     }
 
     .testimonial-author {
         font-weight: 600;
+        color: #333;
     }
 
-    .comparison-table {
-        background-color: #f8f9fa;
+    /* FAQ SECTION */
+    .faq-section {
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(20px);
+        padding: 4rem 0;
+        border-top: 1px solid rgba(67, 97, 238, 0.1);
     }
 
-    .comparison-table th {
-        font-weight: 600;
-        background-color: #e9ecef;
+    .faq-section h2 {
+        color: #333;
+        font-weight: 700;
+        margin-bottom: 3rem;
+        text-align: center;
     }
 
-    .faq-section .card-header {
-        background-color: white;
+    .accordion .card {
+        background: rgba(255, 255, 255, 0.95);
+        border: 1px solid rgba(67, 97, 238, 0.1);
+        border-radius: 10px;
+        margin-bottom: 1rem;
+        overflow: hidden;
     }
 
-    .faq-section .btn-link {
-        color: #495057;
+    .accordion .card-header {
+        background: rgba(67, 97, 238, 0.05);
+        border-bottom: 1px solid rgba(67, 97, 238, 0.1);
+        padding: 0;
+    }
+
+    .accordion .btn-link {
+        color: #333;
         text-decoration: none;
         width: 100%;
         text-align: left;
+        padding: 1.25rem 1.5rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
     }
 
-    .faq-section .btn-link:hover {
-        color: var(--primary-color);
+    .accordion .btn-link:hover {
+        color: #4361ee;
+        background: rgba(67, 97, 238, 0.05);
+    }
+
+    .accordion .btn-link:focus {
+        box-shadow: none;
+    }
+
+    .accordion .card-body {
+        padding: 1.5rem;
+        color: #555;
+        line-height: 1.6;
+    }
+
+    .collapse {
+        display: none;
+    }
+
+    .collapse.show {
+        display: block;
+    }
+
+    /* MODALS */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 2000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(5px);
+        animation: fadeIn 0.3s ease-out;
+    }
+
+    .modal.show {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-dialog {
+        max-width: 500px;
+        width: 90%;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+
+    .modal-content {
+        border-radius: 20px;
+        border: none;
+        overflow: hidden;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        background: white;
+        animation: slideIn 0.3s ease-out;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    @keyframes slideIn {
+        from { 
+            opacity: 0;
+            transform: translateY(-50px) scale(0.9);
+        }
+        to { 
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+
+    .modal-header {
+        background: linear-gradient(135deg, #4361ee, #3a0ca3);
+        color: white;
+        border-bottom: none;
+        padding: 1.5rem 2rem;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .modal-title {
+        font-weight: 600;
+        font-size: 1.3rem;
+        margin: 0;
+    }
+
+    .btn-close {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 1.5rem;
+        opacity: 0.8;
+        transition: opacity 0.3s ease;
+        cursor: pointer;
+        padding: 0.5rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+    }
+
+    .btn-close:hover {
+        opacity: 1;
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    .modal-body {
+        padding: 2rem;
+    }
+
+    .modal-footer {
+        padding: 1.5rem 2rem;
+        border-top: 1px solid rgba(67, 97, 238, 0.1);
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+    }
+
+    .modal-open {
+        overflow: hidden;
+    }
+
+    .payment-summary {
+        background: rgba(67, 97, 238, 0.05);
+        border-radius: 10px;
+        padding: 1.5rem;
+        border: 1px solid rgba(67, 97, 238, 0.1);
+    }
+
+    .summary-savings {
+        margin-top: 1rem;
+        padding: 0.75rem;
+        background: rgba(40, 167, 69, 0.1);
+        border-radius: 8px;
+        border: 1px solid rgba(40, 167, 69, 0.2);
     }
 
     .trial-features {
-        background-color: #f8f9fa;
-        border-radius: 8px;
-        padding: 15px;
+        background: rgba(67, 97, 238, 0.05);
+        border-radius: 10px;
+        padding: 1.5rem;
+        border: 1px solid rgba(67, 97, 238, 0.1);
     }
 
     .feature-item {
         display: flex;
         align-items: center;
-        margin-bottom: 8px;
+        margin-bottom: 0.75rem;
+        color: #333;
     }
 
-    .modal {
-        z-index: 1060;
+    .feature-item:last-child {
+        margin-bottom: 0;
     }
 
+    .feature-item i {
+        margin-right: 0.75rem;
+        color: #28a745;
+        font-size: 1.1rem;
+    }
+
+    /* RESPONSIVE DESIGN */
     @media (max-width: 768px) {
+        .pricing-hero h1 {
+            font-size: 2.5rem;
+        }
+
+        .pricing-hero .lead {
+            font-size: 1.1rem;
+        }
+
+        .toggle-wrapper {
+            flex-direction: column;
+            gap: 0.75rem;
+            padding: 1rem 1.5rem;
+        }
+
         .pricing-card.featured {
             transform: none;
+            margin-top: 1rem;
         }
 
         .pricing-card.featured:hover {
             transform: translateY(-5px);
         }
 
-        .popular-badge,
-        .trial-badge {
-            right: -25px;
-            padding: 5px 25px;
-            font-size: 10px;
+        .popular-badge, .trial-badge {
+            right: -30px;
+            padding: 6px 35px;
+            font-size: 0.7rem;
+        }
+
+        .price-amount {
+            font-size: 2.8rem;
+        }
+
+        .card-body {
+            padding: 2rem 1.5rem;
         }
     }
 
-    .lead {
-        color: black;
+    @media (max-width: 480px) {
+        .pricing-hero {
+            padding: 3rem 0;
+        }
+
+        .pricing-hero h1 {
+            font-size: 2rem;
+        }
+
+        .price-amount {
+            font-size: 2.5rem;
+        }
+
+        .btn-choose-plan, .btn-featured-plan, .btn-trial-plan {
+            font-size: 1rem;
+            padding: 0.875rem 1.5rem;
+        }
+    }
+
+    /* LOADING ANIMATIONS */
+    .spinner-border-sm {
+        width: 1rem;
+        height: 1rem;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        border-top-color: #fff;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+
+    .fadeInUp {
+        animation: fadeInUp 0.8s ease-out;
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* UTILITY CLASSES */
+    .text-primary { color: #4361ee !important; }
+    .text-success { color: #28a745 !important; }
+    .text-danger { color: #dc3545 !important; }
+    .d-none { display: none !important; }
+    .d-flex { display: flex !important; }
+    .justify-content-center { justify-content: center !important; }
+    .justify-content-between { justify-content: space-between !important; }
+    .align-items-center { align-items: center !important; }
+    .text-center { text-align: center !important; }
+    .mb-4 { margin-bottom: 1.5rem !important; }
+    .mb-5 { margin-bottom: 3rem !important; }
+    .mr-2 { margin-right: 0.5rem !important; }
+    .ml-2 { margin-left: 0.5rem !important; }
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 2rem;
+    }
+    .row {
+        display: flex;
+        flex-wrap: wrap;
+        margin: 0 -1rem;
+    }
+    .col-lg-4 {
+        flex: 0 0 33.333333%;
+        max-width: 33.333333%;
+        padding: 0 1rem;
+    }
+    .col-md-4 {
+        flex: 0 0 33.333333%;
+        max-width: 33.333333%;
+        padding: 0 1rem;
+    }
+    @media (max-width: 768px) {
+        .col-lg-4, .col-md-4 {
+            flex: 0 0 100%;
+            max-width: 100%;
+        }
     }
 </style>
+{% endblock %}
 
-<!-- JavaScript Libraries -->
-<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js"></script>
+{% block content %}
+<div class="pricing-page">
+    <!-- Hero Section -->
+    <section class="pricing-hero">
+        <div class="container">
+            <div class="text-center">
+                <h1>
+                    <i class="bi bi-lightning-charge" style="color: #ffd700; margin-right: 0.5rem;"></i>
+                    Find Your Perfect Plan
+                </h1>
+                <p class="lead">Powerful document analysis tailored to your needs</p>
+                <div class="d-flex justify-content-center">
+                    <div class="toggle-wrapper">
+                        <span class="toggle-label" id="monthlyLabel">
+                            <i class="bi bi-calendar-month"></i> Monthly
+                        </span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="billingToggle">
+                            <span class="slider"></span>
+                        </label>
+                        <span class="toggle-label" id="annualLabel">
+                            <i class="bi bi-calendar-check"></i> Annual 
+                            <span class="badge">
+                                <i class="bi bi-piggy-bank"></i> Save 20%
+                            </span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
-<!-- Main JavaScript -->
+    <!-- Pricing Cards -->
+    <section class="pricing-cards-section">
+        <div class="container">
+            <div class="row justify-content-center">
+                <!-- Basic Plan -->
+                <div class="col-lg-4 mb-4">
+                    <div class="pricing-card">
+                        <div class="card-body">
+                            <div class="plan-header">
+                                <h3 class="plan-name">
+                                    <i class="bi bi-star" style="color: #4361ee; margin-right: 0.5rem;"></i>
+                                    Basic
+                                </h3>
+                                <p class="plan-description">For individuals getting started</p>
+                            </div>
+                            <div class="price-display">
+                                <span class="price-currency">QAR</span>
+                                <span class="price-amount">99</span>
+                                <span class="price-period">/month</span>
+                                <div class="annual-price d-none">
+                                    <span class="price-currency">QAR</span>
+                                    <span class="price-amount">79</span>
+                                    <span class="price-period">/month</span>
+                                </div>
+                            </div>
+                            <ul class="plan-features">
+                                <li>
+                                    <i class="bi bi-check-circle-fill"></i> 
+                                    <strong>500</strong> documents/month
+                                </li>
+                                <li>
+                                    <i class="bi bi-check-circle-fill"></i> 
+                                    <strong>100MB</strong> max file size
+                                </li>
+                                <li>
+                                    <i class="bi bi-check-circle-fill"></i> 
+                                    <i class="bi bi-envelope"></i> Email support
+                                </li>
+                                <li>
+                                    <i class="bi bi-check-circle-fill"></i> 
+                                    <i class="bi bi-graph-up"></i> Basic analytics
+                                </li>
+                            </ul>
+                            {% if current_user.is_authenticated %}
+                                {% if current_user.subscription_plan == 'basic' and current_user.is_subscribed %}
+                                    <button class="btn-current-plan" disabled>
+                                        <i class="bi bi-check-circle-fill"></i> Current Plan
+                                    </button>
+                                {% else %}
+                                    <button class="btn-choose-plan" onclick="showPaymentModal('basic')">
+                                        <i class="bi bi-arrow-right-circle"></i> Choose Basic
+                                    </button>
+                                {% endif %}
+                            {% else %}
+                                <a href="{{ url_for('register') }}" class="btn-choose-plan">
+                                    <i class="bi bi-person-plus"></i> Get Started
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pro Plan (Featured) -->
+                <div class="col-lg-4 mb-4">
+                    <div class="pricing-card featured">
+                        <div class="popular-badge">
+                            <i class="bi bi-star-fill"></i> Most Popular
+                        </div>
+                        <div class="card-body">
+                            <div class="plan-header">
+                                <h3 class="plan-name">
+                                    <i class="bi bi-gem" style="color: #4361ee; margin-right: 0.5rem;"></i>
+                                    Professional
+                                </h3>
+                                <p class="plan-description">For power users and teams</p>
+                            </div>
+                            <div class="price-display">
+                                <span class="price-currency">QAR</span>
+                                <span class="price-amount">199</span>
+                                <span class="price-period">/month</span>
+                                <div class="annual-price d-none">
+                                    <span class="price-currency">QAR</span>
+                                    <span class="price-amount">159</span>
+                                    <span class="price-period">/month</span>
+                                </div>
+                            </div>
+                            <ul class="plan-features">
+                                <li>
+                                    <i class="bi bi-check-circle-fill"></i> 
+                                    <strong>2000</strong> documents/month
+                                </li>
+                                <li>
+                                    <i class="bi bi-check-circle-fill"></i> 
+                                    <strong>500MB</strong> max file size
+                                </li>
+                                <li>
+                                    <i class="bi bi-check-circle-fill"></i> 
+                                    <i class="bi bi-headset"></i> Priority email & chat support
+                                </li>
+                                <li>
+                                    <i class="bi bi-check-circle-fill"></i> 
+                                    <i class="bi bi-graph-up-arrow"></i> Advanced analytics
+                                </li>
+                                <li>
+                                    <i class="bi bi-check-circle-fill"></i> 
+                                    <i class="bi bi-code-square"></i> API access
+                                </li>
+                            </ul>
+                            {% if current_user.is_authenticated %}
+                                {% if current_user.subscription_plan == 'pro' and current_user.is_subscribed %}
+                                    <button class="btn-current-plan" disabled>
+                                        <i class="bi bi-check-circle-fill"></i> Current Plan
+                                    </button>
+                                {% else %}
+                                    <button class="btn-featured-plan" onclick="showPaymentModal('pro')">
+                                        <i class="bi bi-rocket-takeoff"></i> Choose Professional
+                                    </button>
+                                {% endif %}
+                            {% else %}
+                                <a href="{{ url_for('register') }}" class="btn-featured-plan">
+                                    <i class="bi bi-person-plus"></i> Get Started
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Free Trial Plan -->
+                <div class="col-lg-4 mb-4">
+                    <div class="pricing-card">
+                        <div class="trial-badge">
+                            <i class="bi bi-credit-card-2-front"></i> No Credit Card
+                        </div>
+                        <div class="card-body">
+                            <div class="plan-header">
+                                <h3 class="plan-name">
+                                    <i class="bi bi-gift" style="color: #10a37f; margin-right: 0.5rem;"></i>
+                                    Free Trial
+                                </h3>
+                                <p class="plan-description">Experience all features risk-free</p>
+                            </div>
+                            <div class="price-display">
+                                <span class="price-amount">0</span>
+                                <span class="price-currency">QAR</span>
+                                <span class="price-period">for 14 days</span>
+                            </div>
+                            <ul class="plan-features">
+                                <li>
+                                    <i class="bi bi-check-circle-fill"></i> 
+                                    <strong>Unlimited</strong> documents
+                                </li>
+                                <li>
+                                    <i class="bi bi-check-circle-fill"></i> 
+                                    <strong>100MB</strong> max file size
+                                </li>
+                                <li>
+                                    <i class="bi bi-check-circle-fill"></i> 
+                                    <i class="bi bi-gem"></i> All Professional features
+                                </li>
+                                <li>
+                                    <i class="bi bi-check-circle-fill"></i> 
+                                    <i class="bi bi-shield-check"></i> No credit card required
+                                </li>
+                                <li>
+                                    <i class="bi bi-check-circle-fill"></i> 
+                                    <i class="bi bi-x-circle"></i> Cancel anytime
+                                </li>
+                            </ul>
+                            {% if current_user.is_authenticated %}
+                                {% if current_user.subscription_plan == 'trial' and current_user.is_subscribed %}
+                                    <button class="btn-current-plan" disabled>
+                                        <i class="bi bi-check-circle-fill"></i> Trial Active ({{ current_user.trial_days_remaining }} days left)
+                                    </button>
+                                {% else %}
+                                    <button class="btn-trial-plan" onclick="startTrial()">
+                                        <i class="bi bi-rocket-takeoff"></i> Start Free Trial
+                                    </button>
+                                {% endif %}
+                            {% else %}
+                                <a href="{{ url_for('register') }}" class="btn-trial-plan">
+                                    <i class="bi bi-rocket-takeoff"></i> Start Free Trial
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Comparison Table -->
+    <section class="comparison-section">
+        <div class="container">
+            <h2>
+                <i class="bi bi-table" style="color: #4361ee; margin-right: 0.5rem;"></i>
+                Plan Comparison
+            </h2>
+            <div class="table-container">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th scope="col"><i class="bi bi-list-check"></i> Features</th>
+                                <th scope="col"><i class="bi bi-star"></i> Basic</th>
+                                <th scope="col"><i class="bi bi-gem"></i> Professional</th>
+                                <th scope="col"><i class="bi bi-gift"></i> Free Trial</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <th scope="row"><i class="bi bi-file-earmark-text"></i> Documents/month</th>
+                                <td>500</td>
+                                <td>2000</td>
+                                <td>Unlimited</td>
+                            </tr>
+                            <tr>
+                                <th scope="row"><i class="bi bi-file-zip"></i> Max file size</th>
+                                <td>100MB</td>
+                                <td>500MB</td>
+                                <td>100MB</td>
+                            </tr>
+                            <tr>
+                                <th scope="row"><i class="bi bi-headset"></i> Support</th>
+                                <td>Email</td>
+                                <td>Priority email & chat</td>
+                                <td>Priority email & chat</td>
+                            </tr>
+                            <tr>
+                                <th scope="row"><i class="bi bi-graph-up"></i> Analytics</th>
+                                <td>Basic</td>
+                                <td>Advanced</td>
+                                <td>Advanced</td>
+                            </tr>
+                            <tr>
+                                <th scope="row"><i class="bi bi-code-square"></i> API Access</th>
+                                <td><i class="bi bi-x-circle text-danger"></i></td>
+                                <td><i class="bi bi-check-circle text-success"></i></td>
+                                <td><i class="bi bi-check-circle text-success"></i></td>
+                            </tr>
+                            <tr>
+                                <th scope="row"><i class="bi bi-clock"></i> Duration</th>
+                                <td>Ongoing</td>
+                                <td>Ongoing</td>
+                                <td>14 days</td>
+                            </tr>
+                            <tr>
+                                <th scope="row"><i class="bi bi-credit-card"></i> Payment Required</th>
+                                <td><i class="bi bi-check-circle text-success"></i></td>
+                                <td><i class="bi bi-check-circle text-success"></i></td>
+                                <td><i class="bi bi-x-circle text-danger"></i></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section class="testimonials-section">
+        <div class="container">
+            <h2>
+                <i class="bi bi-chat-quote" style="color: #4361ee; margin-right: 0.5rem;"></i>
+                What Our Customers Say
+            </h2>
+            <div class="row">
+                <div class="col-md-4 mb-4">
+                    <div class="testimonial-card">
+                        <div class="rating">
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                        </div>
+                        <p class="testimonial-text">"The free trial gave me full access to test the Professional features. After seeing the value, upgrading was an easy decision."</p>
+                        <div class="testimonial-author">
+                            <i class="bi bi-person-circle" style="color: #4361ee; margin-right: 0.5rem;"></i>
+                            <strong>Fatima A.</strong>, Small Business Owner
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="testimonial-card">
+                        <div class="rating">
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                        </div>
+                        <p class="testimonial-text">"I was able to process all my documents during the trial period with no limitations. The perfect way to evaluate the service."</p>
+                        <div class="testimonial-author">
+                            <i class="bi bi-person-circle" style="color: #4361ee; margin-right: 0.5rem;"></i>
+                            <strong>Khalid R.</strong>, Startup Founder
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="testimonial-card">
+                        <div class="rating">
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-half"></i>
+                        </div>
+                        <p class="testimonial-text">"The Basic plan exceeded our expectations. Perfect for our small team's needs after trying the Professional features in the trial."</p>
+                        <div class="testimonial-author">
+                            <i class="bi bi-person-circle" style="color: #4361ee; margin-right: 0.5rem;"></i>
+                            <strong>Sarah M.</strong>, Marketing Team
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="faq-section">
+        <div class="container">
+            <h2>
+                <i class="bi bi-question-circle" style="color: #4361ee; margin-right: 0.5rem;"></i>
+                Frequently Asked Questions
+            </h2>
+            <div class="accordion" id="faqAccordion">
+                <div class="card">
+                    <div class="card-header" id="headingOne">
+                        <h3 class="mb-0">
+                            <button class="btn-link" type="button" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true">
+                                <i class="bi bi-gift"></i> How does the free trial work?
+                                <i class="bi bi-chevron-down" style="float: right;"></i>
+                            </button>
+                        </h3>
+                    </div>
+                    <div id="collapseOne" class="collapse show" aria-labelledby="headingOne" data-parent="#faqAccordion">
+                        <div class="card-body">
+                            Our free trial gives you 14 days of full access to all Professional plan features. No credit card is required to start. After 14 days, you can choose to upgrade to a paid plan or your account will be downgraded to the free Basic plan limitations.
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header" id="headingTwo">
+                        <h3 class="mb-0">
+                            <button class="btn-link collapsed" type="button" data-toggle="collapse" data-target="#collapseTwo">
+                                <i class="bi bi-clock-history"></i> What happens when my trial ends?
+                                <i class="bi bi-chevron-down" style="float: right;"></i>
+                            </button>
+                        </h3>
+                    </div>
+                    <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#faqAccordion">
+                        <div class="card-body">
+                            When your trial ends, you'll automatically be moved to the Basic plan limitations. Your data remains intact, and you can upgrade at any time to regain full access. We'll send you reminders before your trial ends.
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header" id="headingThree">
+                        <h3 class="mb-0">
+                            <button class="btn-link collapsed" type="button" data-toggle="collapse" data-target="#collapseThree">
+                                <i class="bi bi-arrow-clockwise"></i> Can I extend my free trial?
+                                <i class="bi bi-chevron-down" style="float: right;"></i>
+                            </button>
+                        </h3>
+                    </div>
+                    <div id="collapseThree" class="collapse" aria-labelledby="headingThree" data-parent="#faqAccordion">
+                        <div class="card-body">
+                            Free trials are limited to one per user. If you need more time to evaluate, please contact our support team - we may be able to offer an extension in special circumstances.
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header" id="headingFour">
+                        <h3 class="mb-0">
+                            <button class="btn-link collapsed" type="button" data-toggle="collapse" data-target="#collapseFour">
+                                <i class="bi bi-credit-card"></i> What payment methods do you accept?
+                                <i class="bi bi-chevron-down" style="float: right;"></i>
+                            </button>
+                        </h3>
+                    </div>
+                    <div id="collapseFour" class="collapse" aria-labelledby="headingFour" data-parent="#faqAccordion">
+                        <div class="card-body">
+                            We accept all major credit cards (Visa, Mastercard, American Express) through our secure payment processor. We also support bank transfers for annual Professional plans.
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header" id="headingFive">
+                        <h3 class="mb-0">
+                            <button class="btn-link collapsed" type="button" data-toggle="collapse" data-target="#collapseFive">
+                                <i class="bi bi-arrow-left-right"></i> Can I switch plans later?
+                                <i class="bi bi-chevron-down" style="float: right;"></i>
+                            </button>
+                        </h3>
+                    </div>
+                    <div id="collapseFive" class="collapse" aria-labelledby="headingFive" data-parent="#faqAccordion">
+                        <div class="card-body">
+                            Yes! You can upgrade or downgrade at any time. When upgrading, you'll get immediate access to the new features. Downgrades take effect at your next billing cycle. All changes are prorated.
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="text-center" style="margin-top: 3rem;">
+                <p class="lead" style="color: #333;">Still have questions?</p>
+                <a href="#" class="btn-choose-plan" style="width: auto; display: inline-block;">
+                    <i class="bi bi-envelope"></i> Contact Support
+                </a>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- Payment Modal -->
+<div class="modal fade" id="paymentModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-credit-card"></i> Subscribe to <span id="planName"></span> Plan
+                </h5>
+                <button type="button" class="btn-close" onclick="closeModal('paymentModal')">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="payment-form">
+                    <div class="form-group" style="margin-bottom: 1.5rem;">
+                        <label for="card-element" style="font-weight: 600; margin-bottom: 0.5rem; display: block;">
+                            <i class="bi bi-credit-card-2-front"></i> Credit or debit card
+                        </label>
+                        <div id="card-element" style="padding: 1rem; border: 2px solid rgba(67, 97, 238, 0.2); border-radius: 8px; background: white;"></div>
+                        <div id="card-errors" role="alert" style="color: #dc3545; margin-top: 0.5rem;"></div>
+                    </div>
+                    <input type="hidden" id="plan-id" name="plan_id">
+                    <input type="hidden" id="billing-type" name="billing_type" value="monthly">
+                </form>
+                <div class="payment-summary">
+                    <h6 style="font-weight: 600; margin-bottom: 1rem;">
+                        <i class="bi bi-receipt"></i> Order Summary
+                    </h6>
+                    <div class="d-flex justify-content-between" style="margin-bottom: 0.5rem;">
+                        <span>Plan:</span>
+                        <span id="summary-plan" style="font-weight: 600;">Basic</span>
+                    </div>
+                    <div class="d-flex justify-content-between" style="margin-bottom: 1rem;">
+                        <span>Price:</span>
+                        <span id="summary-price" style="font-weight: 600;">99 QAR/month</span>
+                    </div>
+                    <hr style="margin: 1rem 0;">
+                    <div class="d-flex justify-content-between" style="font-weight: 700; font-size: 1.1rem;">
+                        <span>Total:</span>
+                        <span id="summary-total">99 QAR/month</span>
+                    </div>
+                    <div class="summary-savings d-none" id="annualSavings">
+                        <i class="bi bi-piggy-bank"></i> You save <span id="savingsAmount">240 QAR</span> annually!
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="padding: 1.5rem; border-top: 1px solid rgba(67, 97, 238, 0.1);">
+                <button type="button" class="btn" onclick="closeModal('paymentModal')" style="background: #e9ecef; color: #495057; padding: 0.75rem 1.5rem; border-radius: 8px; border: none; margin-right: 1rem;">
+                    Cancel
+                </button>
+                <button type="button" class="btn-featured-plan" id="submit-payment" style="width: auto;">
+                    <span id="submit-text">
+                        <i class="bi bi-credit-card"></i> Subscribe
+                    </span>
+                    <span id="spinner" class="spinner-border spinner-border-sm d-none ml-2" role="status" aria-hidden="true"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Trial Confirmation Modal -->
+<div class="modal fade" id="trialModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-gift"></i> Start Your Free Trial
+                </h5>
+                <button type="button" class="btn-close" onclick="closeModal('trialModal')">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center" style="margin-bottom: 2rem;">
+                    <i class="bi bi-gift" style="font-size: 4rem; color: #10a37f;"></i>
+                </div>
+                <h4 class="text-center" style="margin-bottom: 1rem; color: #333;">14-Day Free Trial</h4>
+                <p class="text-center" style="color: #666; margin-bottom: 2rem;">
+                    Get full access to all Professional features for 14 days. No credit card required. Cancel anytime.
+                </p>
+
+                <div class="trial-features">
+                    <div class="feature-item">
+                        <i class="bi bi-check-circle-fill"></i>
+                        <span>Unlimited document processing</span>
+                    </div>
+                    <div class="feature-item">
+                        <i class="bi bi-check-circle-fill"></i>
+                        <span>100MB max file size</span>
+                    </div>
+                    <div class="feature-item">
+                        <i class="bi bi-check-circle-fill"></i>
+                        <span>Priority email & chat support</span>
+                    </div>
+                    <div class="feature-item">
+                        <i class="bi bi-check-circle-fill"></i>
+                        <span>Advanced analytics</span>
+                    </div>
+                    <div class="feature-item">
+                        <i class="bi bi-check-circle-fill"></i>
+                        <span>API access</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="padding: 1.5rem; border-top: 1px solid rgba(67, 97, 238, 0.1);">
+                <button type="button" class="btn" onclick="closeModal('trialModal')" style="background: #e9ecef; color: #495057; padding: 0.75rem 1.5rem; border-radius: 8px; border: none; margin-right: 1rem;">
+                    Not Now
+                </button>
+                <button type="button" class="btn-trial-plan" id="confirm-trial" style="width: auto;">
+                    <span id="trial-button-text">
+                        <i class="bi bi-rocket-takeoff"></i> Start Free Trial
+                    </span>
+                    <span id="trial-spinner" class="spinner-border spinner-border-sm d-none ml-2"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
 <script>
-    // Global functions and variables
-    function showPaymentModal(planId) {
-        const plan = plans[planId];
-        if (!plan) return;
+// Global variables and functions
+const plans = {
+    'basic': {
+        name: 'Basic',
+        monthlyPrice: 99,
+        annualPrice: 79,
+        features: [
+            '500 documents/month',
+            '100MB max file size',
+            'Email support',
+            'Basic analytics'
+        ]
+    },
+    'pro': {
+        name: 'Professional',
+        monthlyPrice: 199,
+        annualPrice: 159,
+        features: [
+            '2000 documents/month',
+            '500MB max file size',
+            'Priority email & chat support',
+            'Advanced analytics',
+            'API access'
+        ]
+    },
+    'trial': {
+        name: 'Free Trial',
+        monthlyPrice: 0,
+        annualPrice: 0,
+        features: [
+            'Unlimited documents for 14 days',
+            '100MB max file size',
+            'All Professional features',
+            'No credit card required'
+        ]
+    }
+};
 
-        const isAnnual = $('#billingToggle').is(':checked');
-        const price = isAnnual ? plan.annualPrice : plan.monthlyPrice;
-        const cycle = isAnnual ? 'Annual' : 'Monthly';
+function showPaymentModal(planId) {
+    const plan = plans[planId];
+    if (!plan) return;
 
-        $('#planName').text(plan.name);
-        $('#plan-id').val(planId);
-        $('#billing-type').val(isAnnual ? 'annual' : 'monthly');
-        $('#summary-plan').text(plan.name);
-        $('#summary-price').text(`${price} QAR/${cycle.toLowerCase()}`);
-        $('#summary-total').text(`${price} QAR/${cycle.toLowerCase()}`);
+    const billingToggle = document.getElementById('billingToggle');
+    const isAnnual = billingToggle ? billingToggle.checked : false;
+    const price = isAnnual ? plan.annualPrice : plan.monthlyPrice;
+    const cycle = isAnnual ? 'Annual' : 'Monthly';
 
-        if (isAnnual) {
-            const savings = (plan.monthlyPrice * 12) - (plan.annualPrice * 12);
-            $('#savingsAmount').text(`${savings} QAR`);
-            $('#annualSavings').removeClass('d-none');
-        } else {
-            $('#annualSavings').addClass('d-none');
-        }
+    // Update modal content
+    const planNameEl = document.getElementById('planName');
+    const planIdEl = document.getElementById('plan-id');
+    const billingTypeEl = document.getElementById('billing-type');
+    const summaryPlanEl = document.getElementById('summary-plan');
+    const summaryPriceEl = document.getElementById('summary-price');
+    const summaryTotalEl = document.getElementById('summary-total');
+    const annualSavingsEl = document.getElementById('annualSavings');
+    const savingsAmountEl = document.getElementById('savingsAmount');
 
-        initStripeElements();
-        $('#paymentModal').modal('show');
+    if (planNameEl) planNameEl.textContent = plan.name;
+    if (planIdEl) planIdEl.value = planId;
+    if (billingTypeEl) billingTypeEl.value = isAnnual ? 'annual' : 'monthly';
+    if (summaryPlanEl) summaryPlanEl.textContent = plan.name;
+    if (summaryPriceEl) summaryPriceEl.textContent = `${price} QAR/${cycle.toLowerCase()}`;
+    if (summaryTotalEl) summaryTotalEl.textContent = `${price} QAR/${cycle.toLowerCase()}`;
+
+    if (isAnnual && annualSavingsEl && savingsAmountEl) {
+        const savings = (plan.monthlyPrice * 12) - (plan.annualPrice * 12);
+        savingsAmountEl.textContent = `${savings} QAR`;
+        annualSavingsEl.classList.remove('d-none');
+    } else if (annualSavingsEl) {
+        annualSavingsEl.classList.add('d-none');
     }
 
-    function startTrial() {
-        $('#trialModal').modal('show');
+    showModal('paymentModal');
+}
+
+function startTrial() {
+    showModal('trialModal');
+}
+
+function showModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.add('show');
+        document.body.classList.add('modal-open');
     }
+}
 
-    const plans = {
-        'basic': {
-            name: 'Basic',
-            monthlyPrice: 99,
-            annualPrice: 79,
-            features: [
-                '500 documents/month',
-                '100MB max file size',
-                'Email support',
-                'Basic analytics'
-            ]
-        },
-        'pro': {
-            name: 'Professional',
-            monthlyPrice: 199,
-            annualPrice: 159,
-            features: [
-                '2000 documents/month',
-                '500MB max file size',
-                'Priority email & chat support',
-                'Advanced analytics',
-                'API access'
-            ]
-        },
-        'trial': {
-            name: 'Free Trial',
-            monthlyPrice: 0,
-            annualPrice: 0,
-            features: [
-                'Unlimited documents for 14 days',
-                '100MB max file size',
-                'All Professional features',
-                'No credit card required'
-            ]
-        }
-    };
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.remove('show');
+        document.body.classList.remove('modal-open');
+    }
+}
 
-    // DOM Ready Handler
-    $(document).ready(function () {
-        // Toggle between monthly and annual billing
-        $('#billingToggle').change(function () {
+// DOM Ready Handler
+document.addEventListener('DOMContentLoaded', function() {
+    // Toggle between monthly and annual billing
+    const billingToggle = document.getElementById('billingToggle');
+    const monthlyLabel = document.getElementById('monthlyLabel');
+    const annualLabel = document.getElementById('annualLabel');
+    
+    if (billingToggle && monthlyLabel && annualLabel) {
+        billingToggle.addEventListener('change', function() {
             const isAnnual = this.checked;
-            $('.price-amount, .price-period').toggleClass('d-none', isAnnual);
-            $('.annual-price').toggleClass('d-none', !isAnnual);
-            $('#billing-type').val(isAnnual ? 'annual' : 'monthly');
+            
+            // Update toggle labels
+            if (isAnnual) {
+                monthlyLabel.classList.remove('active');
+                annualLabel.classList.add('active');
+            } else {
+                monthlyLabel.classList.add('active');
+                annualLabel.classList.remove('active');
+            }
+            
+            // Update pricing display
+            const priceAmounts = document.querySelectorAll('.price-amount');
+            const pricePeriods = document.querySelectorAll('.price-period');
+            const annualPrices = document.querySelectorAll('.annual-price');
+            
+            priceAmounts.forEach(el => {
+                const parent = el.parentElement;
+                if (parent) {
+                    parent.style.display = isAnnual ? 'none' : 'block';
+                }
+            });
+            
+            annualPrices.forEach(el => {
+                el.style.display = isAnnual ? 'block' : 'none';
+            });
         });
 
-        // Confirm trial handler
-        $('#confirm-trial').click(function () {
-            const btn = $(this);
-            btn.prop('disabled', true);
-            $('#trial-button-text').text('Starting...');
-            $('#trial-spinner').removeClass('d-none');
+        // Initialize active state for monthly label
+        monthlyLabel.classList.add('active');
+    }
+
+    // Confirm trial handler
+    const confirmTrialBtn = document.getElementById('confirm-trial');
+    if (confirmTrialBtn) {
+        confirmTrialBtn.addEventListener('click', function() {
+            const btn = this;
+            const buttonText = document.getElementById('trial-button-text');
+            const spinner = document.getElementById('trial-spinner');
+            
+            btn.disabled = true;
+            if (buttonText) buttonText.innerHTML = '<i class="bi bi-hourglass-split"></i> Starting...';
+            if (spinner) spinner.classList.remove('d-none');
 
             fetch('/start_trial', {
                 method: 'POST',
@@ -899,110 +1512,70 @@
                     'Content-Type': 'application/json',
                 }
             })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.error) throw new Error(data.error);
-                    $('#trialModal').modal('hide');
-                    window.location.reload();
-                })
-                .catch(error => {
-                    alert(error.message);
-                    btn.prop('disabled', false);
-                    $('#trial-button-text').text('Start Free Trial');
-                    $('#trial-spinner').addClass('d-none');
-                });
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) throw new Error(data.error);
+                closeModal('trialModal');
+                window.location.reload();
+            })
+            .catch(error => {
+                alert(error.message);
+                btn.disabled = false;
+                if (buttonText) buttonText.innerHTML = '<i class="bi bi-rocket-takeoff"></i> Start Free Trial';
+                if (spinner) spinner.classList.add('d-none');
+            });
         });
+    }
 
-        // Modal close handlers
-        $('[data-dismiss="modal"]').click(function () {
-            $(this).closest('.modal').modal('hide');
-        });
-
-        // Stripe initialization
-        function initStripeElements() {
-            const stripe = Stripe('{{ config["STRIPE_PUBLIC_KEY"] }}');
-            const elements = stripe.elements();
-            const card = elements.create('card', {
-                style: {
-                    base: {
-                        fontSize: '16px',
-                        color: '#32325d',
-                        '::placeholder': {
-                            color: '#aab7c4'
-                        }
-                    },
-                    invalid: {
-                        color: '#fa755a'
+    // FAQ accordion functionality
+    const accordionButtons = document.querySelectorAll('[data-toggle="collapse"]');
+    accordionButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const targetId = this.getAttribute('data-target');
+            const target = document.querySelector(targetId);
+            if (!target) return;
+            
+            const isExpanded = this.getAttribute('aria-expanded') === 'true';
+            
+            // Close all other accordions
+            accordionButtons.forEach(otherButton => {
+                if (otherButton !== this) {
+                    const otherTargetId = otherButton.getAttribute('data-target');
+                    const otherTarget = document.querySelector(otherTargetId);
+                    if (otherTarget) {
+                        otherTarget.classList.remove('show');
+                        otherButton.setAttribute('aria-expanded', 'false');
                     }
                 }
             });
-
-            card.mount('#card-element');
-
-            card.addEventListener('change', function (event) {
-                const displayError = $('#card-errors');
-                if (event.error) {
-                    displayError.text(event.error.message).show();
-                } else {
-                    displayError.text('').hide();
-                }
-            });
-
-            $('#submit-payment').click(async function (ev) {
-                ev.preventDefault();
-                const btn = $(this);
-                btn.prop('disabled', true);
-                $('#submit-text').text('Processing...');
-                $('#spinner').removeClass('d-none');
-
-                const { paymentMethod, error } = await stripe.createPaymentMethod({
-                    type: 'card',
-                    card: card,
-                    billing_details: {
-                        name: '{{ current_user.username if current_user.is_authenticated else "" }}',
-                        email: '{{ current_user.email if current_user.is_authenticated else "" }}'
-                    }
-                });
-
-                if (error) {
-                    $('#card-errors').text(error.message);
-                    btn.prop('disabled', false);
-                    $('#submit-text').text('Subscribe');
-                    $('#spinner').addClass('d-none');
-                    return;
-                }
-
-                // Process payment
-                fetch('/create_subscription', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        plan_id: $('#plan-id').val(),
-                        payment_method_id: paymentMethod.id,
-                        billing_type: $('#billing-type').val()
-                    })
-                })
-                    .then(response => response.json())
-                    .then(result => {
-                        if (result.error) throw new Error(result.error);
-                        return stripe.confirmCardPayment(result.client_secret);
-                    })
-                    .then(confirmResult => {
-                        if (confirmResult.error) throw new Error(confirmResult.error.message);
-                        if (confirmResult.paymentIntent.status === 'succeeded') {
-                            window.location.reload();
-                        }
-                    })
-                    .catch(error => {
-                        $('#card-errors').text(error.message);
-                        btn.prop('disabled', false);
-                        $('#submit-text').text('Subscribe');
-                        $('#spinner').addClass('d-none');
-                    });
-            });
-        }
+            
+            // Toggle current accordion
+            if (isExpanded) {
+                target.classList.remove('show');
+                this.setAttribute('aria-expanded', 'false');
+            } else {
+                target.classList.add('show');
+                this.setAttribute('aria-expanded', 'true');
+            }
+        });
     });
+});
+
+// Close modal when clicking outside
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('modal') && e.target.classList.contains('show')) {
+        closeModal(e.target.id);
+    }
+});
+
+// Escape key handler for modals
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        const openModals = document.querySelectorAll('.modal.show');
+        if (openModals.length > 0) {
+            closeModal(openModals[openModals.length - 1].id);
+        }
+    }
+});
 </script>
 {% endblock %}
