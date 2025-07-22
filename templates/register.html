@@ -55,7 +55,7 @@
         position: relative;
         z-index: 2;
         width: 100%;
-        max-width: 500px;
+        max-width: 600px;
         margin: 0 auto;
     }
 
@@ -121,9 +121,21 @@
         margin-bottom: 2rem;
     }
 
+    .form-row {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
     .form-group {
         margin-bottom: 1.5rem;
         position: relative;
+        flex: 1;
+    }
+
+    .form-group.full-width {
+        flex: none;
+        width: 100%;
     }
 
     .form-group label {
@@ -135,6 +147,18 @@
         transition: color 0.3s ease;
     }
 
+    .form-group label .required {
+        color: #dc3545;
+        margin-left: 2px;
+    }
+
+    .form-group label .optional {
+        color: #6c757d;
+        font-weight: 400;
+        font-size: 0.85rem;
+        margin-left: 4px;
+    }
+
     .form-group input {
         width: 100%;
         padding: 1rem 1.25rem 1rem 3rem;
@@ -144,6 +168,7 @@
         transition: all 0.3s ease;
         background: rgba(255, 255, 255, 0.8);
         backdrop-filter: blur(10px);
+        box-sizing: border-box;
     }
 
     .form-group input:focus {
@@ -356,6 +381,11 @@
         .auth-title {
             font-size: 1.75rem;
         }
+
+        .form-row {
+            flex-direction: column;
+            gap: 0;
+        }
     }
 
     @media (max-width: 480px) {
@@ -390,20 +420,45 @@
             </h2>
             
             <form method="POST" class="auth-form" id="registerForm">
-                <div class="form-group">
-                    <label for="username">Username</label>
-                    <input type="text" id="username" name="username" required autocomplete="username" minlength="3">
-                    <i class="bi bi-person input-icon"></i>
+                <!-- Name Row -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="first_name">First Name <span class="required">*</span></label>
+                        <input type="text" id="first_name" name="first_name" required autocomplete="given-name" minlength="2">
+                        <i class="bi bi-person input-icon"></i>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="last_name">Last Name <span class="required">*</span></label>
+                        <input type="text" id="last_name" name="last_name" required autocomplete="family-name" minlength="2">
+                        <i class="bi bi-person input-icon"></i>
+                    </div>
+                </div>
+
+                <!-- Company Name -->
+                <div class="form-group full-width">
+                    <label for="company_name">Company Name <span class="required">*</span></label>
+                    <input type="text" id="company_name" name="company_name" required autocomplete="organization" minlength="2">
+                    <i class="bi bi-building input-icon"></i>
                 </div>
                 
-                <div class="form-group">
-                    <label for="email">Email Address</label>
+                <!-- Username -->
+                <div class="form-group full-width">
+                    <label for="username">Username <span class="required">*</span></label>
+                    <input type="text" id="username" name="username" required autocomplete="username" minlength="3">
+                    <i class="bi bi-at input-icon"></i>
+                </div>
+                
+                <!-- Email -->
+                <div class="form-group full-width">
+                    <label for="email">Email Address <span class="required">*</span></label>
                     <input type="email" id="email" name="email" required autocomplete="email">
                     <i class="bi bi-envelope input-icon"></i>
                 </div>
                 
-                <div class="form-group">
-                    <label for="password">Password</label>
+                <!-- Password -->
+                <div class="form-group full-width">
+                    <label for="password">Password <span class="required">*</span></label>
                     <input type="password" id="password" name="password" required autocomplete="new-password" minlength="8">
                     <i class="bi bi-lock input-icon"></i>
                     <div class="password-strength" id="passwordStrength">
@@ -411,8 +466,9 @@
                     </div>
                 </div>
                 
-                <div class="form-group">
-                    <label for="confirm_password">Confirm Password</label>
+                <!-- Confirm Password -->
+                <div class="form-group full-width">
+                    <label for="confirm_password">Confirm Password <span class="required">*</span></label>
                     <input type="password" id="confirm_password" name="confirm_password" required autocomplete="new-password">
                     <i class="bi bi-shield-check input-icon"></i>
                     <div class="password-match" id="passwordMatch">
@@ -451,6 +507,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const passwordMatch = document.getElementById('passwordMatch');
     const usernameInput = document.getElementById('username');
     const emailInput = document.getElementById('email');
+    const firstNameInput = document.getElementById('first_name');
+    const lastNameInput = document.getElementById('last_name');
+    const companyNameInput = document.getElementById('company_name');
 
     // Password strength checker
     function checkPasswordStrength(password) {
@@ -481,6 +540,58 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         return { strength, className };
+    }
+
+    // Name validation
+    function validateName(input, minLength = 2) {
+        const value = input.value.trim();
+        if (value.length >= minLength && /^[a-zA-Z\s'-]+$/.test(value)) {
+            input.classList.add('valid');
+            input.classList.remove('invalid');
+            return true;
+        } else if (value.length > 0) {
+            input.classList.add('invalid');
+            input.classList.remove('valid');
+            return false;
+        } else {
+            input.classList.remove('valid', 'invalid');
+            return false;
+        }
+    }
+
+    // First name validation
+    firstNameInput.addEventListener('input', function() {
+        validateName(this);
+        validateForm();
+    });
+
+    // Last name validation
+    lastNameInput.addEventListener('input', function() {
+        validateName(this);
+        validateForm();
+    });
+
+    // Company name validation
+    companyNameInput.addEventListener('input', function() {
+        validateCompanyName(this);
+        validateForm();
+    });
+
+    // Company name validation function
+    function validateCompanyName(input) {
+        const value = input.value.trim();
+        if (value.length >= 2 && value.length <= 100) {
+            input.classList.add('valid');
+            input.classList.remove('invalid');
+            return true;
+        } else if (value.length > 0) {
+            input.classList.add('invalid');
+            input.classList.remove('valid');
+            return false;
+        } else {
+            input.classList.remove('valid', 'invalid');
+            return false;
+        }
     }
 
     // Password input handler
@@ -544,10 +655,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Username validation
     usernameInput.addEventListener('input', function() {
-        if (this.value.length >= 3) {
+        const value = this.value.trim();
+        if (value.length >= 3 && /^[a-zA-Z0-9_.-]+$/.test(value)) {
             this.classList.add('valid');
             this.classList.remove('invalid');
-        } else if (this.value.length > 0) {
+        } else if (value.length > 0) {
             this.classList.add('invalid');
             this.classList.remove('valid');
         } else {
@@ -572,17 +684,23 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Form validation
     function validateForm() {
-        const username = usernameInput.value;
-        const email = emailInput.value;
+        const firstName = firstNameInput.value.trim();
+        const lastName = lastNameInput.value.trim();
+        const companyName = companyNameInput.value.trim();
+        const username = usernameInput.value.trim();
+        const email = emailInput.value.trim();
         const password = passwordInput.value;
         const confirmPassword = confirmPasswordInput.value;
         
-        const isUsernameValid = username.length >= 3;
+        const isFirstNameValid = firstName.length >= 2 && /^[a-zA-Z\s'-]+$/.test(firstName);
+        const isLastNameValid = lastName.length >= 2 && /^[a-zA-Z\s'-]+$/.test(lastName);
+        const isCompanyNameValid = companyName.length >= 2 && companyName.length <= 100;
+        const isUsernameValid = username.length >= 3 && /^[a-zA-Z0-9_.-]+$/.test(username);
         const isEmailValid = emailInput.checkValidity() && email.length > 0;
         const isPasswordValid = checkPasswordStrength(password).strength >= 3;
         const isPasswordMatch = password === confirmPassword && password.length > 0;
         
-        if (isUsernameValid && isEmailValid && isPasswordValid && isPasswordMatch) {
+        if (isFirstNameValid && isLastNameValid && isCompanyNameValid && isUsernameValid && isEmailValid && isPasswordValid && isPasswordMatch) {
             registerBtn.disabled = false;
             registerBtn.style.opacity = '1';
         } else {

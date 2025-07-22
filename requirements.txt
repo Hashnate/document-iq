@@ -1,42 +1,100 @@
-# Core
-setuptools<70.0.0
-numpy==1.26.0
-
-# Flask
-Flask==2.3.2
-Flask-Session==0.4.0
+# Core Web Framework
+Flask==2.3.3
+Flask-Login==0.6.3
 Flask-SQLAlchemy==3.0.5
-Flask-Login==0.6.2
-Flask-Migrate==4.0.4
+Flask-Migrate==4.0.5
+Flask-Session==0.5.0
 Werkzeug==2.3.7
 
-# Document Processing
-PyPDF2==3.0.1
-pdfplumber==0.10.3
-pdfminer.six==20221105
+# Database
+SQLAlchemy==2.0.21
+psycopg2-binary==2.9.7
+alembic==1.12.0
+
+# GPU and Machine Learning
+torch>=2.0.0
+torchvision>=0.15.0
+sentence-transformers>=2.2.0,<3.0.0
+huggingface_hub>=0.15.0,<0.17.0
+faiss-gpu==1.7.1.post3
+# Alternative for CPU-only systems: faiss-cpu==1.7.1.post3
+numpy==1.24.3
+transformers>=4.21.0,<5.0.0
+
+# Document Processing - PDF
+PyMuPDF==1.23.5
+pdf2image==1.17.0
+pytesseract==0.3.10
+
+# Document Processing - Office Files
+mammoth==1.6.0
 python-docx==0.8.11
+openpyxl==3.1.2
+pandas==2.0.3
+xlrd==2.0.1
 
-# Utilities
-python-dotenv==1.0.0
-python-decouple==3.8
-bcrypt==4.0.1
-email-validator==2.0.0.post2
-stripe==5.5.0
-requests==2.31.0
+# OCR and Image Processing
+easyocr==1.7.0
+Pillow==10.0.0
+opencv-python==4.8.0.76
+
+# Legacy PDF Processing
+PyPDF2==3.0.1
+
+# Web Scraping and Parsing
 beautifulsoup4==4.12.2
-markdown==3.4.4
-langchain
-sentence_transformers
-faiss
-# AI/ML (install these last)
---find-links https://download.pytorch.org/whl/nightly/cpu
-torch
-torchvision
-torchaudio
-faiss-cpu==1.7.4
-sentence-transformers==2.2.2
-langchain==0.0.348
+lxml==4.9.3
+html5lib==1.1
 
-psycopg2-binary>=2.9.5
-redis>=4.5.0
-celery>=5.2.0
+# Caching and Performance
+redis==4.6.0
+hiredis==2.2.3
+
+# System Monitoring
+psutil==5.9.5
+
+# Async Operations
+aiofiles==23.2.1
+
+# Environment and Configuration
+python-dotenv==1.0.0
+
+# HTTP Requests
+requests==2.31.0
+urllib3==2.0.4
+
+# Text Processing
+regex==2023.8.8
+nltk==3.8.1
+
+# Logging and Monitoring
+colorlog==6.7.0
+
+# Development and Testing (Optional)
+pytest==7.4.2
+pytest-asyncio==0.21.1
+black==23.7.0
+flake8==6.0.0
+
+# Production Server (Optional)
+gunicorn==21.2.0
+gevent==23.7.0
+spacy
+
+# Additional System Dependencies (may need system-level installation)
+# For Ubuntu/Debian:
+# sudo apt-get install tesseract-ocr
+# sudo apt-get install poppler-utils
+# sudo apt-get install libpq-dev
+# sudo apt-get install python3-dev
+# sudo apt-get install build-essential
+
+# For GPU support, ensure CUDA is installed:
+# CUDA Toolkit 11.8 or 12.1+ recommended
+# cuDNN compatible with your CUDA version
+
+# Note: For RTX A6000 optimization, ensure:
+# - CUDA 11.8+ or 12.1+
+# - Latest NVIDIA drivers (535.x or newer)
+# - At least 16GB system RAM
+# - Python 3.8+ (3.10 recommended)

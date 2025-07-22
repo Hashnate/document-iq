@@ -66,6 +66,7 @@
                 </div>
             </div>
 
+            <!-- Enhanced Progress Container with Multiple Indicators -->
             <div class="progress-container">
                 <div class="progress-info">
                     <span class="progress-text">Ready to upload</span>
@@ -74,9 +75,34 @@
                 <div class="progress-bar">
                     <div class="progress"></div>
                 </div>
+                <!-- Additional progress details -->
+                <div class="progress-details">
+                    <span class="progress-speed"></span>
+                    <span class="progress-eta"></span>
+                </div>
             </div>
 
+            <!-- Enhanced File List with Status Tracking -->
             <div class="file-list"></div>
+            
+            <!-- Processing Summary -->
+            <div class="processing-summary" style="display: none;">
+                <div class="summary-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Total Files:</span>
+                        <span class="stat-value" id="total-files">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Processed:</span>
+                        <span class="stat-value" id="processed-files">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Failed:</span>
+                        <span class="stat-value" id="failed-files">0</span>
+                    </div>
+                </div>
+            </div>
+
             <p class="error-message"></p>
 
             <div class="supported-files">
@@ -135,8 +161,7 @@
 
 <style>
     /* Modern color scheme with gradients */
-    
-     :root {
+    :root {
         --primary-color: #4361ee;
         --secondary-color: #3a0ca3;
         --accent-color: #7209b7;
@@ -149,8 +174,8 @@
         --warning-color: #f8961e;
         --error-color: #f94144;
     }
-    /* Gradient text effect */
     
+    /* Gradient text effect */
     .gradient-text {
         background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
         -webkit-background-clip: text;
@@ -158,8 +183,8 @@
         color: transparent;
         display: inline-block;
     }
-    /* Smooth animations */
     
+    /* Smooth animations */
     @keyframes fadeIn {
         from {
             opacity: 0;
@@ -182,8 +207,8 @@
             transform: scale(1);
         }
     }
-    /* Processing animations */
     
+    /* Processing animations */
     @keyframes processingPulse {
         0% {
             background-color: rgba(76, 201, 240, 0.15);
@@ -207,8 +232,31 @@
             transform: translateX(100%);
         }
     }
-    /* Main layout with gradient background */
     
+    @keyframes rotate {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+    
+    @keyframes successPulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+    
+    @keyframes dotAnimation {
+        0%, 20% { content: '.'; }
+        40% { content: '..'; }
+        60%, 100% { content: '...'; }
+    }
+    
+    /* Loading dots animation */
+    .loading-dots::after {
+        content: '.';
+        animation: dotAnimation 1.5s infinite;
+    }
+    
+    /* Main layout with gradient background */
     body {
         background: linear-gradient(135deg, var(--background-light) 0%, #e9ecef 100%);
         min-height: 100vh;
@@ -227,8 +275,8 @@
         align-items: flex-start;
         animation: fadeIn 0.5s ease-out;
     }
-    /* Welcome column styling */
     
+    /* Welcome column styling */
     .welcome-column {
         flex: 1;
         min-width: 0;
@@ -257,8 +305,8 @@
         margin-bottom: 30px;
         color: var(--light-text);
     }
-    /* Feature cards */
     
+    /* Feature cards */
     .features-section {
         margin-top: 40px;
         display: flex;
@@ -309,8 +357,8 @@
         margin: 0;
         font-size: 0.95rem;
     }
-    /* Upload column styling */
     
+    /* Upload column styling */
     .upload-column {
         flex: 0 1 500px;
         position: sticky;
@@ -347,8 +395,8 @@
         color: var(--light-text);
         font-size: 0.95rem;
     }
-    /* File upload area */
     
+    /* File upload area */
     .file-upload-area {
         min-height: 220px;
         border: 2px dashed rgba(67, 97, 238, 0.3);
@@ -433,8 +481,8 @@
         transform: translateY(-2px);
         box-shadow: 0 6px 20px rgba(67, 97, 238, 0.4);
     }
-    /* Progress bar */
     
+    /* Enhanced Progress bar */
     .progress-container {
         margin-top: 25px;
         display: none;
@@ -444,6 +492,7 @@
         display: flex;
         justify-content: space-between;
         margin-bottom: 8px;
+        align-items: center;
     }
     
     .progress-text {
@@ -453,6 +502,27 @@
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        flex: 1;
+        transition: opacity 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    /* Spinner for initialization phase */
+    .progress-text::before {
+        content: '';
+        display: none;
+        width: 16px;
+        height: 16px;
+        border: 2px solid var(--primary-color);
+        border-top-color: transparent;
+        border-radius: 50%;
+        animation: rotate 1s linear infinite;
+    }
+    
+    .progress-text.initializing::before {
+        display: inline-block;
     }
     
     .progress-percent {
@@ -460,6 +530,8 @@
         color: var(--primary-color);
         font-weight: 600;
         text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        min-width: 45px;
+        text-align: right;
     }
     
     .progress-bar {
@@ -476,6 +548,7 @@
         background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
         width: 0%;
         transition: width 0.3s ease;
+        position: relative;
     }
     
     .progress-bar::after {
@@ -497,8 +570,37 @@
     .progress-bar.completed::after {
         opacity: 0;
     }
-    /* File list with enhanced styling */
     
+    .progress-bar.error .progress {
+        background: linear-gradient(90deg, #f94144, #f3722c);
+    }
+    
+    .progress-bar.processing .progress {
+        background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+    }
+    
+    .progress-bar.completed .progress {
+        background: linear-gradient(90deg, #38b000, #4cc9f0);
+    }
+    
+    /* Progress details */
+    .progress-details {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 5px;
+        font-size: 0.8rem;
+        color: var(--light-text);
+    }
+    
+    .progress-speed {
+        flex: 1;
+    }
+    
+    .progress-eta {
+        text-align: right;
+    }
+    
+    /* File list with enhanced styling */
     .file-list {
         margin-top: 20px;
         max-height: 300px;
@@ -578,8 +680,16 @@
         flex-shrink: 0;
         transition: all 0.3s ease;
     }
-    /* File processing states */
     
+    .file-progress {
+        font-size: 0.75rem;
+        color: var(--primary-color);
+        margin-left: 10px;
+        min-width: 40px;
+        text-align: right;
+    }
+    
+    /* File processing states */
     .file-item.waiting {
         background-color: rgba(141, 153, 174, 0.1);
         border-left-color: var(--light-text);
@@ -589,23 +699,60 @@
     .file-item.processing {
         background-color: rgba(76, 201, 240, 0.15);
         border-left-color: #4cc9f0;
-        animation: processingPulse 2s infinite;
-        opacity: 1;
+        animation: processingPulse 1.5s infinite;
         transform: scale(1.02);
+        box-shadow: 0 2px 8px rgba(76, 201, 240, 0.2);
+    }
+    
+    .file-item.processing .file-status {
+        animation: rotate 2s linear infinite;
     }
     
     .file-item.completed {
         background-color: rgba(56, 176, 0, 0.1);
         border-left-color: #38b000;
-        opacity: 0.8;
+        animation: successPulse 0.5s ease-out;
     }
     
     .file-item.error {
         background-color: rgba(249, 65, 68, 0.1);
         border-left-color: #f94144;
     }
-    /* Supported files */
     
+    /* Processing summary */
+    .processing-summary {
+        margin-top: 20px;
+        padding: 15px;
+        background-color: rgba(67, 97, 238, 0.05);
+        border-radius: 10px;
+        border: 1px solid rgba(67, 97, 238, 0.2);
+    }
+    
+    .summary-stats {
+        display: flex;
+        justify-content: space-around;
+        gap: 20px;
+    }
+    
+    .stat-item {
+        text-align: center;
+    }
+    
+    .stat-label {
+        display: block;
+        font-size: 0.85rem;
+        color: var(--light-text);
+        margin-bottom: 5px;
+    }
+    
+    .stat-value {
+        display: block;
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--primary-color);
+    }
+    
+    /* Supported files */
     .supported-files {
         margin-top: 20px;
     }
@@ -639,8 +786,8 @@
     .badge i {
         font-size: 1rem;
     }
-    /* Upload tips */
     
+    /* Upload tips */
     .upload-tips {
         margin-top: 25px;
         display: flex;
@@ -670,8 +817,8 @@
         background-color: rgba(249, 65, 68, 0.1);
         border-radius: 6px;
     }
-    /* Modal styles */
     
+    /* Modal styles */
     .modal {
         display: none;
         position: fixed;
@@ -759,7 +906,7 @@
     .btn-secondary:hover {
         background-color: rgba(141, 153, 174, 0.2);
     }
-
+    
     .subscription-info {
         background: rgba(67, 97, 238, 0.05);
         border-radius: 10px;
@@ -767,19 +914,19 @@
         margin: 20px 0;
         border-left: 4px solid var(--primary-color);
     }
-
+    
     .subscription-info h4 {
         color: var(--text-color);
         margin-bottom: 10px;
         font-size: 1.1rem;
     }
-
+    
     .subscription-info p {
         color: var(--light-text);
         margin: 5px 0;
         font-size: 0.9rem;
     }
-
+    
     .text-center { 
         text-align: center; 
     }
@@ -791,8 +938,8 @@
     .mb-4 { 
         margin-bottom: 1.5rem; 
     }
-    /* Responsive styles */
     
+    /* Responsive styles */
     @media (max-width: 1200px) {
         .main-container {
             flex-direction: column;
@@ -861,700 +1008,613 @@
             font-size: 1rem;
         }
     }
+
+    .progress-bar .progress {
+    transition: width 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.processing-pulse {
+    animation: processingPulse 1.5s infinite;
+}
+
+@keyframes processingPulse {
+    0% { background-position: 0% 0%; }
+    100% { background-position: 200% 0%; }
+}
 </style>
-
 <script>
-    // Enhanced Upload JavaScript with Proper Authentication and Subscription Checks
-    document.addEventListener('DOMContentLoaded', function() {
-        const uploadArea = document.getElementById('dropZone');
-        const browseBtn = document.querySelector('.browse-btn');
+document.addEventListener('DOMContentLoaded', function() {
+    const uploadArea = document.getElementById('dropZone');
+    const browseBtn = document.querySelector('.browse-btn');
+    const progressContainer = document.querySelector('.progress-container');
+    const progressBar = document.querySelector('.progress');
+    const progressText = document.querySelector('.progress-text');
+    const progressPercent = document.querySelector('.progress-percent');
+    const progressSpeed = document.querySelector('.progress-speed');
+    const progressETA = document.querySelector('.progress-eta');
+    const fileList = document.querySelector('.file-list');
+    const errorMessage = document.querySelector('.error-message');
+    const modal = document.getElementById('subscriptionModal');
 
-        // Create file input
-        const fileInput = document.createElement('input');
-        fileInput.type = 'file';
-        fileInput.multiple = true;
-        fileInput.accept = '.pdf,.docx,.txt,.csv,.zip,.md,.json,.xml,.html';
-        fileInput.style.display = 'none';
-        document.body.appendChild(fileInput);
+    // File processing variables
+    let uploadStartTime = 0;
+    let bytesUploaded = 0;
+    let totalBytes = 0;
+    let filesCompleted = 0;
+    let filesFailed = 0;
+    let lastProgressUpdate = 0;
+    const MIN_PROGRESS_UPDATE_INTERVAL = 300; // ms between progress updates
+    
+    // Supported file types
+    const ALLOWED_EXTENSIONS = ['.pdf', '.docx', '.txt', '.csv', '.zip', '.md', '.json', '.xml', '.html'];
 
-        const progressContainer = document.querySelector('.progress-container');
-        const progressBar = document.querySelector('.progress');
-        const progressText = document.querySelector('.progress-text');
-        const progressPercent = document.querySelector('.progress-percent');
-        const fileList = document.querySelector('.file-list');
-        const errorMessage = document.querySelector('.error-message');
-        const modal = document.getElementById('subscriptionModal');
+    // Create file input
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.multiple = true;
+    fileInput.accept = ALLOWED_EXTENSIONS.join(',');
+    fileInput.style.display = 'none';
+    document.body.appendChild(fileInput);
 
-        // Supported file types
-        const ALLOWED_EXTENSIONS = ['.pdf', '.docx', '.txt', '.csv', '.zip', '.md', '.json', '.xml', '.html'];
+    // Subscription check
+    async function checkSubscriptionStatus() {
+        try {
+            const response = await fetch('/api/check_subscription', {
+                method: 'GET',
+                credentials: 'include'
+            });
 
-        // Enhanced subscription status check with better error handling
-        async function checkSubscriptionStatus() {
-            try {
-                console.log('Checking subscription status...');
-                const response = await fetch('/api/check_subscription', {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    credentials: 'include'
-                });
-
-                console.log('Subscription check response status:', response.status);
-
-                if (response.status === 401) {
-                    // User not logged in
-                    console.log('User not authenticated');
-                    return {
-                        is_logged_in: false,
-                        allow_uploads: false,
-                        redirect_to_login: true
-                    };
-                }
-
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-
-                const data = await response.json();
-                console.log('Subscription data:', data);
-                return data;
-
-            } catch (error) {
-                console.error('Subscription check failed:', error);
-                // If we can't check subscription, assume user needs to login
-                return {
-                    is_logged_in: false,
-                    allow_uploads: false,
-                    error: error.message
-                };
+            if (response.status === 401) {
+                return { is_logged_in: false, allow_uploads: false, redirect_to_login: true };
             }
+
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+            return await response.json();
+        } catch (error) {
+            console.error('Subscription check failed:', error);
+            return { is_logged_in: false, allow_uploads: false, error: error.message };
+        }
+    }
+
+    // File validation
+    function isValidFile(file) {
+        const fileName = file.name.toLowerCase();
+        return ALLOWED_EXTENSIONS.some(ext => fileName.endsWith(ext));
+    }
+
+    // Handle selected files
+    function handleFiles(files) {
+        const validFiles = Array.from(files).filter(isValidFile);
+
+        if (validFiles.length === 0) {
+            showError('No valid files found. Supported types: ' + ALLOWED_EXTENSIONS.join(', '));
+            return;
         }
 
-        // File validation
-        function isValidFile(file) {
-            const fileName = file.name.toLowerCase();
-            return ALLOWED_EXTENSIONS.some(ext => fileName.endsWith(ext));
-        }
-
-        // Enhanced file handling with proper authentication flow
-        function handleFiles(files) {
-            console.log('Handling', files.length, 'files');
-
-            const validFiles = Array.from(files).filter(isValidFile);
-            console.log('Valid files:', validFiles.length);
-
-            if (validFiles.length === 0) {
-                showError('No valid files found. Supported types: ' + ALLOWED_EXTENSIONS.join(', '));
+        checkSubscriptionStatus().then(status => {
+            if (!status.is_logged_in || status.redirect_to_login) {
+                window.location.href = `/login?next=${encodeURIComponent(window.location.pathname)}`;
                 return;
             }
 
-            // Check authentication and subscription
-            checkSubscriptionStatus().then(status => {
-                console.log('Processing subscription status:', status);
+            if (!status.allow_uploads) {
+                showSubscriptionModal(status);
+                return;
+            }
 
-                // Handle login redirect
-                if (!status.is_logged_in || status.redirect_to_login) {
-                    console.log('Redirecting to login...');
-                    const currentPath = window.location.pathname;
-                    window.location.href = `/login?next=${encodeURIComponent(currentPath)}`;
-                    return;
+            uploadFiles(validFiles);
+        }).catch(error => {
+            showError('Unable to verify subscription status. Please try again.');
+        });
+    }
+
+    // Show subscription modal
+    function showSubscriptionModal(status) {
+        const modalMessage = document.getElementById('modalMessage');
+        const subscriptionInfo = document.getElementById('subscriptionInfo');
+        const startTrialBtn = document.getElementById('startTrialBtn');
+
+        let message = 'To upload documents, you need an active subscription.';
+        let infoContent = '';
+
+        if (status.has_trial_available) {
+            message = 'Start your free 14-day trial to upload documents!';
+            infoContent = `
+                <h4><i class="bi bi-gift"></i> Free Trial Benefits:</h4>
+                <p>• Unlimited document uploads for 14 days</p>
+                <p>• All Professional features included</p>
+                <p>• Comprehensive search capabilities</p>
+            `;
+            startTrialBtn.style.display = 'inline-flex';
+        } else {
+            startTrialBtn.style.display = 'none';
+        }
+
+        modalMessage.textContent = message;
+        subscriptionInfo.innerHTML = infoContent;
+        modal.style.display = 'block';
+    }
+
+    // File upload function with reliable progress tracking
+    async function uploadFiles(files) {
+        console.log('Starting streaming upload of', files.length, 'files');
+
+        // Reset statistics
+        uploadStartTime = Date.now();
+        bytesUploaded = 0;
+        totalBytes = files.reduce((sum, file) => sum + file.size, 0);
+        filesCompleted = 0;
+        filesFailed = 0;
+        lastProgressUpdate = 0;
+        
+        // Clear UI
+        fileList.innerHTML = '';
+        errorMessage.style.display = 'none';
+        
+        // Show progress UI
+        progressContainer.style.display = 'block';
+        progressBar.style.width = '0%';
+        progressPercent.textContent = '0%';
+        progressText.textContent = '🔄 Preparing files for upload...';
+        document.querySelector('.processing-summary').style.display = 'block';
+        updateProcessingSummary(files.length, 0, 0);
+        
+        // Create file previews
+        createFilePreviewList(files);
+        
+        try {
+            // Create form data
+            const formData = new FormData();
+            files.forEach(file => formData.append('files', file));
+            
+            // Start upload
+            const xhr = new XMLHttpRequest();
+            
+            // Client-side upload tracking (0-20%)
+            xhr.upload.addEventListener('progress', (event) => {
+                if (event.lengthComputable) {
+                    // CORRECTED: Use bytes for size display
+                    const uploadedMB = event.loaded / (1024 * 1024);
+                    const totalMB = event.total / (1024 * 1024);
+                    const percent = Math.round((event.loaded / event.total) * 20);
+                    
+                    updateProgress(
+                        percent, 
+                        `📤 Uploading files... (${formatSize(uploadedMB)}/${formatSize(totalMB)})`
+                    );
                 }
-
-                // Handle subscription requirements
-                if (!status.allow_uploads) {
-                    console.log('Uploads not allowed, showing subscription modal');
-                    showSubscriptionModal(status);
-                    return;
-                }
-
-                // All checks passed - proceed with upload
-                console.log('All checks passed, starting upload');
-                uploadFiles(validFiles);
-
-            }).catch(error => {
-                console.error('Error in subscription check:', error);
-                showError('Unable to verify subscription status. Please try again or contact support.');
             });
-        }
-
-        // Enhanced subscription modal
-        function showSubscriptionModal(status) {
-            const modalMessage = document.getElementById('modalMessage');
-            const subscriptionInfo = document.getElementById('subscriptionInfo');
-            const startTrialBtn = document.getElementById('startTrialBtn');
-
-            let message = 'To upload documents, you need an active subscription.';
-            let infoContent = '';
-
-            if (!status.has_subscription && !status.has_active_trial) {
-                if (status.has_trial_available) {
-                    message = 'Start your free 14-day trial to upload documents and experience all features!';
-                    infoContent = `
-                        <h4><i class="bi bi-gift"></i> Free Trial Benefits:</h4>
-                        <p>• Unlimited document uploads for 14 days</p>
-                        <p>• All Professional features included</p>
-                        <p>• No credit card required</p>
-                        <p>• Cancel anytime</p>
-                    `;
-                    startTrialBtn.style.display = 'inline-flex';
-                } else {
-                    message = 'Your trial has expired. Upgrade to continue uploading documents.';
-                    startTrialBtn.style.display = 'none';
+            
+            // Handle server-sent events (20-100%)
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 3) { // Loading state (partial data received)
+                    try {
+                        const responseText = xhr.responseText;
+                        const events = responseText.split('\n').filter(line => line.startsWith('data: '));
+                        
+                        if (events.length > 0) {
+                            const lastEvent = events[events.length - 1].substring(6);
+                            const data = JSON.parse(lastEvent);
+                            handleStreamingProgress(data);
+                        }
+                    } catch (e) {
+                        console.log('Partial data parsing error', e);
+                    }
                 }
-            } else if (status.has_active_trial && status.trial_days_remaining <= 3) {
-                message = `Your trial expires in ${status.trial_days_remaining} day(s). Upgrade now to continue uninterrupted service.`;
-                infoContent = `
-                    <h4><i class="bi bi-clock"></i> Trial Status:</h4>
-                    <p>• ${status.trial_days_remaining} days remaining</p>
-                    <p>• Upgrade now for seamless transition</p>
-                `;
-                startTrialBtn.style.display = 'none';
-            } else {
-                message = 'Your subscription has expired. Please renew to continue uploading documents.';
-                startTrialBtn.style.display = 'none';
-            }
-
-            modalMessage.textContent = message;
-            subscriptionInfo.innerHTML = infoContent;
-            modal.style.display = 'block';
-        }
-
-        // Close subscription modal
-        window.closeSubscriptionModal = function() {
-            modal.style.display = 'none';
-        };
-
-        // Start free trial
-        window.startFreeTrial = async function() {
-            const startTrialBtn = document.getElementById('startTrialBtn');
-            startTrialBtn.disabled = true;
-            startTrialBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Starting Trial...';
-
-            try {
-                const response = await fetch('/start_trial', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    credentials: 'include'
-                });
-
-                const result = await response.json();
-
-                if (response.ok && result.success) {
-                    closeSubscriptionModal();
-                    showSuccess('Free trial started! You can now upload documents.');
-                    // Allow user to try upload again
+            };
+            
+            // Handle completion
+            xhr.onload = function() {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    try {
+                        // Process all events in final response
+                        const events = xhr.responseText.split('\n')
+                            .filter(line => line.startsWith('data: '))
+                            .map(line => JSON.parse(line.substring(6)));
+                        
+                        // Process all events
+                        events.forEach(event => handleStreamingProgress(event));
+                        
+                        // Ensure completion is handled
+                        if (!events.some(e => e.status === 'completed')) {
+                            handleUploadCompleted({
+                                message: 'Processing completed',
+                                processed_count: filesCompleted
+                            });
+                        }
+                    } catch (e) {
+                        handleUploadCompleted({
+                            message: 'Processing completed',
+                            processed_count: filesCompleted
+                        });
+                    }
                 } else {
-                    throw new Error(result.error || 'Failed to start trial');
+                    handleUploadError({message: `Server error: ${xhr.status}`});
                 }
-            } catch (error) {
-                console.error('Trial start failed:', error);
-                showError('Failed to start trial: ' + error.message);
-            } finally {
-                startTrialBtn.disabled = false;
-                startTrialBtn.innerHTML = '<i class="bi bi-gift"></i> Start Free Trial';
-            }
-        };
+            };
+            
+            // Handle errors
+            xhr.onerror = function() {
+                handleUploadError({message: 'Network error - please check your connection'});
+            };
+            
+            // Start request
+            xhr.open('POST', '/upload');
+            xhr.setRequestHeader('Accept', 'text/event-stream');
+            xhr.send(formData);
+            
+        } catch (error) {
+            console.error('Upload error:', error);
+            handleUploadError({message: 'Upload failed: ' + error.message});
+        }
+    }
 
-        // Go to pricing page
-        window.goToPricing = function() {
-            window.location.href = '/pricing';
-        };
+    // Unified progress update function
+    function updateProgress(percent, message) {
+        const now = Date.now();
+        
+        // Throttle updates
+        if (now - lastProgressUpdate < MIN_PROGRESS_UPDATE_INTERVAL && percent < 100) {
+            return;
+        }
+        lastProgressUpdate = now;
+        
+        // Update progress bar
+        progressBar.style.width = percent + '%';
+        progressPercent.textContent = percent + '%';
+        
+        // Update message
+        if (message) {
+            progressText.textContent = message;
+        }
+    }
 
-        // Enhanced upload function with better error handling
-        function uploadFiles(files) {
-            console.log('Starting upload of', files.length, 'files');
+    // Handle streaming progress updates from server
+    function handleStreamingProgress(data) {
+        // Update progress percentage
+        if (data.percent !== undefined) {
+            updateProgress(data.percent, data.message);
+        } 
+        // Update status message
+        else if (data.message) {
+            progressText.textContent = data.message;
+        }
+        
+        // Handle specific status types
+        switch (data.status) {
+            case 'files_ready':
+                handleFilesReady(data);
+                break;
+            case 'processing_file':
+                handleFileProcessing(data);
+                break;
+            case 'file_completed':
+                handleFileCompleted(data);
+                break;
+            case 'file_error':
+                handleFileError(data);
+                break;
+            case 'completed':
+                handleUploadCompleted(data);
+                break;
+            case 'error':
+                handleUploadError(data);
+                break;
+        }
+        
+        // Update speed/ETA if available
+        updateSpeedAndETA(data);
+    }
 
-            // Clear previous results
+    // Handle files ready for processing
+    function handleFilesReady(data) {
+        if (data.files && Array.isArray(data.files)) {
             fileList.innerHTML = '';
-            errorMessage.style.display = 'none';
-
-            // Show files with initial status
-            files.forEach((file, index) => {
+            data.files.forEach((file, index) => {
                 const fileItem = document.createElement('div');
                 fileItem.className = 'file-item waiting';
-                fileItem.setAttribute('data-file-index', index);
+                fileItem.dataset.filename = file.name;
+                fileItem.dataset.fileIndex = index;
                 fileItem.innerHTML = `
                     <span class="file-icon">📄</span>
                     <div class="file-info">
                         <span class="file-name">${file.name}</span>
                         <span class="file-size">${formatFileSize(file.size)}</span>
                     </div>
+                    <span class="file-progress"></span>
                     <span class="file-status">⏳</span>
                 `;
                 fileList.appendChild(fileItem);
             });
-
-            // Show progress
-            progressContainer.style.display = 'block';
-            progressBar.style.width = '0%';
-            progressPercent.textContent = '0%';
-
-            const totalSize = files.reduce((sum, file) => sum + file.size, 0);
-            progressText.textContent = `Preparing ${files.length} files (${formatFileSize(totalSize)})`;
-
-            // Prepare form data
-            const formData = new FormData();
-            files.forEach(file => {
-                formData.append('files', file);
-            });
-
-            console.log('FormData prepared, starting upload...');
-
-            // Upload with enhanced error handling
-            const xhr = new XMLHttpRequest();
-            xhr.open('POST', '/upload', true);
-
-            xhr.upload.onprogress = function(e) {
-                if (e.lengthComputable) {
-                    const percent = Math.round((e.loaded / e.total) * 100);
-                    progressBar.style.width = percent + '%';
-                    progressPercent.textContent = percent + '%';
-                    progressText.textContent = `Uploading... (${formatFileSize(e.loaded)} of ${formatFileSize(e.total)})`;
-                    updateProgressBarStyle('upload');
-                }
-            };
-
-            xhr.onload = function() {
-                console.log('Upload completed with status:', xhr.status);
-                console.log('Response:', xhr.responseText);
-
-                if (xhr.status === 200) {
-                    try {
-                        const response = JSON.parse(xhr.responseText);
-                        console.log('Parsed response:', response);
-
-                        if (response.job_id) {
-                            console.log('Starting processing with job ID:', response.job_id);
-                            startProcessingProgress(response.job_id, response.total_files);
-                        } else if (response.redirect) {
-                            console.log('Redirecting to:', response.redirect);
-                            window.location.href = response.redirect;
-                        } else {
-                            console.log('Unexpected response format');
-                            showError('Upload completed but processing failed to start');
-                        }
-                    } catch (parseError) {
-                        console.error('Error parsing response:', parseError);
-                        showError('Invalid response from server');
-                    }
-                } else if (xhr.status === 401) {
-                    console.log('Authentication required during upload');
-                    window.location.href = '/login?next=' + encodeURIComponent(window.location.pathname);
-                } else if (xhr.status === 403) {
-                    console.log('Upload forbidden - subscription required');
-                    checkSubscriptionStatus().then(status => {
-                        showSubscriptionModal(status);
-                    });
-                } else {
-                    console.error('Upload failed with status:', xhr.status);
-                    try {
-                        const response = JSON.parse(xhr.responseText);
-                        showError(response.error || `Upload failed (${xhr.status})`);
-                    } catch {
-                        showError(`Upload failed (${xhr.status}). Please try again.`);
-                    }
-                }
-            };
-
-            xhr.onerror = function() {
-                console.error('Network error during upload');
-                showError('Network error during upload. Please check your connection.');
-            };
-
-            xhr.ontimeout = function() {
-                console.error('Upload timeout');
-                showError('Upload timeout. Please try with smaller files.');
-            };
-
-            xhr.timeout = 300000; // 5 minute timeout
-
-            console.log('Sending upload request...');
-            xhr.send(formData);
         }
-
-        // Processing progress tracking (unchanged)
-        function startProcessingProgress(jobId, totalFiles) {
-            console.log('Starting processing progress tracking for job:', jobId);
-
-            progressBar.style.width = '0%';
-            progressPercent.textContent = '0%';
-            progressText.textContent = 'Starting document processing...';
-            updateProgressBarStyle('processing');
-
-            const fileItems = document.querySelectorAll('.file-item');
-            fileItems.forEach(item => {
-                item.classList.remove('processing', 'completed', 'error');
-                item.classList.add('waiting');
-                const statusSpan = item.querySelector('.file-status');
-                if (statusSpan) statusSpan.textContent = '⏳';
-            });
-
-            pollProcessingStatus(jobId, totalFiles);
+        
+        // Set progress to 25% if not already higher
+        const currentPercent = parseInt(progressBar.style.width);
+        if (currentPercent < 25) {
+            updateProgress(25, '✅ Upload complete! Starting processing...');
         }
+    }
 
-        function pollProcessingStatus(jobId, totalFiles) {
-    const pollInterval = 1000; // 1 second
-    const maxRetries = 3;
-    const maxPollTime = 300000; // 5 minutes max
-    let retryCount = 0;
-    let startTime = Date.now();
+    // Handle file processing
+    function handleFileProcessing(data) {
+        if (data.current_file) {
+            updateFileStatus(data.current_file, 'processing', '⚙️');
+        }
+        
+        if (data.message) {
+            progressText.textContent = data.message;
+        }
+    }
 
-    console.log(`Starting status polling for job ${jobId}`);
-
-    const poll = async () => {
-        try {
-            // Check if we've exceeded max polling time
-            if (Date.now() - startTime > maxPollTime) {
-                throw new Error('Processing timeout - please check if files were processed successfully');
+    // Handle completed file
+    function handleFileCompleted(data) {
+        if (data.file) {
+            if (data.success) {
+                updateFileStatus(data.file, 'completed', '✅');
+                
+                // Use server-provided success status if available
+                if (data.success === true) {
+                    filesCompleted++;
+                }
+            } else {
+                updateFileStatus(data.file, 'error', '❌');
+                filesFailed++;
             }
+            updateProcessingSummary(data.progress?.total || 0, filesCompleted, filesFailed);
+        }
+    }
 
-            console.log(`Polling status for job: ${jobId} (attempt ${retryCount + 1})`);
+    // Handle file error
+    function handleFileError(data) {
+        if (data.file) {
+            updateFileStatus(data.file, 'error', '❌');
+            filesFailed++;
+            updateProcessingSummary(data.progress?.total || 0, filesCompleted, filesFailed);
+        }
+    }
+
+    // Handle upload completion
+    function handleUploadCompleted(data) {
+        // Use server-provided count if available
+        const processedCount = data.processed_count || filesCompleted;
+        
+        updateProgress(100, data.message || '✅ Processing completed!');
+        
+        // Show success message
+        let successMsg = `Successfully processed ${processedCount} files`;
+        if (filesFailed > 0) {
+            successMsg += ` (${filesFailed} failed)`;
+        }
+        showSuccess(successMsg);
+        
+        // Redirect to chat after delay
+        setTimeout(() => {
+            window.location.href = '/new_chat';
+        }, 2500);
+    }
+    // Handle upload error
+    function handleUploadError(data) {
+        showError(data.message || 'Upload failed');
+        markAllFilesFailed();
+        progressBar.style.width = '0%';
+        progressPercent.textContent = '0%';
+    }
+
+    // Create file preview list
+    function createFilePreviewList(files) {
+        fileList.innerHTML = '';
+        files.forEach((file, index) => {
+            const fileItem = document.createElement('div');
+            fileItem.className = 'file-item waiting';
+            fileItem.dataset.filename = file.name;
+            fileItem.dataset.fileIndex = index;
             
-            const response = await fetch(`/upload_status/${jobId}`, {
-                method: 'GET',
-                credentials: 'include',
-                headers: {
-                    'Content-Type': 'application/json',
-                }
+            // File type icon
+            const extension = file.name.split('.').pop().toLowerCase();
+            let icon = '📄';
+            if (extension === 'pdf') icon = '📕';
+            else if (extension === 'docx' || extension === 'doc') icon = '📘';
+            else if (extension === 'txt') icon = '📝';
+            else if (extension === 'csv' || extension === 'xlsx' || extension === 'xls') icon = '📊';
+            else if (extension === 'zip') icon = '📦';
+            
+            fileItem.innerHTML = `
+                <span class="file-icon">${icon}</span>
+                <div class="file-info">
+                    <span class="file-name">${file.name}</span>
+                    <span class="file-size">${formatFileSize(file.size)}</span>
+                </div>
+                <span class="file-progress"></span>
+                <span class="file-status">⏳</span>
+            `;
+            
+            // Animate appearance
+            fileItem.style.opacity = '0';
+            fileItem.style.transform = 'translateY(10px)';
+            fileList.appendChild(fileItem);
+            
+            setTimeout(() => {
+                fileItem.style.transition = 'all 0.3s ease';
+                fileItem.style.opacity = '1';
+                fileItem.style.transform = 'translateY(0)';
+            }, index * 50);
+        });
+    }
+
+    // Update file status in UI
+    function updateFileStatus(filename, status, icon) {
+        const fileItem = document.querySelector(`[data-filename="${filename}"]`);
+        if (!fileItem) return;
+        
+        fileItem.className = `file-item ${status}`;
+        const statusElement = fileItem.querySelector('.file-status');
+        if (statusElement) statusElement.textContent = icon;
+    }
+
+    // Update processing summary
+    function updateProcessingSummary(total, completed, failed) {
+        document.getElementById('total-files').textContent = total;
+        document.getElementById('processed-files').textContent = completed;
+        document.getElementById('failed-files').textContent = failed;
+    }
+
+    // Update speed and ETA
+    function updateSpeedAndETA(data) {
+        if (!uploadStartTime) return;
+        
+        const elapsed = (Date.now() - uploadStartTime) / 1000;
+        if (data.processed_size_mb && elapsed > 0) {
+            const speed = data.processed_size_mb / elapsed;
+            progressSpeed.textContent = `Speed: ${speed.toFixed(1)} MB/s`;
+            
+            if (data.total_extracted_size_mb && speed > 0) {
+                const remaining = data.total_extracted_size_mb - data.processed_size_mb;
+                const eta = remaining / speed;
+                progressETA.textContent = `ETA: ${formatTime(eta)}`;
+            }
+        }
+    }
+
+    // Format file size
+    function formatFileSize(bytes) {
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+        return (bytes / 1048576).toFixed(1) + ' MB';
+    }
+
+    // Format size from MB
+    function formatSize(mb) {
+        if (mb < 0.1) return (mb * 1024).toFixed(0) + ' KB';
+        if (mb < 1024) return mb.toFixed(1) + ' MB';
+        return (mb / 1024).toFixed(1) + ' GB';
+    }
+
+    // Format time
+    function formatTime(seconds) {
+        if (seconds < 60) return Math.round(seconds) + 's';
+        if (seconds < 3600) return Math.floor(seconds / 60) + 'm';
+        return Math.floor(seconds / 3600) + 'h ' + Math.floor((seconds % 3600) / 60) + 'm';
+    }
+
+    // Mark all files as failed
+    function markAllFilesFailed() {
+        const fileItems = document.querySelectorAll('.file-item');
+        fileItems.forEach(item => {
+            if (!item.classList.contains('completed')) {
+                item.className = 'file-item error';
+                const statusElement = item.querySelector('.file-status');
+                if (statusElement) statusElement.textContent = '❌';
+            }
+        });
+    }
+
+    // Show error message
+    function showError(message) {
+        errorMessage.textContent = message;
+        errorMessage.style.display = 'block';
+        setTimeout(() => errorMessage.style.display = 'none', 5000);
+    }
+
+    // Show success message
+    function showSuccess(message) {
+        const successDiv = document.createElement('div');
+        successDiv.className = 'success-message';
+        successDiv.textContent = message;
+        document.body.appendChild(successDiv);
+        setTimeout(() => successDiv.remove(), 4000);
+    }
+
+    // Event listeners
+    uploadArea.addEventListener('click', () => fileInput.click());
+    browseBtn.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) handleFiles(e.target.files);
+    });
+
+    // Drag and drop
+    uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.classList.add('active');
+    });
+
+    uploadArea.addEventListener('dragleave', () => {
+        uploadArea.classList.remove('active');
+    });
+
+    uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('active');
+        if (e.dataTransfer.files.length > 0) {
+            handleFiles(e.dataTransfer.files);
+        }
+    });
+
+    // Modal handlers
+    document.querySelector('.close-modal').addEventListener('click', closeSubscriptionModal);
+    window.addEventListener('click', (e) => {
+        if (e.target === modal) closeSubscriptionModal();
+    });
+
+    // Modal functions
+    window.closeSubscriptionModal = function() {
+        modal.style.display = 'none';
+    };
+
+    window.startFreeTrial = async function() {
+        const startTrialBtn = document.getElementById('startTrialBtn');
+        startTrialBtn.disabled = true;
+        startTrialBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Starting Trial...';
+
+        try {
+            const response = await fetch('/start_trial', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include'
             });
 
-            console.log(`Status check response: ${response.status}`);
+            const result = await response.json();
 
-            if (response.status === 404) {
-                // Job not found - might be completed or error
-                console.warn(`Job ${jobId} not found (404). Checking if processing completed...`);
-                
-                // Check if files were actually processed by looking for documents
-                try {
-                    const docsResponse = await fetch('/debug/documents', {
-                        method: 'GET',
-                        credentials: 'include'
-                    });
-                    
-                    if (docsResponse.ok) {
-                        const docsData = await docsResponse.json();
-                        console.log('Documents check result:', docsData);
-                        
-                        // If we have recent documents, assume processing completed
-                        if (docsData.documents && docsData.documents.length > 0) {
-                            progressText.textContent = `✅ Processing complete! Redirecting to chat...`;
-                            updateProgressBarStyle('completed');
-                            progressBar.style.width = '100%';
-                            progressPercent.textContent = '100%';
-
-                            const fileItems = document.querySelectorAll('.file-item');
-                            fileItems.forEach(item => {
-                                item.classList.remove('processing', 'waiting');
-                                item.classList.add('completed');
-                                const statusSpan = item.querySelector('.file-status');
-                                if (statusSpan) statusSpan.textContent = '✅';
-                            });
-
-                            setTimeout(() => {
-                                window.location.href = '/new_chat';
-                            }, 2000);
-                            return;
-                        }
-                    }
-                } catch (docCheckError) {
-                    console.warn('Could not check documents:', docCheckError);
-                }
-                
-                // If we can't confirm completion, show error
-                throw new Error(`Processing job not found. This might be due to server restart or timeout.`);
-            }
-
-            if (!response.ok) {
-                throw new Error(`Status check failed: ${response.status} ${response.statusText}`);
-            }
-
-            const status = await response.json();
-            console.log('Processing status:', status);
-
-            // Reset retry count on successful response
-            retryCount = 0;
-
-            updateProcessingProgress(status);
-
-            if (status.status === 'completed') {
-                console.log('Processing completed successfully');
-                progressText.textContent = `✅ Processing complete! Redirecting to chat...`;
-                updateProgressBarStyle('completed');
-
-                const fileItems = document.querySelectorAll('.file-item');
-                fileItems.forEach(item => {
-                    item.classList.remove('processing', 'waiting');
-                    item.classList.add('completed');
-                    const statusSpan = item.querySelector('.file-status');
-                    if (statusSpan) statusSpan.textContent = '✅';
-                });
-
-                setTimeout(() => {
-                    window.location.href = '/new_chat';
-                }, 2000);
-                
-            } else if (status.status === 'error') {
-                console.error('Processing failed:', status.error_message);
-                updateProgressBarStyle('error');
-                showError(status.error_message || 'Processing failed');
-                
-            } else if (status.status === 'processing') {
-                // Continue polling
-                setTimeout(poll, pollInterval);
-                
+            if (response.ok && result.success) {
+                closeSubscriptionModal();
+                showSuccess('Free trial started! You can now upload documents.');
             } else {
-                // Unknown status, continue polling but log warning
-                console.warn('Unknown processing status:', status.status);
-                setTimeout(poll, pollInterval);
+                throw new Error(result.error || 'Failed to start trial');
             }
-
         } catch (error) {
-            console.error('Error polling status:', error);
-            retryCount++;
-
-            if (retryCount <= maxRetries) {
-                console.log(`Retrying in ${pollInterval * retryCount}ms... (${retryCount}/${maxRetries})`);
-                progressText.textContent = `Connection issue, retrying... (${retryCount}/${maxRetries})`;
-                
-                // Exponential backoff for retries
-                setTimeout(poll, pollInterval * retryCount);
-            } else {
-                console.error('Max retries exceeded');
-                updateProgressBarStyle('error');
-                
-                let errorMessage = 'Error checking processing status: ' + error.message;
-                
-                // Provide more helpful error messages
-                if (error.message.includes('404') || error.message.includes('not found')) {
-                    errorMessage = 'Processing job not found. Your files may have been processed successfully. Please check your documents or try uploading again.';
-                } else if (error.message.includes('timeout')) {
-                    errorMessage = 'Processing is taking longer than expected. Please check your documents or contact support.';
-                } else if (error.message.includes('NetworkError') || error.message.includes('Failed to fetch')) {
-                    errorMessage = 'Network connection lost. Please check your connection and try again.';
-                }
-                
-                showError(errorMessage);
-                
-                // Add a button to check documents or retry
-                const errorDiv = document.querySelector('.error-message');
-                if (errorDiv) {
-                    const checkButton = document.createElement('button');
-                    checkButton.textContent = 'Check My Documents';
-                    checkButton.className = 'btn btn-primary';
-                    checkButton.style.marginTop = '10px';
-                    checkButton.onclick = () => window.location.href = '/new_chat';
-                    errorDiv.appendChild(checkButton);
-                }
-            }
+            showError('Failed to start trial: ' + error.message);
+        } finally {
+            startTrialBtn.disabled = false;
+            startTrialBtn.innerHTML = '<i class="bi bi-gift"></i> Start Free Trial';
         }
     };
 
-    // Start polling
-    poll();
-}
-
-// Also add this enhanced error handling to the updateProcessingProgress function
-function updateProcessingProgress(status) {
-    const { processed_files, total_files, current_file, progress_percent } = status;
-
-    // Ensure progress_percent is valid
-    const validPercent = Math.min(100, Math.max(0, progress_percent || 0));
-    
-    progressBar.style.width = validPercent + '%';
-    progressPercent.textContent = validPercent + '%';
-
-    const progressCount = `${processed_files || 0}/${total_files || 0}`;
-    let statusText = `🔥 Processing documents... (${progressCount})`;
-
-    if (current_file && !current_file.includes('completed')) {
-        // Truncate long filenames for display
-        const displayName = current_file.length > 30 ? 
-            current_file.substring(0, 27) + '...' : current_file;
-        statusText = `Processing: ${displayName} (${progressCount})`;
-    }
-
-    if (status.status === 'completed') {
-        statusText = `✅ Processing complete! (${total_files}/${total_files})`;
-    } else if (status.status === 'error') {
-        statusText = `❌ Processing failed`;
-    }
-
-    progressText.textContent = statusText;
-
-    // Update individual file statuses if we have the information
-    if (current_file) {
-        const fileItems = document.querySelectorAll('.file-item');
-        fileItems.forEach((item, index) => {
-            const fileName = item.querySelector('.file-name').textContent;
-            const statusSpan = item.querySelector('.file-status');
-            
-            if (index < (processed_files || 0)) {
-                // This file has been processed
-                item.classList.remove('waiting', 'processing');
-                item.classList.add('completed');
-                if (statusSpan) statusSpan.textContent = '✅';
-            } else if (fileName === current_file) {
-                // This file is currently being processed
-                item.classList.remove('waiting', 'completed');
-                item.classList.add('processing');
-                if (statusSpan) statusSpan.textContent = '⚙️';
-            } else {
-                // This file is waiting
-                item.classList.remove('processing', 'completed');
-                item.classList.add('waiting');
-                if (statusSpan) statusSpan.textContent = '⏳';
-            }
-        });
-    }
-}
-
-
-        function updateProcessingProgress(status) {
-            const { processed_files, total_files, current_file, progress_percent } = status;
-
-            progressBar.style.width = progress_percent + '%';
-            progressPercent.textContent = progress_percent + '%';
-
-            const progressCount = `${processed_files}/${total_files}`;
-            let statusText = `🔥 Processing documents... (${progressCount})`;
-
-            if (current_file && !current_file.includes('completed')) {
-                statusText = `Processing: ${current_file} (${progressCount})`;
-            }
-
-            if (status.status === 'completed') {
-                statusText = `✅ Processing complete! (${total_files}/${total_files})`;
-            }
-
-            progressText.textContent = statusText;
-        }
-
-        function updateProgressBarStyle(phase) {
-            const progressBar = document.querySelector('.progress');
-            const progressBarContainer = document.querySelector('.progress-bar');
-
-            switch (phase) {
-                case 'upload':
-                    progressBar.style.background = 'linear-gradient(90deg, var(--primary-color), var(--accent-color))';
-                    break;
-                case 'processing':
-                    progressBar.style.background = 'linear-gradient(90deg, #4cc9f0, #7209b7)';
-                    progressBarContainer.classList.add('processing');
-                    break;
-                case 'completed':
-                    progressBar.style.background = 'linear-gradient(90deg, #4cc9f0, #38b000)';
-                    progressBarContainer.classList.add('completed');
-                    break;
-                case 'error':
-                    progressBar.style.background = 'linear-gradient(90deg, #f94144, #ff006e)';
-                    break;
-            }
-        }
-
-        // Utility functions
-        function formatFileSize(bytes) {
-            if (bytes === 0) return '0 Bytes';
-            const k = 1024;
-            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-        }
-
-        function showError(message) {
-            console.error('Showing error:', message);
-            errorMessage.textContent = message;
-            errorMessage.style.display = 'block';
-            progressContainer.style.display = 'none';
-
-            const fileItems = document.querySelectorAll('.file-item');
-            fileItems.forEach(item => {
-                item.classList.remove('waiting', 'processing', 'completed');
-                item.classList.add('error');
-                const statusSpan = item.querySelector('.file-status');
-                if (statusSpan) statusSpan.textContent = '❌';
-            });
-
-            setTimeout(() => {
-                errorMessage.style.display = 'none';
-            }, 8000);
-        }
-
-        function showSuccess(message) {
-            // Create a temporary success message
-            const successDiv = document.createElement('div');
-            successDiv.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                background: linear-gradient(135deg, #4cc9f0, #38b000);
-                color: white;
-                padding: 15px 20px;
-                border-radius: 8px;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-                z-index: 1001;
-                animation: fadeIn 0.3s ease-out;
-            `;
-            successDiv.textContent = message;
-            document.body.appendChild(successDiv);
-
-            setTimeout(() => {
-                successDiv.remove();
-            }, 3000);
-        }
-
-        // Event listeners
-        uploadArea.addEventListener('click', (e) => {
-            e.preventDefault();
-            console.log('Upload area clicked');
-            fileInput.click();
-        });
-
-        browseBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            console.log('Browse button clicked');
-            fileInput.click();
-        });
-
-        fileInput.addEventListener('change', (e) => {
-            console.log('File input changed, files:', e.target.files.length);
-            if (e.target.files.length > 0) {
-                handleFiles(e.target.files);
-            }
-        });
-
-        // Drag and drop
-        uploadArea.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            uploadArea.classList.add('active');
-        });
-
-        uploadArea.addEventListener('dragleave', () => {
-            uploadArea.classList.remove('active');
-        });
-
-        uploadArea.addEventListener('drop', (e) => {
-            e.preventDefault();
-            uploadArea.classList.remove('active');
-            console.log('Files dropped:', e.dataTransfer.files.length);
-
-            if (e.dataTransfer.files.length > 0) {
-                handleFiles(e.dataTransfer.files);
-            }
-        });
-
-        // Modal close handlers
-        document.querySelector('.close-modal').addEventListener('click', closeSubscriptionModal);
-        
-        window.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                closeSubscriptionModal();
-            }
-        });
-
-        console.log('Enhanced upload script initialized');
-    });
+    window.goToPricing = function() {
+        window.location.href = '/pricing';
+    };
+});
 </script>
+
+<style>
+.success-message {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: linear-gradient(135deg, #4cc9f0, #38b000);
+    color: white;
+    padding: 15px 25px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    z-index: 1000;
+    font-weight: 600;
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+</style>
+
+
 {% endblock %}
