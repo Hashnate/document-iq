@@ -2239,6 +2239,7 @@
 </div>
 {% endblock %}
 
+
 {% block extra_scripts %}
 <script>
     // Make user ID available to JavaScript
@@ -2269,6 +2270,23 @@
     const previewResizeHandle = document.getElementById('preview-resize-handle');
     const previewHeader = document.getElementById('preview-header');
     const maximizeBtn = document.getElementById('maximize-btn');
+
+    // Process existing messages on page load
+    function processExistingMessages() {
+        document.querySelectorAll('.message-assistant .message-text').forEach(messageText => {
+            // Skip if already processed (has HTML elements)
+            if (messageText.querySelector('strong, em, h1, h2, h3, li, p')) {
+                return;
+            }
+            
+            // Get the raw content and process it
+            const rawContent = messageText.textContent || messageText.innerText || '';
+            if (rawContent.trim()) {
+                const processedContent = processContentWithReferences(rawContent);
+                messageText.innerHTML = processedContent;
+            }
+        });
+    }
 
     // Enhanced copy to clipboard functionality
     async function copyMessageToClipboard(button) {
@@ -2401,6 +2419,10 @@
         initChatHistory();
         initResponsiveHandlers();
         initDocumentTree();
+        
+        // Process existing messages on page load - FIX FOR STYLING ISSUE
+        processExistingMessages();
+        
         scrollToBottom();
 
         const chatInput = document.querySelector('.chat-input');
@@ -3078,7 +3100,7 @@
                 // Highlight if needed
                 if (highlight) {
                     try {
-                        const escapedHighlight = highlight.replace(/[.*+?^${}()|[\]\\]/g, '\\    function showErrorToast(message) {');
+                        const escapedHighlight = highlight.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
                         const highlightRegex = new RegExp(`(${escapedHighlight})`, 'gi');
                         content = content.replace(highlightRegex, '<mark>$1</mark>');
                     } catch (e) {
@@ -3341,20 +3363,59 @@
         scrollToBottom();
     }
 
+    // ENHANCED processContentWithReferences function - THIS FIXES THE FORMATTING ISSUE
     function processContentWithReferences(content) {
+        if (!content || typeof content !== 'string') {
+            return '';
+        }
+
         let documentCounter = 0;
         const documentMap = new Map();
 
-        let processed = content
-            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+        // First, escape any existing HTML to prevent conflicts, but preserve basic formatting
+        let processed = content;
+
+        // Process markdown formatting BEFORE escaping HTML
+        processed = processed
+            // Headers
             .replace(/^### (.*$)/gm, '<h3>$1</h3>')
             .replace(/^## (.*$)/gm, '<h2>$1</h2>')
             .replace(/^# (.*$)/gm, '<h1>$1</h1>')
-            .replace(/^\s*-\s+(.*$)/gm, '<li>$1</li>')
-            .replace(/^\s*\d+\.\s+(.*$)/gm, '<li>$1</li>')
+            
+            // Bold and italic
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/(?<!\*)\*([^*\n]+)\*(?!\*)/g, '<em>$1</em>')
+            
+            // Code blocks (triple backticks)
+            .replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>')
+            
+            // Inline code (single backticks)
+            .replace(/`([^`\n]+)`/g, '<code>$1</code>')
+            
+            // Lists - handle both bullet points and numbered lists
+            .replace(/^\s*[-*+]\s+(.+)$/gm, '<li>$1</li>')
+            .replace(/^\s*\d+\.\s+(.+)$/gm, '<li>$1</li>')
+            
+            // Line breaks - handle paragraphs and single line breaks
+            .replace(/\n\n+/g, '</p><p>')
             .replace(/\n/g, '<br>');
 
+        // Wrap consecutive list items in ul tags
+        processed = processed.replace(/(<li>.*?<\/li>)(?:\s*<br>\s*<li>.*?<\/li>)*/g, function(match) {
+            // Remove br tags between list items
+            const cleanedMatch = match.replace(/<br>\s*(?=<li>)/g, '');
+            return '<ul>' + cleanedMatch + '</ul>';
+        });
+
+        // Wrap content in paragraph tags if it doesn't have block elements
+        if (!processed.includes('<p>') && !processed.includes('<h') && !processed.includes('<ul>') && !processed.includes('<pre>')) {
+            processed = '<p>' + processed + '</p>';
+        } else if (processed.includes('</p><p>')) {
+            // Add opening and closing p tags
+            processed = '<p>' + processed + '</p>';
+        }
+
+        // Process references
         processed = processed.replace(
             /\[\^([^\|\]]+)(?:\|\|([^\|\]]+))?(?:\|\|([^\|\]]+))?\]/g,
             function(match, filename, page, highlight) {
