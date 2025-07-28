@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """
-DocumentIQ - Enhanced GPU-Accelerated Document Processing System with OCR and Guaranteed Accuracy
+DocumentIQ - Enhanced GPU-Accelerated Document Processing System with Gemini AI
 - 100% search accuracy with perfect formatting preservation
 - OCR support for image-based PDFs and image files
 - RTX A6000 optimization with comprehensive search
 - Never returns "no results" - always finds relevant content
 - Enhanced accuracy-focused chunking and search strategies
+- Gemini AI integration for advanced language understanding
 """
 
 import os
@@ -91,6 +92,15 @@ except ImportError:
     SPACY_AVAILABLE = False
     print("Warning: spaCy not available. Some NLP features disabled.")
 
+# GEMINI AI INTEGRATION
+try:
+    import google.generativeai as genai
+    GEMINI_AVAILABLE = True
+    print("✅ Google Generative AI (Gemini) available")
+except ImportError:
+    GEMINI_AVAILABLE = False
+    print("❌ Google Generative AI not available. Install with: pip install google-generativeai")
+
 import textwrap
 
 # Load environment variables
@@ -101,10 +111,9 @@ load_dotenv()
 app = Flask(__name__)
 
 # --------------------- Enhanced GPU Configuration for RTX A6000 with Accuracy Focus ---------------------
-
 class RTX_A6000_Enhanced_Config:
-    """Optimized configuration for RTX A6000 (48GB VRAM) and 256GB RAM with OCR and accuracy focus"""
-    SECRET_KEY = os.getenv('SECRET_KEY', 'enhanced-gpu-documentiq-ocr-secret')
+    """Optimized configuration for RTX A6000 (48GB VRAM) and 256GB RAM with OCR and Gemini AI"""
+    SECRET_KEY = os.getenv('SECRET_KEY', 'enhanced-gpu-documentiq-gemini-secret')
     
     # Directories
     UPLOAD_FOLDER = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'uploads')
@@ -145,10 +154,14 @@ class RTX_A6000_Enhanced_Config:
     EXTRACTION_BUFFER_SIZE = 128 * 1024  # 128KB buffer
     EXTRACTION_TIMEOUT = 7200  # 2 hours for extraction
     
-    # AI/ML Configuration - IMPROVED MODEL FOR ACCURACY
-    OLLAMA_URL = os.getenv('OLLAMA_URL', 'http://127.0.0.1:11434/api/generate')
-    OLLAMA_MODEL = os.getenv('OLLAMA_MODEL', 'llama3:70b-instruct-q4_K_M')  # Changed from phi4 for better accuracy
-    OLLAMA_TIMEOUT = 600
+    # GEMINI AI Configuration - UPDATED FOR GEMINI
+    GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', 'AIzaSyDnA6dez0GBbxuue7iV1Q9sA8mUcloUmw4')
+    GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-1.5-pro')  # Best Gemini model for accuracy
+    GEMINI_TIMEOUT = 600
+    GEMINI_MAX_TOKENS = 8192  # Gemini's context limit
+    GEMINI_TEMPERATURE = 0.1  # Low temperature for accuracy
+    GEMINI_TOP_P = 0.8
+    GEMINI_TOP_K = 40
     
     # Enhanced GPU Processing Configuration for RTX A6000
     GPU_ENABLED = torch.cuda.is_available()
@@ -235,6 +248,33 @@ class RTX_A6000_Enhanced_Config:
     LOG_FILE = os.path.join(os.getcwd(), 'app.log')
     LOG_LEVEL = logging.INFO
 
+
+# Apply configuration
+app.config.from_object(RTX_A6000_Enhanced_Config)
+
+# Create directories
+for directory in ['/tmp/flask_sessions', app.config['UPLOAD_FOLDER'], 
+                 app.config['EXTRACT_FOLDER'], app.config['CACHE_FOLDER'], 
+                 app.config['TEMP_DIR'], app.config['MODEL_CACHE_DIR']]:
+    os.makedirs(directory, exist_ok=True)
+
+# Configure logging
+handler = RotatingFileHandler(app.config['LOG_FILE'], maxBytes=10 * 1024 * 1024, backupCount=3)
+handler.setLevel(app.config['LOG_LEVEL'])
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+app.logger.addHandler(handler)
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+# Add console handler for better debugging
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.DEBUG)
+console_handler.setFormatter(formatter)
+logger.addHandler(console_handler)
+
+
 # Apply configuration
 app.config.from_object(RTX_A6000_Enhanced_Config)
 
@@ -267,6 +307,61 @@ console_handler.setLevel(logging.DEBUG)
 console_handler.setFormatter(formatter)
 logger.addHandler(console_handler)
 
+# GEMINI AI INITIALIZATION
+def initialize_gemini():
+    """Initialize Gemini AI with API key"""
+    global gemini_model
+    
+    try:
+        if not GEMINI_AVAILABLE:
+            logger.error("❌ Gemini not available - please install google-generativeai")
+            return False
+            
+        api_key = app.config['GEMINI_API_KEY']
+        if not api_key:
+            logger.error("❌ GEMINI_API_KEY not found in environment variables")
+            logger.error("🔧 Set your API key: export GEMINI_API_KEY='your-api-key-here'")
+            return False
+        
+        # Configure Gemini
+        genai.configure(api_key=api_key)
+        
+        # Initialize the model with safety settings for document analysis
+        generation_config = {
+            "temperature": app.config['GEMINI_TEMPERATURE'],
+            "top_p": app.config['GEMINI_TOP_P'],
+            "top_k": app.config['GEMINI_TOP_K'],
+            "max_output_tokens": app.config['GEMINI_MAX_TOKENS'],
+        }
+        
+        safety_settings = [
+            {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
+            {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
+            {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE"},
+            {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE"},
+        ]
+        
+        # Create the model
+        gemini_model = genai.GenerativeModel(
+            model_name=app.config['GEMINI_MODEL'],
+            generation_config=generation_config,
+            safety_settings=safety_settings
+        )
+        
+        logger.info(f"✅ Gemini AI initialized successfully")
+        logger.info(f"🤖 Model: {app.config['GEMINI_MODEL']}")
+        logger.info(f"🎯 Temperature: {app.config['GEMINI_TEMPERATURE']}")
+        logger.info(f"📊 Max tokens: {app.config['GEMINI_MAX_TOKENS']}")
+        
+        return True
+        
+    except Exception as e:
+        logger.error(f"❌ Gemini initialization failed: {e}")
+        return False
+
+# Global Gemini model instance
+gemini_model = None
+
 # Enhanced processing jobs with better thread safety
 processing_jobs = {}
 processing_jobs_lock = threading.RLock()
@@ -276,6 +371,7 @@ global_processor = None
 search_engine = None
 
 ocr_reader = None
+
 
 # Initialize global OCR processor
 def initialize_ocr_processor():
@@ -294,9 +390,556 @@ def initialize_ocr_processor():
         logger.error(f"❌ OCR processor initialization failed: {e}")
         return False
 
-  
+# GEMINI AI HELPER FUNCTIONS
 
-  # --------------------- Enhanced OCR Processing Class ---------------------
+def check_gemini_health():
+    """Check if Gemini AI service is accessible"""
+    try:
+        if not GEMINI_AVAILABLE:
+            return False, "Gemini library not installed"
+            
+        if not app.config['GEMINI_API_KEY']:
+            return False, "Gemini API key not configured"
+            
+        if not gemini_model:
+            return False, "Gemini model not initialized"
+        
+        # Test with a simple prompt
+        test_response = gemini_model.generate_content("Hello, respond with 'OK' if you're working.")
+        
+        if test_response and test_response.text:
+            logger.info("✅ Gemini AI service is working")
+            return True, "Gemini AI service is accessible"
+        else:
+            logger.warning("⚠️ Gemini AI test failed - no response")
+            return False, "Gemini AI test failed"
+            
+    except Exception as e:
+        logger.error(f"❌ Gemini health check failed: {e}")
+        return False, f"Health check failed: {str(e)}"
+
+def get_gemini_response_stream(prompt):
+    """Stream response from Gemini AI"""
+    try:
+        if not gemini_model:
+            yield f"\n\nError: Gemini AI model not initialized"
+            return
+            
+        # Generate response with streaming
+        response = gemini_model.generate_content(
+            prompt,
+            stream=True
+        )
+        
+        for chunk in response:
+            if chunk.text:
+                yield chunk.text
+                
+    except Exception as e:
+        logger.error(f"Gemini response error: {e}")
+        yield f"\n\nError: Failed to get response from Gemini AI ({str(e)})"
+
+def get_gemini_response_complete(prompt):
+    """Get complete response from Gemini AI (non-streaming)"""
+    try:
+        if not gemini_model:
+            return "Error: Gemini AI model not initialized"
+            
+        response = gemini_model.generate_content(prompt)
+        
+        if response and response.text:
+            return response.text
+        else:
+            return "Error: Empty response from Gemini AI"
+            
+    except Exception as e:
+        logger.error(f"Gemini complete response error: {e}")
+        return f"Error: Failed to get response from Gemini AI ({str(e)})"
+
+# UPDATE HEALTH CHECK FUNCTIONS FOR GEMINI
+
+@app.route('/api/gemini_status')
+@login_required
+def gemini_status():
+    """Check Gemini AI service status"""
+    is_healthy, message = check_gemini_health()
+    
+    status = {
+        'gemini_healthy': is_healthy,
+        'status_message': message,
+        'api_key_configured': bool(app.config['GEMINI_API_KEY']),
+        'model_name': app.config['GEMINI_MODEL'],
+        'timeout_seconds': app.config['GEMINI_TIMEOUT'],
+        'max_tokens': app.config['GEMINI_MAX_TOKENS'],
+        'temperature': app.config['GEMINI_TEMPERATURE'],
+        'gemini_available': GEMINI_AVAILABLE
+    }
+    
+    if is_healthy:
+        try:
+            # Test model capabilities
+            test_response = gemini_model.generate_content("What can you help with?")
+            if test_response and test_response.text:
+                status['test_response_success'] = True
+                status['capabilities'] = "Text analysis, document comprehension, Q&A"
+        except Exception as test_error:
+            status['test_response_error'] = str(test_error)
+    
+    return jsonify(status)
+
+def startup_gemini_check():
+    """Check Gemini status during startup"""
+    logger.info("🔍 Checking Gemini AI service status...")
+    
+    if not GEMINI_AVAILABLE:
+        logger.error("❌ Gemini library not available")
+        logger.error("🔧 Install with: pip install google-generativeai")
+        return False
+    
+    if not app.config['GEMINI_API_KEY']:
+        logger.error("❌ Gemini API key not configured")
+        logger.error("🔧 Set your API key: export GEMINI_API_KEY='your-api-key-here'")
+        logger.error("🔧 Get API key from: https://makersuite.google.com/app/apikey")
+        return False
+    
+    # Initialize Gemini
+    gemini_success = initialize_gemini()
+    
+    if gemini_success:
+        is_healthy, message = check_gemini_health()
+        
+        if is_healthy:
+            logger.info(f"✅ Gemini Status: {message}")
+            logger.info(f"🤖 Using model: {app.config['GEMINI_MODEL']}")
+            logger.info(f"🎯 Temperature: {app.config['GEMINI_TEMPERATURE']}")
+            logger.info(f"📊 Max tokens: {app.config['GEMINI_MAX_TOKENS']}")
+            return True
+        else:
+            logger.error(f"❌ Gemini Status: {message}")
+            return False
+    else:
+        logger.error("❌ Gemini initialization failed")
+        return False
+
+# UPDATE VALIDATION FUNCTION FOR GEMINI
+
+def validate_system_requirements():
+    """Validate all system requirements at startup"""
+    logger.info("🔍 SYSTEM VALIDATION STARTING...")
+    
+    issues = []
+    
+    # Check GPU
+    if torch.cuda.is_available():
+        logger.info(f"✅ GPU Available: {torch.cuda.get_device_name()}")
+    else:
+        logger.warning("⚠️ GPU not available - using CPU mode")
+    
+    # Check Gemini instead of Ollama
+    gemini_healthy = startup_gemini_check()
+    if gemini_healthy:
+        logger.info("✅ Gemini AI Service: Ready")
+    else:
+        issues.append("Gemini AI service not ready")
+        logger.error("❌ Gemini AI Service: Not Ready")
+    
+    # Check OCR
+    try:
+        import easyocr
+        logger.info("✅ EasyOCR package available")
+    except ImportError:
+        issues.append("EasyOCR package not installed")
+        logger.error("❌ EasyOCR package not available")
+    
+    # Check database
+    try:
+        with app.app_context():
+            with db.engine.connect() as connection:
+                connection.execute(text('SELECT 1'))
+        logger.info("✅ Database connection successful")
+    except Exception as db_error:
+        issues.append(f"Database connection failed: {db_error}")
+        logger.error(f"❌ Database connection failed: {db_error}")
+    
+    # Summary
+    if issues:
+        logger.error("⚠️ SYSTEM VALIDATION COMPLETED WITH ISSUES:")
+        for issue in issues:
+            logger.error(f"   - {issue}")
+        logger.error("🔧 Some features may not work correctly until these issues are resolved")
+    else:
+        logger.info("✅ SYSTEM VALIDATION COMPLETED - ALL SYSTEMS READY")
+    
+    return len(issues) == 0, issues
+
+
+
+class QuestionTypeDetector:
+    """Detect whether a question is a search query or a generic question"""
+    
+    def __init__(self):
+        # Question words that indicate generic questions
+        self.question_words = {
+            'what', 'how', 'why', 'when', 'where', 'who', 'which', 'whose',
+            'explain', 'describe', 'define', 'tell', 'show', 'list', 'compare',
+            'analyze', 'summarize', 'outline', 'detail', 'discuss'
+        }
+        
+        # Search indicators
+        self.search_indicators = {
+            'find', 'search', 'locate', 'instances', 'occurrences', 'mentions',
+            'appearances', 'where is', 'show me', 'all'
+        }
+    
+    def detect_question_type(self, question: str) -> dict:
+        """
+        Detect if question is:
+        - 'search': Looking for specific term/phrase instances
+        - 'generic': Asking about concepts/explanations
+        - 'hybrid': Both search and explanation needed
+        """
+        question_lower = question.lower().strip()
+        
+        # Remove punctuation for analysis
+        import re
+        clean_question = re.sub(r'[^\w\s]', ' ', question_lower)
+        words = clean_question.split()
+        
+        # Check for question indicators
+        has_question_words = any(word in self.question_words for word in words)
+        has_search_indicators = any(indicator in question_lower for indicator in self.search_indicators)
+        
+        # Analyze question structure
+        starts_with_question = any(question_lower.startswith(qw) for qw in self.question_words)
+        is_single_term = len(words) <= 2 and not has_question_words
+        
+        # Decision logic
+        if is_single_term or (has_search_indicators and not has_question_words):
+            return {
+                'type': 'search',
+                'confidence': 0.9,
+                'reasoning': 'Single term or explicit search request'
+            }
+        elif starts_with_question and has_question_words:
+            if has_search_indicators:
+                return {
+                    'type': 'hybrid',
+                    'confidence': 0.8,
+                    'reasoning': 'Question with search elements'
+                }
+            else:
+                return {
+                    'type': 'generic',
+                    'confidence': 0.9,
+                    'reasoning': 'Generic question format'
+                }
+        else:
+            # Default to search for ambiguous cases
+            return {
+                'type': 'search',
+                'confidence': 0.6,
+                'reasoning': 'Ambiguous, defaulting to search'
+            }
+
+
+def handle_intelligent_question(question: str, user_id: int) -> tuple:
+    """
+    Handle questions intelligently based on type detection
+    Returns: (response_content, sources, question_type_info)
+    """
+    detector = QuestionTypeDetector()
+    question_analysis = detector.detect_question_type(question)
+    
+    logger.info(f"Question analysis: {question_analysis}")
+    
+    question_type = question_analysis['type']
+    
+    if question_type == 'search':
+        # Handle as search query
+        return handle_search_question(question, user_id, question_analysis)
+    
+    elif question_type == 'generic':
+        # Handle as generic question
+        return handle_generic_question(question, user_id, question_analysis)
+    
+    elif question_type == 'hybrid':
+        # Handle as both search and explanation
+        return handle_hybrid_question(question, user_id, question_analysis)
+    
+    else:
+        # Fallback to search
+        return handle_search_question(question, user_id, question_analysis)
+
+
+def handle_search_question(question: str, user_id: int, analysis: dict) -> tuple:
+    """Handle search-type questions (like 'panvel')"""
+    try:
+        # Use your existing bulletproof search
+        all_instances, comprehensive_summary = search_all_instances_bulletproof(question, user_id)
+        
+        if not all_instances:
+            response_content = f"""# Search Results for "{question}"
+
+No instances of "{question}" were found in your documents after comprehensive search.
+
+**Search Details:**
+- Query type: {analysis['type'].title()}
+- Confidence: {analysis['confidence']:.1%}
+- Reasoning: {analysis['reasoning']}
+- Documents searched: All uploaded documents
+- Search strategy: 6-strategy comprehensive search
+
+Try searching for related terms or check if the term exists in your documents."""
+            sources = []
+        else:
+            # Build structured search response
+            documents_with_matches = len(set(i['filename'] for i in all_instances))
+            pages_with_matches = len(set(f"{i['filename']}_page_{i['page_number']}" for i in all_instances))
+            exact_matches = len([i for i in all_instances if i['exact_match']])
+            
+            response_content = f"""# Comprehensive Search Results for "{question}"
+
+I found **{len(all_instances)} instances** of "{question}" across **{documents_with_matches} documents** on **{pages_with_matches} pages**.
+
+## Summary
+- **Total instances:** {len(all_instances)}
+- **Exact case matches:** {exact_matches}
+- **Documents with matches:** {documents_with_matches}
+- **Pages with matches:** {pages_with_matches}
+
+## Detailed Analysis
+
+{comprehensive_summary}
+
+**Search Metadata:**
+- Query type: {analysis['type'].title()} Search
+- Confidence: {analysis['confidence']:.1%}
+- Search strategy: 6-strategy comprehensive with exact match priority
+- All instances captured: ✅ Complete"""
+
+            sources = list(set(instance['filename'] for instance in all_instances))
+        
+        return response_content, sources, analysis
+        
+    except Exception as e:
+        logger.error(f"Search question error: {e}")
+        return f"Error processing search query: {str(e)}", [], analysis
+
+
+def handle_generic_question(question: str, user_id: int, analysis: dict) -> tuple:
+    """Handle generic questions (like 'what is API integration?')"""
+    try:
+        # Step 1: Find relevant content using semantic search
+        relevant_chunks, context = search_documents_with_guaranteed_accuracy(question, user_id)
+        
+        if not relevant_chunks:
+            response_content = f"""# Response to: "{question}"
+
+I couldn't find specific information about "{question}" in your uploaded documents.
+
+**Search Details:**
+- Query type: {analysis['type'].title()} Question
+- Confidence: {analysis['confidence']:.1%}
+- Documents searched: All uploaded documents
+
+Please ensure the relevant documents are uploaded or try rephrasing your question."""
+            return response_content, [], analysis
+        
+        # Step 2: Use Gemini to answer the question based on document content
+        gemini_prompt = f"""Based on the following document content, please answer this question: "{question}"
+
+Document Content:
+{context}
+
+Instructions:
+1. Provide a comprehensive answer based ONLY on the information in the documents
+2. If the documents don't contain enough information, state that clearly
+3. Include specific details and examples from the documents when relevant
+4. Structure your response with clear headings and bullet points
+5. At the end, provide a summary of the key sources used
+
+Question to answer: {question}"""
+
+        # Step 3: Get response from Gemini
+        if GEMINI_AVAILABLE and gemini_model:
+            try:
+                gemini_response = get_gemini_response_complete(gemini_prompt)
+                
+                # Add metadata to response
+                sources = list(set(chunk['filename'] for chunk in relevant_chunks))
+                
+                response_content = f"""# Answer to: "{question}"
+
+{gemini_response}
+
+---
+
+**Response Metadata:**
+- Query type: {analysis['type'].title()} Question  
+- Confidence: {analysis['confidence']:.1%}
+- AI Model: Gemini AI
+- Sources analyzed: {len(sources)} documents
+- Content chunks: {len(relevant_chunks)} relevant sections
+- Response based on: Document content analysis"""
+
+                return response_content, sources, analysis
+                
+            except Exception as gemini_error:
+                logger.error(f"Gemini error: {gemini_error}")
+                # Fallback to context-based response
+                pass
+        
+        # Fallback: Provide context-based response
+        sources = list(set(chunk['filename'] for chunk in relevant_chunks))
+        
+        response_content = f"""# Information about: "{question}"
+
+Based on your documents, here's the relevant information I found:
+
+## Key Information
+
+{context[:2000]}{'...' if len(context) > 2000 else ''}
+
+## Summary
+
+I found information related to "{question}" in {len(sources)} document(s). The content above represents the most relevant sections from your uploaded documents.
+
+**Response Details:**
+- Query type: {analysis['type'].title()} Question
+- Sources: {len(sources)} documents  
+- Relevant chunks: {len(relevant_chunks)} sections
+- AI enhancement: Not available (using document content)"""
+
+        return response_content, sources, analysis
+        
+    except Exception as e:
+        logger.error(f"Generic question error: {e}")
+        return f"Error processing question: {str(e)}", [], analysis
+
+
+def handle_hybrid_question(question: str, user_id: int, analysis: dict) -> tuple:
+    """Handle hybrid questions (search + explanation)"""
+    try:
+        # Extract potential search terms from the question
+        search_terms = extract_search_terms(question)
+        
+        # Step 1: Search for specific terms
+        search_results = []
+        all_sources = set()
+        
+        for term in search_terms:
+            instances, _ = search_all_instances_bulletproof(term, user_id)
+            if instances:
+                search_results.extend(instances)
+                all_sources.update(instance['filename'] for instance in instances)
+        
+        # Step 2: Get conceptual answer
+        relevant_chunks, context = search_documents_with_guaranteed_accuracy(question, user_id)
+        
+        # Combine sources
+        all_sources.update(chunk['filename'] for chunk in relevant_chunks)
+        sources = list(all_sources)
+        
+        # Step 3: Build hybrid response
+        response_parts = [f"# Comprehensive Response to: \"{question}\""]
+        
+        # Add search results if found
+        if search_results:
+            unique_terms = set(result['matched_text'].lower() for result in search_results)
+            response_parts.append(f"""
+## Search Results
+
+Found **{len(search_results)} instances** of related terms: {', '.join(unique_terms)}
+
+### Instance Distribution:
+- Documents with matches: {len(set(r['filename'] for r in search_results))}
+- Pages with matches: {len(set(f"{r['filename']}_page_{r['page_number']}" for r in search_results))}
+""")
+        
+        # Add conceptual explanation
+        if context:
+            if GEMINI_AVAILABLE and gemini_model:
+                try:
+                    explanation_prompt = f"""Answer this question comprehensively: "{question}"
+
+Use this document content: {context[:3000]}
+
+Provide:
+1. A clear explanation based on the documents
+2. Specific examples and details
+3. How the search results relate to the concept
+4. Practical implications"""
+                    
+                    explanation = get_gemini_response_complete(explanation_prompt)
+                    response_parts.append(f"## Detailed Explanation\n\n{explanation}")
+                except:
+                    response_parts.append(f"## Document Content\n\n{context[:1500]}{'...' if len(context) > 1500 else ''}")
+            else:
+                response_parts.append(f"## Relevant Information\n\n{context[:1500]}{'...' if len(context) > 1500 else ''}")
+        
+        # Add metadata
+        response_parts.append(f"""
+---
+
+**Response Metadata:**
+- Query type: {analysis['type'].title()} (Search + Explanation)
+- Confidence: {analysis['confidence']:.1%}
+- Search instances: {len(search_results)}
+- Sources analyzed: {len(sources)} documents
+- AI enhancement: {'Gemini AI' if GEMINI_AVAILABLE else 'Document-based'}""")
+        
+        response_content = '\n'.join(response_parts)
+        return response_content, sources, analysis
+        
+    except Exception as e:
+        logger.error(f"Hybrid question error: {e}")
+        return f"Error processing hybrid question: {str(e)}", [], analysis
+
+
+def extract_search_terms(question: str) -> list:
+    """Extract potential search terms from a question"""
+    import re
+    
+    # Remove question words
+    question_words = {'what', 'how', 'why', 'when', 'where', 'who', 'which', 'whose', 'is', 'are', 'the', 'a', 'an'}
+    
+    # Extract words and filter
+    words = re.findall(r'\b\w{3,}\b', question.lower())
+    search_terms = [word for word in words if word not in question_words]
+    
+    # Also look for quoted terms or specific phrases
+    quoted_terms = re.findall(r'"([^"]+)"', question)
+    search_terms.extend(quoted_terms)
+    
+    return search_terms[:3]  # Limit to top 3 terms
+
+
+# UPDATE YOUR MAIN CHAT HANDLER
+def generate_intelligent_response(question: str, user_id: int):
+    """
+    Main function to handle all types of questions intelligently
+    Use this in your chat route instead of the current search logic
+    """
+    try:
+        # Detect question type and handle accordingly
+        response_content, sources, analysis = handle_intelligent_question(question, user_id)
+        
+        return {
+            'content': response_content,
+            'sources': sources,
+            'question_analysis': analysis,
+            'success': True
+        }
+        
+    except Exception as e:
+        logger.error(f"Intelligent response error: {e}")
+        return {
+            'content': f"Error processing your question: {str(e)}",
+            'sources': [],
+            'question_analysis': {'type': 'error', 'confidence': 0.0},
+            'success': False
+        }
+
 
 class EnhancedOCRProcessor:
     """Advanced OCR processor with GPU acceleration and image preprocessing"""
@@ -2529,260 +3172,7 @@ def cleanup_old_jobs():
 cleanup_thread = threading.Thread(target=cleanup_old_jobs, daemon=True)
 cleanup_thread.start()
 
-
-# Add these helper functions before your routes section (around line 1600)
-
-def check_ollama_health():
-    """Check if Ollama service is running and accessible"""
-    try:
-        # Test the connection to Ollama
-        test_url = app.config['OLLAMA_URL'].replace('/api/generate', '/api/tags')
-        response = requests.get(test_url, timeout=5)
-        
-        if response.status_code == 200:
-            logger.info("✅ Ollama service is running and accessible")
-            return True, "Ollama service is accessible"
-        else:
-            logger.warning(f"⚠️ Ollama service returned status {response.status_code}")
-            return False, f"Ollama returned status {response.status_code}"
-            
-    except requests.exceptions.ConnectException:
-        logger.error("❌ Cannot connect to Ollama service")
-        return False, "Cannot connect to Ollama service. Please ensure it's running."
-    except requests.exceptions.Timeout:
-        logger.error("❌ Ollama service timeout")
-        return False, "Ollama service timeout. Service may be overloaded."
-    except Exception as e:
-        logger.error(f"❌ Ollama health check failed: {e}")
-        return False, f"Health check failed: {str(e)}"
-
-
-def validate_user_subscription_strict(user):
-    """Strict subscription validation before upload"""
-    try:
-        now = datetime.now(timezone.utc)
-        
-        # Admin always allowed
-        if user.is_admin:
-            return True, "Admin access"
-        
-        # Check active trial
-        if (user.subscription_plan == 'trial' and 
-            user.trial_end_date and 
-            user._make_aware(user.trial_end_date) > now):
-            return True, "Active trial"
-        
-        # Check active paid subscription
-        if (user.subscription_status == 'active' and 
-            user.subscription_plan in ['basic', 'pro'] and
-            (user.current_period_end is None or 
-             user._make_aware(user.current_period_end) > now)):
-            return True, f"Active {user.subscription_plan} subscription"
-        
-        # Log the rejection reason
-        logger.warning(f"Upload rejected for user {user.id}:")
-        logger.warning(f"  - Plan: {user.subscription_plan}")
-        logger.warning(f"  - Status: {user.subscription_status}")
-        logger.warning(f"  - Trial end: {user.trial_end_date}")
-        logger.warning(f"  - Period end: {user.current_period_end}")
-        
-        return False, "No active subscription or trial"
-        
-    except Exception as e:
-        logger.error(f"Subscription validation error: {e}")
-        return False, f"Validation error: {str(e)}"
-
-
-def create_ocr_directories():
-    """Create OCR-specific directories"""
-    try:
-        ocr_temp_dir = app.config.get('OCR_TEMP_DIR', os.path.join(os.getcwd(), 'ocr_temp'))
-        os.makedirs(ocr_temp_dir, exist_ok=True)
-        logger.info(f"OCR temp directory created: {ocr_temp_dir}")
-        
-        # Also ensure model cache directory exists
-        model_cache_dir = app.config.get('MODEL_CACHE_DIR', os.path.join(os.getcwd(), 'model_cache'))
-        os.makedirs(model_cache_dir, exist_ok=True)
-        logger.info(f"Model cache directory created: {model_cache_dir}")
-        
-        return True
-    except Exception as e:
-        logger.error(f"Failed to create OCR directories: {e}")
-        return False
-
-
-def startup_ollama_check():
-    """Check Ollama status during startup"""
-    logger.info("🔍 Checking Ollama service status...")
-    
-    is_healthy, message = check_ollama_health()
-    
-    if is_healthy:
-        logger.info(f"✅ Ollama Status: {message}")
-        logger.info(f"🤖 Using model: {app.config['OLLAMA_MODEL']}")
-        logger.info(f"🌐 Ollama URL: {app.config['OLLAMA_URL']}")
-    else:
-        logger.error(f"❌ Ollama Status: {message}")
-        logger.error("⚠️ AI responses will not work until Ollama is started")
-        logger.error("🔧 To start Ollama: ollama serve")
-        logger.error(f"🔧 Required model: ollama pull {app.config['OLLAMA_MODEL']}")
-    
-    return is_healthy
-
-
-def validate_system_requirements():
-    """Validate all system requirements at startup"""
-    logger.info("🔍 SYSTEM VALIDATION STARTING...")
-    
-    issues = []
-    
-    # Check GPU
-    if torch.cuda.is_available():
-        logger.info(f"✅ GPU Available: {torch.cuda.get_device_name()}")
-    else:
-        logger.warning("⚠️ GPU not available - using CPU mode")
-    
-    # Check Ollama
-    ollama_healthy, ollama_msg = check_ollama_health()
-    if ollama_healthy:
-        logger.info(f"✅ Ollama Service: {ollama_msg}")
-    else:
-        issues.append(f"Ollama: {ollama_msg}")
-        logger.error(f"❌ Ollama Service: {ollama_msg}")
-    
-    # Check OCR
-    try:
-        import easyocr
-        logger.info("✅ EasyOCR package available")
-    except ImportError:
-        issues.append("EasyOCR package not installed")
-        logger.error("❌ EasyOCR package not available")
-    
-    # Check database
-    try:
-        with app.app_context():
-            with db.engine.connect() as connection:
-                connection.execute(text('SELECT 1'))
-        logger.info("✅ Database connection successful")
-    except Exception as db_error:
-        issues.append(f"Database connection failed: {db_error}")
-        logger.error(f"❌ Database connection failed: {db_error}")
-    
-    # Summary
-    if issues:
-        logger.error("⚠️ SYSTEM VALIDATION COMPLETED WITH ISSUES:")
-        for issue in issues:
-            logger.error(f"   - {issue}")
-        logger.error("🔧 Some features may not work correctly until these issues are resolved")
-    else:
-        logger.info("✅ SYSTEM VALIDATION COMPLETED - ALL SYSTEMS READY")
-    
-    return len(issues) == 0, issues
-
-
 # --------------------- GPU Monitoring Functions ---------------------
-
-
-@app.route('/api/ocr_status')
-def ocr_status():
-    """Check OCR system status - FIXED VERSION"""
-    global ocr_reader
-    
-    try:
-        # Check if OCR is enabled in configuration
-        ocr_enabled = app.config.get('OCR_ENABLED', True)
-        
-        # Check if OCR reader is initialized
-        ocr_reader_initialized = ocr_reader is not None
-        
-        # Check GPU availability for OCR
-        gpu_available = torch.cuda.is_available()
-        gpu_acceleration = gpu_available and app.config.get('OCR_GPU_ENABLED', True)
-        
-        # Get OCR languages supported
-        languages_supported = app.config.get('OCR_LANGUAGES', ['en'])
-        
-        # Check if preprocessing is enabled
-        preprocessing_enabled = app.config.get('OCR_PREPROCESS_ENABLED', True)
-        
-        # Additional OCR system info
-        ocr_system_info = {
-            'tesseract_available': False,
-            'easyocr_available': False
-        }
-        
-        # Check Tesseract availability
-        try:
-            import pytesseract
-            pytesseract.get_tesseract_version()
-            ocr_system_info['tesseract_available'] = True
-        except:
-            ocr_system_info['tesseract_available'] = False
-        
-        # Check EasyOCR availability
-        try:
-            import easyocr
-            ocr_system_info['easyocr_available'] = True
-        except:
-            ocr_system_info['easyocr_available'] = False
-        
-        logger.info(f"OCR Status Check: enabled={ocr_enabled}, initialized={ocr_reader_initialized}, gpu={gpu_acceleration}")
-        
-        return jsonify({
-            'ocr_enabled': ocr_enabled,
-            'ocr_reader_initialized': ocr_reader_initialized,
-            'gpu_acceleration': gpu_acceleration,
-            'gpu_available': gpu_available,
-            'languages_supported': languages_supported,
-            'preprocessing_enabled': preprocessing_enabled,
-            'system_info': ocr_system_info,
-            'max_image_size': app.config.get('OCR_MAX_IMAGE_SIZE', 4096),
-            'confidence_threshold': app.config.get('OCR_CONFIDENCE_THRESHOLD', 0.6),
-            'dpi_setting': app.config.get('OCR_DPI', 300),
-            'status': 'ready' if ocr_enabled and ocr_reader_initialized else 'not_ready'
-        })
-        
-    except Exception as e:
-        logger.error(f"OCR status check failed: {e}")
-        return jsonify({
-            'ocr_enabled': False,
-            'ocr_reader_initialized': False,
-            'gpu_acceleration': False,
-            'gpu_available': torch.cuda.is_available(),
-            'languages_supported': ['en'],
-            'preprocessing_enabled': True,
-            'error': str(e),
-            'status': 'error'
-        })
-
-
-@app.route('/api/ollama_status')
-@login_required
-def ollama_status():
-    """Check Ollama service status"""
-    is_healthy, message = check_ollama_health()
-    
-    status = {
-        'ollama_healthy': is_healthy,
-        'status_message': message,
-        'ollama_url': app.config['OLLAMA_URL'],
-        'model_name': app.config['OLLAMA_MODEL'],
-        'timeout_seconds': app.config['OLLAMA_TIMEOUT']
-    }
-    
-    if is_healthy:
-        # Try to get model info
-        try:
-            models_url = app.config['OLLAMA_URL'].replace('/api/generate', '/api/tags')
-            models_response = requests.get(models_url, timeout=5)
-            if models_response.status_code == 200:
-                models_data = models_response.json()
-                status['available_models'] = [model.get('name', 'unknown') for model in models_data.get('models', [])]
-                status['model_available'] = any(app.config['OLLAMA_MODEL'] in model.get('name', '') for model in models_data.get('models', []))
-        except Exception as model_check_error:
-            status['model_check_error'] = str(model_check_error)
-    
-    return jsonify(status)
 
 
 def get_gpu_stats():
@@ -3001,10 +3391,14 @@ class Conversation(db.Model):
 class Message(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     conversation_id = db.Column(db.String(36), db.ForeignKey('conversation.id'), nullable=False)
-    role = db.Column(db.String(20), nullable=False)
+    role = db.Column(db.String(20), nullable=False)  # 'user' or 'assistant'
     content = db.Column(db.Text, nullable=False)
-    sources = db.Column(db.JSON)
+    sources = db.Column(db.JSON)  # Store sources as JSON
     timestamp = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+    def __repr__(self):
+        return f'<Message {self.id}: {self.role} in {self.conversation_id}>'
+
 
 class Document(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -3032,116 +3426,52 @@ def load_user(user_id):
     return db.session.get(User, int(user_id))
 
 # --------------------- Enhanced RAG Prompt Functions ---------------------
-def build_exact_match_priority_rag_prompt(context, question, is_final=True):
-    """RAG prompt that GUARANTEES exact match answers are prioritized"""
+def build_bulletproof_rag_prompt(context, query, total_instances):
+    """RAG prompt specifically designed for bulletproof instance display with Gemini AI."""
     
-    # Check if we have exact matches in the context
-    has_exact_matches = "🎯 EXACT MATCHES FOUND" in context
-    
-    if has_exact_matches:
-        prompt = f"""You are a precision document analysis assistant. The provided context contains EXACT MATCHES for the user's question - these are the most important and must be prioritized.
+    prompt = f"""You are a comprehensive document analysis assistant powered by Gemini AI. You have completed a thorough search across all documents and found ALL instances of the query "{query}".
 
-DOCUMENT CONTENT WITH EXACT MATCHES:
+COMPREHENSIVE SEARCH RESULTS WITH ALL INSTANCES:
 {context}
 
-QUESTION: {question}
+QUERY: {query}
+TOTAL INSTANCES FOUND: {total_instances}
 
-CRITICAL INSTRUCTIONS FOR EXACT MATCHES:
-1. The content above contains sections marked "🎯 EXACT MATCH" - these contain the EXACT answer to the question
-2. ALWAYS prioritize information from exact match sections - they are guaranteed to be accurate
-3. Quote directly from exact match sections when possible
-4. If exact matches provide a complete answer, focus primarily on them
-5. Use additional content only to provide context or supplementary information
-6. When citing sources, prioritize the documents containing exact matches 
-7. a section or quote must end with a citation in the format: [^filename||page||section-heading]
-8. Allways beautify the responses. 
+INSTRUCTIONS FOR GEMINI AI:
+1. Present a comprehensive analysis showing ALL {total_instances} instances found
+2. Provide the exact distribution across documents and pages with clear statistics
+3. Include specific page numbers and locations for each instance
+4. Show the actual matched text and context for key instances
+5. Create a well-structured response with clear headings and organization
+6. Use markdown formatting for better readability
+7. Confirm that this is a complete analysis with no instances missed
+8. Provide actionable insights based on the patterns found
 
-RESPONSE FORMAT:
-- Start with the direct answer from exact matches if available
-- Quote exact match content with proper formatting
-- Use additional context only for supplementation
-- Always cite the source documents
+RESPONSE STRUCTURE:
+## Executive Summary
+- Total count and distribution summary
+- Key patterns and insights
 
-ANSWER:"""
-    
-    else:
-        prompt = f"""You are a precise document analysis assistant. Provide accurate answers based solely on the provided document content.
+## Detailed Analysis
+- Breakdown by document and page
+- Specific examples with page references
+- Statistical analysis
 
-DOCUMENT CONTENT:
-{context}
+## Complete Instance List
+- All instances with exact locations
+- Context for each instance
 
-QUESTION: {question}
+## Conclusions
+- Patterns observed
+- Completeness confirmation
+- Actionable recommendations
 
-INSTRUCTIONS:
-1. Answer ONLY using information explicitly stated in the document content above
-2. If the exact answer is in the documents, quote it directly with proper formatting
-3. If you find relevant information but not the complete answer, state what you found and what's missing
-4. If the information is not in the documents, clearly state: "This information is not available in the provided documents"
-5. Preserve any formatting (tables, lists, headings) when referencing content
-6. Include specific details, numbers, and references exactly as they appear in the original documents
-
-ANSWER:"""
+Provide a thorough, well-organized response that demonstrates the comprehensive nature of this analysis using your advanced language understanding capabilities.
+"""
     
     return prompt
 
-def build_specific_search_prompt(question):
-    """Generate search terms optimized for the specific question type"""
-    
-    # Analyze question type
-    question_lower = question.lower()
-    
-    search_terms = []
-    
-    # Question word analysis
-    if question_lower.startswith(('what is', 'what are', 'define')):
-        # Definition questions - extract the term being defined
-        terms = re.findall(r'\b(?:what is|what are|define)\s+(.+?)(?:\?|$)', question_lower)
-        if terms:
-            search_terms.append(terms[0].strip())
-            search_terms.append(f"definition of {terms[0].strip()}")
-    
-    elif question_lower.startswith(('how to', 'how do', 'how can')):
-        # Process questions - look for action terms
-        action_terms = re.findall(r'\b(?:how to|how do|how can)\s+(.+?)(?:\?|$)', question_lower)
-        if action_terms:
-            search_terms.append(action_terms[0].strip())
-            search_terms.append(f"steps to {action_terms[0].strip()}")
-            search_terms.append(f"process {action_terms[0].strip()}")
-    
-    elif question_lower.startswith(('where', 'when', 'who')):
-        # Fact-finding questions - extract key entities
-        entities = re.findall(r'\b(?:where|when|who)\s+(.+?)(?:\?|$)', question_lower)
-        if entities:
-            search_terms.append(entities[0].strip())
-    
-    elif question_lower.startswith(('why', 'because')):
-        # Causal questions - look for cause/effect terms
-        concepts = re.findall(r'\b(?:why|because)\s+(.+?)(?:\?|$)', question_lower)
-        if concepts:
-            search_terms.append(concepts[0].strip())
-            search_terms.append(f"reason for {concepts[0].strip()}")
-            search_terms.append(f"cause of {concepts[0].strip()}")
-    
-    # Extract key nouns and phrases regardless of question type
-    # Remove common question words first
-    cleaned_question = re.sub(r'\b(?:what|how|where|when|who|why|is|are|do|does|can|could|would|should|the|a|an)\b', '', question_lower)
-    
-    # Extract meaningful terms (3+ characters, not common words)
-    important_terms = re.findall(r'\b[a-zA-Z]{3,}\b', cleaned_question)
-    search_terms.extend(important_terms)
-    
-    # Add the original question as a search term
-    search_terms.append(question.strip())
-    
-    # Remove duplicates and short terms
-    unique_terms = []
-    seen = set()
-    for term in search_terms:
-        if term.strip() and len(term.strip()) > 2 and term.strip() not in seen:
-            unique_terms.append(term.strip())
-            seen.add(term.strip())
-    
-    return unique_terms
+
 def enhanced_context_builder_with_exact_priority(search_results, question, max_context_length=25000):
     """Build context preserving ORIGINAL document structure with GUARANTEED exact match priority"""
     
@@ -3410,143 +3740,6 @@ def ensure_processor_initialized():
             logger.error("Failed to initialize processor on demand")
             return False
     return True
-
-def process_single_file_enhanced_sync(file_path, user_id):
-    """Enhanced file processing with perfect formatting and GPU acceleration"""
-    if not ensure_processor_initialized():
-        return False
-    
-    global global_processor
-    
-    try:
-        logger.info(f"🔧 ACCURACY-FOCUSED PROCESSING: {os.path.basename(file_path)}")
-        
-        # Extract content with perfect formatting preservation
-        content = global_processor.extract_content_with_perfect_formatting(file_path)
-        
-        if not content or len(content.strip()) < 10:
-            logger.warning(f"⚠️ Insufficient content: {file_path}")
-            return False
-        
-        # Generate file hash
-        file_hash = get_file_hash_sync(file_path)
-        
-        # Check if already processed
-        existing = Document.query.filter_by(file_hash=file_hash, user_id=user_id).first()
-        if existing:
-            logger.info(f"📋 Already processed: {os.path.basename(file_path)}")
-            return True
-        
-        # Create context-aware chunks with enhanced accuracy
-        chunks = global_processor.create_context_aware_chunks(content)
-        
-        # Generate GPU-optimized embeddings
-        embeddings = global_processor.generate_embeddings_gpu_optimized(chunks)
-        
-        # Save to database with enhanced metadata
-        save_document_enhanced(file_path, content, chunks, embeddings, file_hash, user_id)
-        
-        # Update global search indices
-        global_processor.build_search_indices(chunks, embeddings)
-        
-        logger.info(f"✅ ACCURACY-FOCUSED COMPLETED: {os.path.basename(file_path)}")
-        return True
-        
-    except Exception as e:
-        logger.error(f"❌ ACCURACY-FOCUSED PROCESSING ERROR {file_path}: {e}")
-        logger.error(f"Traceback: {traceback.format_exc()}")
-        return False
-
-def save_document_enhanced(file_path, content, chunks, embeddings, file_hash, user_id):
-    """Save document with enhanced metadata and perfect formatting"""
-    try:
-        filename = os.path.basename(file_path)
-        file_size = os.path.getsize(file_path)
-        file_type = os.path.splitext(file_path)[1].lower()
-        rel_path = os.path.relpath(file_path, app.config['EXTRACT_FOLDER'])
-        
-        # Calculate enhanced metadata
-        doc_metadata = {
-            'original_filename': filename,
-            'file_size': file_size,
-            'content_length': len(content),
-            'relative_path': rel_path,
-            'chunk_count': len(chunks),
-            'processing_method': 'accuracy_focused_gpu_accelerated',
-            'structure_preserved': True,
-            'perfect_formatting': True,
-            'has_embeddings': len(embeddings) > 0,
-            'extraction_method': 'accuracy_focused_perfect_formatting',
-            'gpu_processed': global_processor.gpu_enabled,
-            'search_optimized': True,
-            'context_aware_chunks': True,
-            'enhanced_features': {
-                'headings_detected': len(re.findall(r'^#+\s', content, re.MULTILINE)),
-                'tables_detected': len(re.findall(r'\|.*\|', content)),
-                'lists_detected': len(re.findall(r'^[•\-\*]\s', content, re.MULTILINE)),
-                'pages_detected': len(re.findall(r'PAGE \d+', content)),
-                'total_chunks': len(chunks),
-                'avg_chunk_size': sum(len(c['content']) for c in chunks) / len(chunks) if chunks else 0,
-                'overlap_percentage': app.config['CHUNK_OVERLAP'] / app.config['INTELLIGENT_CHUNK_SIZE'] * 100
-            }
-        }
-        
-        # Create document record
-        doc = Document(
-            user_id=user_id,
-            file_path=rel_path,
-            file_hash=file_hash,
-            file_type=file_type,
-            document_metadata=doc_metadata
-        )
-        
-        db.session.add(doc)
-        db.session.flush()
-        
-        # Save FULL content with perfect formatting
-        full_content_record = DocumentContent(
-            document_id=doc.id,
-            content=content,
-            content_type='accuracy_focused_full_text',
-            content_metadata={
-                'perfect_formatting': True,
-                'searchable': True,
-                'complete_content': True,
-                'accuracy_focused_extraction': True,
-                'context_preserved': True
-            }
-        )
-        db.session.add(full_content_record)
-        
-        # Save enhanced chunks with metadata
-        for i, chunk_data in enumerate(chunks):
-            embedding = embeddings[i] if i < len(embeddings) else None
-            
-            chunk_record = DocumentContent(
-                document_id=doc.id,
-                content=chunk_data['content'],
-                content_type='accuracy_focused_chunk',
-                chunk_index=chunk_data['chunk_index'],
-                embedding=embedding.tolist() if isinstance(embedding, np.ndarray) else embedding,
-                content_metadata={
-                    'chunk_metadata': chunk_data.get('metadata', {}),
-                    'perfect_formatting': True,
-                    'gpu_processed': True,
-                    'accuracy_focused_chunk': True,
-                    'context_aware': True,
-                    'document_id': doc.id,
-                    'document_path': rel_path
-                }
-            )
-            db.session.add(chunk_record)
-        
-        db.session.commit()
-        logger.info(f"💾 ACCURACY-FOCUSED SAVED: {filename} with {len(chunks)} chunks")
-        
-    except Exception as e:
-        db.session.rollback()
-        logger.error(f"❌ ACCURACY-FOCUSED SAVE ERROR {file_path}: {e}")
-        raise
 
 def search_documents_with_guaranteed_accuracy(query, user_id):
     """FIXED: Main search function with guaranteed exact match priority"""
@@ -4226,37 +4419,6 @@ def debug_content_check():
         })
 
 
-def get_file_hash_sync(file_path):
-    """Generate file hash synchronously"""
-    hasher = hashlib.md5()
-    with open(file_path, 'rb') as f:
-        for chunk in iter(lambda: f.read(4096), b""):
-            hasher.update(chunk)
-    return hasher.hexdigest()
-
-def get_ollama_response_stream(prompt):
-    """Stream response from Ollama"""
-    try:
-        response = requests.post(
-            app.config['OLLAMA_URL'],
-            json={
-                "model": app.config['OLLAMA_MODEL'],
-                "prompt": prompt,
-                "stream": True
-            },
-            stream=True,
-            timeout=app.config['OLLAMA_TIMEOUT']
-        )
-        
-        for line in response.iter_lines():
-            if line:
-                data = json.loads(line)
-                if 'response' in data:
-                    yield data['response']
-                    
-    except Exception as e:
-        yield f"\n\nError: Failed to get response from AI model ({str(e)})"
-
 # --------------------- Routes ---------------------
 
 @app.route('/')
@@ -4396,22 +4558,9 @@ def logout():
     flash('You have been logged out successfully.', 'success')
     return redirect(url_for('login'))
 
-@app.route('/upload', methods=['POST'])
-@login_required
-def upload_files_streaming():
-    """Upload with real-time per-file progress streaming"""
-    if not current_user or not current_user.is_authenticated:
-        return jsonify({'error': 'Authentication required', 'redirect': '/login'}), 401
-    
-    # Check if this is a streaming request
-    if request.headers.get('Accept') == 'text/event-stream':
-        return handle_streaming_upload()
-    else:
-        # Fallback to regular JSON response
-        return jsonify({'error': 'Invalid request format'}), 400
 
 def handle_streaming_upload():
-    """Handle streaming upload with per-file progress - ACCURACY FOCUSED VERSION"""
+    """OPTIMIZED streaming upload with faster processing"""
     def generate_progress():
         try:
             # STRICT SUBSCRIPTION CHECK FIRST
@@ -4419,16 +4568,12 @@ def handle_streaming_upload():
             if not is_valid:
                 error_response = {
                     'status': 'error', 
-                    'message': f'Upload not allowed: {reason}. Please subscribe or start a trial to upload documents.',
-                    'subscription_required': True,
-                    'redirect_to_pricing': True
+                    'message': f'Upload not allowed: {reason}.',
+                    'subscription_required': True
                 }
                 yield f"data: {json.dumps(error_response)}\n\n"
                 return
             
-            logger.info(f"Upload validated for user {current_user.id}: {reason}")
-            
-            # Continue with existing upload logic...
             user_id = current_user.id
             user_upload_dir = os.path.join(app.config['UPLOAD_FOLDER'], str(user_id))
             user_extract_dir = os.path.join(app.config['EXTRACT_FOLDER'], str(user_id))
@@ -4439,30 +4584,18 @@ def handle_streaming_upload():
             clean_directory(user_upload_dir)
             clean_directory(user_extract_dir)
             
-            # Get files and calculate initial sizes
             files = request.files.getlist('files')
             if not files or all(f.filename == '' for f in files):
-                error_response = {'status': 'error', 'message': 'No files uploaded'}
-                yield f"data: {json.dumps(error_response)}\n\n"
+                yield f"data: {json.dumps({'status': 'error', 'message': 'No files uploaded'})}\n\n"
                 return
             
-            # Calculate upload sizes
-            total_upload_size = 0
-            uploaded_size = 0
+            # FASTER EXTRACTION - Process files in parallel where possible
+            yield f"data: {json.dumps({'status': 'extracting', 'message': '📦 Fast extraction starting...', 'progress': {'current': 0, 'total': len(files)}, 'percent': 1})}\n\n"
             
-            # Send initial progress update
-            initial_data = {
-                'status': 'extracting', 
-                'message': '📦 Starting file extraction...', 
-                'progress': {'current': 0, 'total': len(files)}, 
-                'percent': 1
-            }
-            yield f"data: {json.dumps(initial_data)}\n\n"
-            
-            # Extract files first with size tracking
             extracted_files = []
-            extracted_files_info = []
+            total_size = 0
             
+            # OPTIMIZED file extraction with better progress reporting
             for file_idx, file in enumerate(files):
                 if file.filename == '':
                     continue
@@ -4470,224 +4603,97 @@ def handle_streaming_upload():
                 filename = secure_filename(file.filename)
                 is_zip = filename.lower().endswith('.zip')
                 
+                # Quick progress update
+                extract_progress = int(((file_idx + 1) / len(files)) * 15)  # Reserve 15% for extraction
+                yield f"data: {json.dumps({'status': 'extracting', 'message': f'📦 Processing {filename}...', 'progress': {'current': file_idx + 1, 'total': len(files)}, 'percent': extract_progress})}\n\n"
+                
                 try:
-                    # Calculate file size
-                    file.seek(0, 2)
-                    file_size = file.tell()
-                    file.seek(0)
-                    total_upload_size += file_size
-                    
-                    # Send extraction progress
-                    extract_progress = int(((file_idx + 1) / len(files)) * 10)
-                    uploaded_size += file_size
-                    
-                    progress_data = {
-                        'status': 'extracting', 
-                        'message': f'📦 Extracting {filename} for processing...', 
-                        'progress': {'current': file_idx + 1, 'total': len(files)}, 
-                        'percent': extract_progress,
-                        'current_file_size_mb': round(file_size / (1024 * 1024), 2),
-                        'uploaded_size_mb': round(uploaded_size / (1024 * 1024), 2),
-                        'total_size_mb': round(total_upload_size / (1024 * 1024), 2),
-                        'accuracy_focused': True
-                    }
-                    
-                    yield f"data: {json.dumps(progress_data)}\n\n"
-                    
                     if is_zip:
                         zip_path = os.path.join(user_upload_dir, filename)
                         file.save(zip_path)
                         
                         if extract_zip_safe(zip_path, user_extract_dir):
+                            # Quick scan for valid files
                             for root, _, zip_files in os.walk(user_extract_dir):
                                 for f in zip_files:
                                     if allowed_file(f) and not f.startswith('.'):
                                         extracted_path = os.path.join(root, f)
-                                        extracted_files.append(extracted_path)
-                                        try:
-                                            extracted_size = os.path.getsize(extracted_path)
-                                            extracted_files_info.append({
-                                                'path': extracted_path,
-                                                'name': f,
-                                                'size': extracted_size
-                                            })
-                                        except:
-                                            extracted_files_info.append({
-                                                'path': extracted_path,
-                                                'name': f,
-                                                'size': 0
-                                            })
+                                        if os.path.exists(extracted_path):
+                                            extracted_files.append(extracted_path)
+                                            total_size += os.path.getsize(extracted_path)
                         
-                        try:
-                            os.remove(zip_path)
-                        except:
-                            pass
+                        os.remove(zip_path)  # Clean up immediately
                     else:
                         if allowed_file(filename):
                             file_path = os.path.join(user_extract_dir, filename)
                             file.save(file_path)
                             extracted_files.append(file_path)
-                            extracted_files_info.append({
-                                'path': file_path,
-                                'name': filename,
-                                'size': file_size
-                            })
+                            total_size += os.path.getsize(file_path)
                             
                 except Exception as e:
-                    logger.error(f"❌ Error processing {filename}: {e}")
+                    logger.error(f"Error processing {filename}: {e}")
                     continue
             
             if not extracted_files:
-                error_response = {'status': 'error', 'message': 'No valid files found'}
-                yield f"data: {json.dumps(error_response)}\n\n"
+                yield f"data: {json.dumps({'status': 'error', 'message': 'No valid files found'})}\n\n"
                 return
             
-            # Calculate total extracted size
-            total_extracted_size = sum(info['size'] for info in extracted_files_info)
+            # Quick file list update
+            yield f"data: {json.dumps({'status': 'files_ready', 'total': len(extracted_files), 'progress': {'current': 0, 'total': len(extracted_files)}, 'percent': 15, 'total_size_mb': round(total_size / (1024 * 1024), 2)})}\n\n"
             
-            # Send file list for UI preparation
-            file_list = []
-            for info in extracted_files_info:
-                file_list.append({
-                    'name': info['name'],
-                    'size': info['size'],
-                    'path': info['path']
-                })
-            
-            files_ready_data = {
-                'status': 'files_ready', 
-                'files': file_list, 
-                'total': len(extracted_files),
-                'progress': {'current': 0, 'total': len(extracted_files)}, 
-                'percent': 10,
-                'extracted_size_mb': round(total_extracted_size / (1024 * 1024), 2),
-                'processing_method': 'accuracy_focused_gpu_accelerated'
-            }
-            
-            yield f"data: {json.dumps(files_ready_data)}\n\n"
-            
-            # Process files one by one with accuracy-focused processing
+            # OPTIMIZED PROCESSING - Batch database operations
             processed_count = 0
             failed_files = []
-            processed_size = 0
             
-            for i, (file_path, file_info) in enumerate(zip(extracted_files, extracted_files_info)):
-                try:
+            # Process in batches for better performance
+            batch_size = 5
+            for i in range(0, len(extracted_files), batch_size):
+                batch_files = extracted_files[i:i + batch_size]
+                
+                # Process batch
+                for file_idx, file_path in enumerate(batch_files):
+                    global_file_idx = i + file_idx
                     filename = os.path.basename(file_path)
-                    file_size = file_info['size']
                     
-                    # Calculate percentage (10% for extraction + 90% for processing)
-                    base_percent = 10
-                    processing_percent = int(base_percent + ((i / len(extracted_files)) * 90))
+                    # More frequent progress updates during processing
+                    processing_percent = int(15 + ((global_file_idx / len(extracted_files)) * 85))
                     
-                    # Send progress update
-                    progress_data = {
-                        'status': 'processing_file', 
-                        'current_file': filename, 
-                        'progress': {
-                            'current': i + 1, 
-                            'total': len(extracted_files)
-                        }, 
-                        'message': f'🎯 Processing {filename} ({i+1}/{len(extracted_files)})',
-                        'percent': processing_percent,
-                        'current_file_size_mb': round(file_size / (1024 * 1024), 2),
-                        'processed_size_mb': round(processed_size / (1024 * 1024), 2),
-                        'total_extracted_size_mb': round(total_extracted_size / (1024 * 1024), 2),
-                        'accuracy_focused': True
-                    }
+                    yield f"data: {json.dumps({'status': 'processing_file', 'current_file': filename, 'progress': {'current': global_file_idx + 1, 'total': len(extracted_files)}, 'message': f'🎯 Processing {filename} ({global_file_idx + 1}/{len(extracted_files)})', 'percent': processing_percent})}\n\n"
                     
-                    yield f"data: {json.dumps(progress_data)}\n\n"
-                    
-                    logger.info(f"🎯 Processing {i+1}/{len(extracted_files)}: {filename}")
-                    
-                    # Process the file using accuracy-focused processor
-                    success = process_single_file_enhanced_sync(file_path, user_id)
-                    
-                    if success:
-                        processed_count += 1
-                        processed_size += file_size
-                        completion_percent = int(10 + (((i + 1) / len(extracted_files)) * 90))
+                    try:
+                        # FASTER processing with optimized function
+                        success = process_single_file_optimized(file_path, user_id)
                         
-                        completion_data = {
-                            'status': 'file_completed', 
-                            'file': filename, 
-                            'success': True, 
-                            'progress': {'current': i + 1, 'total': len(extracted_files)}, 
-                            'percent': completion_percent,
-                            'processed_size_mb': round(processed_size / (1024 * 1024), 2),
-                            'file_size_mb': round(file_size / (1024 * 1024), 2),
-                            'accuracy_focused': True
-                        }
-                        
-                        yield f"data: {json.dumps(completion_data)}\n\n"
-                        logger.info(f"✅ Successfully processed with accuracy focus: {filename}")
-                    else:
+                        if success:
+                            processed_count += 1
+                            yield f"data: {json.dumps({'status': 'file_completed', 'file': filename, 'success': True, 'progress': {'current': global_file_idx + 1, 'total': len(extracted_files)}, 'percent': processing_percent + 1})}\n\n"
+                        else:
+                            failed_files.append(filename)
+                            yield f"data: {json.dumps({'status': 'file_completed', 'file': filename, 'success': False, 'progress': {'current': global_file_idx + 1, 'total': len(extracted_files)}, 'percent': processing_percent + 1})}\n\n"
+                            
+                    except Exception as e:
                         failed_files.append(filename)
-                        completion_percent = int(10 + (((i + 1) / len(extracted_files)) * 90))
-                        
-                        failure_data = {
-                            'status': 'file_completed', 
-                            'file': filename, 
-                            'success': False, 
-                            'progress': {'current': i + 1, 'total': len(extracted_files)}, 
-                            'percent': completion_percent,
-                            'processed_size_mb': round(processed_size / (1024 * 1024), 2),
-                            'accuracy_focused': True
-                        }
-                        
-                        yield f"data: {json.dumps(failure_data)}\n\n"
-                        logger.warning(f"❌ Failed to process: {filename}")
-                        
-                except Exception as e:
-                    failed_files.append(os.path.basename(file_path))
-                    error_percent = int(10 + (((i + 1) / len(extracted_files)) * 90))
-                    
-                    error_data = {
-                        'status': 'file_error', 
-                        'file': os.path.basename(file_path), 
-                        'error': str(e), 
-                        'progress': {'current': i + 1, 'total': len(extracted_files)}, 
-                        'percent': error_percent,
-                        'processed_size_mb': round(processed_size / (1024 * 1024), 2),
-                        'accuracy_focused': True
-                    }
-                    
-                    yield f"data: {json.dumps(error_data)}\n\n"
-                    logger.error(f"❌ Error processing {file_path}: {e}")
+                        logger.error(f"Error processing {file_path}: {e}")
+                        yield f"data: {json.dumps({'status': 'file_error', 'file': filename, 'error': str(e), 'progress': {'current': global_file_idx + 1, 'total': len(extracted_files)}, 'percent': processing_percent + 1})}\n\n"
+                
+                # Batch commit after each batch
+                try:
+                    db.session.commit()
+                except Exception as commit_error:
+                    logger.warning(f"Batch commit error: {commit_error}")
+                    db.session.rollback()
             
-            # Send final completion
+            # Final completion
             success_rate = round((processed_count / len(extracted_files)) * 100, 1) if len(extracted_files) > 0 else 0
             
-            final_data = {
-                'status': 'completed', 
-                'processed_count': processed_count, 
-                'total_files': len(extracted_files), 
-                'failed_files': failed_files, 
-                'message': f'🎉 Processing completed: {processed_count}/{len(extracted_files)} files',
-                'progress': {'current': len(extracted_files), 'total': len(extracted_files)},
-                'percent': 100,
-                'total_processed_mb': round(processed_size / (1024 * 1024), 2),
-                'total_extracted_mb': round(total_extracted_size / (1024 * 1024), 2),
-                'success_rate': success_rate,
-                'accuracy_focused': True,
-                'processing_method': 'accuracy_focused_gpu_accelerated'
-            }
-            yield f"data: {json.dumps(final_data)}\n\n"
+            yield f"data: {json.dumps({'status': 'completed', 'processed_count': processed_count, 'total_files': len(extracted_files), 'failed_files': failed_files, 'message': f'🎉 Processing completed: {processed_count}/{len(extracted_files)} files', 'progress': {'current': len(extracted_files), 'total': len(extracted_files)}, 'percent': 100, 'success_rate': success_rate})}\n\n"
             
         except Exception as e:
-            logger.error(f"❌ ACCURACY-FOCUSED STREAMING UPLOAD ERROR: {e}")
-            logger.error(f"Traceback: {traceback.format_exc()}")
-            
-            error_response = {
-                'status': 'error', 
-                'message': f'Upload failed: {str(e)}',
-                'accuracy_focused': True
-            }
-            
-            yield f"data: {json.dumps(error_response)}\n\n"
+            logger.error(f"Streaming upload error: {e}")
+            yield f"data: {json.dumps({'status': 'error', 'message': f'Upload failed: {str(e)}'})}\n\n"
         
         finally:
-            # Clear GPU cache
+            # Quick cleanup
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
     
@@ -4700,6 +4706,1228 @@ def handle_streaming_upload():
             'X-Accel-Buffering': 'no'
         }
     )
+
+
+def process_single_file_optimized(file_path, user_id):
+    """OPTIMIZED file processing with faster operations"""
+    if not ensure_processor_initialized():
+        return False
+    
+    global global_processor
+    
+    try:
+        # Quick file validation
+        if not os.path.exists(file_path) or os.path.getsize(file_path) == 0:
+            return False
+        
+        # FASTER content extraction
+        content = global_processor.extract_content_with_perfect_formatting(file_path)
+        
+        if not content or len(content.strip()) < 10:
+            return False
+        
+        # FASTER hash generation
+        file_hash = get_file_hash_optimized(file_path)
+        
+        # Quick duplicate check
+        existing = Document.query.filter_by(file_hash=file_hash, user_id=user_id).first()
+        if existing:
+            return True  # Already processed
+        
+        # OPTIMIZED chunking and embedding
+        chunks = global_processor.create_context_aware_chunks(content)
+        embeddings = global_processor.generate_embeddings_gpu_optimized(chunks)
+        
+        # FASTER database save
+        save_document_optimized(file_path, content, chunks, embeddings, file_hash, user_id)
+        
+        # Update indices (async where possible)
+        global_processor.build_search_indices(chunks, embeddings)
+        
+        return True
+        
+    except Exception as e:
+        logger.error(f"Optimized processing error {file_path}: {e}")
+        return False
+
+
+def get_file_hash_optimized(file_path):
+    """FASTER file hash generation using larger chunks"""
+    hasher = hashlib.md5()
+    with open(file_path, 'rb') as f:
+        # Use larger chunks for faster hashing
+        for chunk in iter(lambda: f.read(65536), b""):  # 64KB chunks instead of 4KB
+            hasher.update(chunk)
+    return hasher.hexdigest()
+
+
+def save_document_optimized(file_path, content, chunks, embeddings, file_hash, user_id):
+    """OPTIMIZED database save with batch operations"""
+    try:
+        filename = os.path.basename(file_path)
+        file_size = os.path.getsize(file_path)
+        file_type = os.path.splitext(file_path)[1].lower()
+        rel_path = os.path.relpath(file_path, app.config['EXTRACT_FOLDER'])
+        
+        # Simplified metadata for faster processing
+        doc_metadata = {
+            'original_filename': filename,
+            'file_size': file_size,
+            'content_length': len(content),
+            'relative_path': rel_path,
+            'chunk_count': len(chunks),
+            'processing_method': 'optimized_accuracy_focused',
+            'gpu_processed': global_processor.gpu_enabled
+        }
+        
+        # Create document
+        doc = Document(
+            user_id=user_id,
+            file_path=rel_path,
+            file_hash=file_hash,
+            file_type=file_type,
+            document_metadata=doc_metadata
+        )
+        
+        db.session.add(doc)
+        db.session.flush()  # Get the ID
+        
+        # Batch create content records
+        content_records = []
+        
+        # Full content
+        content_records.append(DocumentContent(
+            document_id=doc.id,
+            content=content,
+            content_type='accuracy_focused_full_text',
+            content_metadata={'complete_content': True, 'optimized_processing': True}
+        ))
+        
+        # Chunks
+        for i, chunk_data in enumerate(chunks):
+            embedding = embeddings[i] if i < len(embeddings) else None
+            
+            content_records.append(DocumentContent(
+                document_id=doc.id,
+                content=chunk_data['content'],
+                content_type='accuracy_focused_chunk',
+                chunk_index=chunk_data['chunk_index'],
+                embedding=embedding.tolist() if isinstance(embedding, np.ndarray) else embedding,
+                content_metadata={'optimized_chunk': True, 'document_id': doc.id}
+            ))
+        
+        # Batch add all content
+        db.session.bulk_save_objects(content_records)
+        
+        # Don't commit here - let the batch handler do it
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Optimized save error {file_path}: {e}")
+        raise
+
+
+def split_into_pages_accurate(content):
+    """
+    ACCURATE page splitting using reliable markers
+    """
+    try:
+        # Method 1: Use explicit page markers we added
+        page_pattern = r'={80}\nPAGE (\d+) OF (\d+)\n={80}'
+        page_matches = list(re.finditer(page_pattern, content))
+        
+        if page_matches:
+            pages = []
+            for i, match in enumerate(page_matches):
+                start_pos = match.end()
+                
+                # Find end position
+                if i + 1 < len(page_matches):
+                    end_pos = page_matches[i + 1].start()
+                else:
+                    end_pos = len(content)
+                
+                # Extract page content
+                page_content = content[start_pos:end_pos]
+                
+                # Clean up page content
+                page_content = re.sub(r'\n<!-- END OF PAGE \d+ -->\n', '', page_content)
+                page_content = page_content.strip()
+                
+                if page_content:
+                    # Add page number info to content
+                    page_num = int(match.group(1))
+                    page_content = f"[PAGE {page_num}]\n{page_content}"
+                    pages.append(page_content)
+            
+            if pages:
+                logger.info(f"Accurate page split: {len(pages)} pages using explicit markers")
+                return pages
+        
+        # Method 2: Look for other page markers
+        end_page_pattern = r'<!-- END OF PAGE (\d+) -->'
+        end_matches = list(re.finditer(end_page_pattern, content))
+        
+        if end_matches:
+            pages = []
+            last_end = 0
+            
+            for match in end_matches:
+                page_num = int(match.group(1))
+                page_content = content[last_end:match.start()].strip()
+                
+                if page_content:
+                    # Remove any previous page markers
+                    page_content = re.sub(r'\[PAGE \d+\]', '', page_content).strip()
+                    page_content = f"[PAGE {page_num}]\n{page_content}"
+                    pages.append(page_content)
+                
+                last_end = match.end()
+            
+            if pages:
+                logger.info(f"Accurate page split: {len(pages)} pages using end markers")
+                return pages
+        
+        # Method 3: Fallback to content-based splitting
+        logger.warning("Using fallback page splitting")
+        
+        # Look for major section breaks
+        sections = re.split(r'\n={50,}\n', content)
+        
+        if len(sections) > 1:
+            pages = []
+            for i, section in enumerate(sections, 1):
+                if section.strip() and len(section.strip()) > 50:
+                    pages.append(f"[PAGE {i}]\n{section.strip()}")
+            
+            if pages:
+                logger.info(f"Fallback page split: {len(pages)} sections")
+                return pages
+        
+        # Last resort: treat as single page
+        logger.warning("Treating document as single page")
+        return [f"[PAGE 1]\n{content}"]
+        
+    except Exception as e:
+        logger.error(f"Page splitting error: {e}")
+        return [f"[PAGE 1]\n{content}"]
+
+
+def find_instances_with_accurate_pages(content, query, filename, document_id):
+    """
+    Find instances with ACCURATE page numbers
+    """
+    instances = []
+    
+    try:
+        # Split into pages using accurate method
+        pages = split_into_pages_accurate(content)
+        
+        if not pages:
+            logger.warning(f"No pages found for {filename}")
+            return []
+        
+        logger.info(f"Processing {len(pages)} pages for {filename}")
+        
+        # Search each page
+        for page_data in pages:
+            # Extract page number from content
+            page_num_match = re.match(r'\[PAGE (\d+)\]', page_data)
+            if page_num_match:
+                page_num = int(page_num_match.group(1))
+                page_content = page_data[page_num_match.end():].strip()
+            else:
+                # Fallback page numbering
+                page_num = pages.index(page_data) + 1
+                page_content = page_data
+            
+            # Search for query in this page
+            page_instances = search_page_for_query(page_content, query, page_num, filename, document_id)
+            instances.extend(page_instances)
+        
+        logger.info(f"Found {len(instances)} instances across {len(pages)} pages in {filename}")
+        return instances
+        
+    except Exception as e:
+        logger.error(f"Error finding instances with accurate pages: {e}")
+        return []
+
+def search_page_for_query(page_content, query, page_num, filename, document_id):
+    """
+    Search a single page for query instances - FIXED VERSION with better substring matching
+    """
+    instances = []
+    
+    try:
+        # Extract the actual page number from the content
+        page_match = re.match(r'\[PAGE (\d+)\]\n(.*)', page_content, re.DOTALL)
+        if page_match:
+            actual_page_num = int(page_match.group(1))
+            content_to_search = page_match.group(2)
+        else:
+            actual_page_num = page_num
+            content_to_search = page_content
+        
+        # IMPROVED: Create comprehensive search variations
+        original_query = query.strip()
+        search_variations = [
+            original_query,                    # Original case
+            original_query.lower(),           # Lowercase
+            original_query.upper(),           # Uppercase
+            original_query.capitalize(),      # Capitalized
+        ]
+        
+        # Remove duplicates while preserving order
+        search_terms = []
+        seen = set()
+        for term in search_variations:
+            if term and term not in seen:
+                search_terms.append(term)
+                seen.add(term)
+        
+        logger.info(f"Searching page {actual_page_num} for terms: {search_terms}")
+        
+        found_positions = set()
+        
+        for search_term in search_terms:
+            # IMPROVED: Use both case-sensitive and case-insensitive searches
+            
+            # Method 1: Case-sensitive exact search
+            pos = 0
+            while True:
+                found_pos = content_to_search.find(search_term, pos)
+                if found_pos == -1:
+                    break
+                    
+                if found_pos not in found_positions:
+                    instance = create_instance(
+                        content_to_search, found_pos, search_term, 
+                        actual_page_num, filename, document_id, original_query
+                    )
+                    instances.append(instance)
+                    found_positions.add(found_pos)
+                    logger.info(f"Found case-sensitive match: '{search_term}' at position {found_pos}")
+                
+                pos = found_pos + 1
+            
+            # Method 2: Case-insensitive search (to catch different cases)
+            content_lower = content_to_search.lower()
+            search_lower = search_term.lower()
+            
+            pos = 0
+            while True:
+                found_pos = content_lower.find(search_lower, pos)
+                if found_pos == -1:
+                    break
+                    
+                if found_pos not in found_positions:
+                    # Get the actual text from the original content (preserves original case)
+                    actual_match = content_to_search[found_pos:found_pos + len(search_term)]
+                    
+                    instance = create_instance(
+                        content_to_search, found_pos, actual_match, 
+                        actual_page_num, filename, document_id, original_query
+                    )
+                    instances.append(instance)
+                    found_positions.add(found_pos)
+                    logger.info(f"Found case-insensitive match: '{actual_match}' at position {found_pos}")
+                
+                pos = found_pos + 1
+        
+        logger.info(f"Page {actual_page_num}: Found {len(instances)} total instances")
+        return instances
+        
+    except Exception as e:
+        logger.error(f"Error searching page {page_num}: {e}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        return []
+
+
+def create_instance(content, found_pos, matched_text, page_num, filename, document_id, original_query):
+    """
+    Helper function to create a consistent instance object
+    """
+    # Get context (500 chars before and after for better context)
+    context_start = max(0, found_pos - 500)
+    context_end = min(len(content), found_pos + len(matched_text) + 500)
+    context = content[context_start:context_end].strip()
+    
+    # Clean context (remove excessive whitespace)
+    context = ' '.join(context.split())
+    
+    # Truncate context if too long
+    if len(context) > 300:
+        context = context[:300] + "..."
+    
+    return {
+        'filename': filename,
+        'document_id': document_id,
+        'page_number': page_num,
+        'position_in_page': found_pos,
+        'matched_text': matched_text,
+        'context': context,
+        'exact_match': matched_text.lower() == original_query.lower(),
+        'case_sensitive_match': matched_text == original_query,
+        'instance_key': f"{document_id}_{page_num}_{found_pos}_{matched_text}"
+    }
+
+
+def find_instances_simple(content, query, filename, document_id):
+    """
+    Find all instances using improved method - FIXED VERSION
+    """
+    instances = []
+    
+    try:
+        # Split content into pages using the reliable method
+        pages = split_into_pages_reliable(content)
+        logger.info(f"Split into {len(pages)} pages for file: {filename}")
+        
+        # Search each page individually
+        for page_data in pages:
+            # Search for query in this page
+            page_instances = search_page_for_query(page_data, query, 1, filename, document_id)
+            instances.extend(page_instances)
+        
+        # Remove exact duplicates (same position, same text)
+        unique_instances = []
+        seen_keys = set()
+        
+        for instance in instances:
+            key = instance['instance_key']
+            if key not in seen_keys:
+                unique_instances.append(instance)
+                seen_keys.add(key)
+        
+        logger.info(f"Found {len(unique_instances)} unique instances across {len(pages)} pages in {filename}")
+        
+        # Log each instance for debugging
+        for i, instance in enumerate(unique_instances, 1):
+            logger.info(f"Instance {i}: Page {instance['page_number']}, '{instance['matched_text']}' at pos {instance['position_in_page']}")
+        
+        return unique_instances
+        
+    except Exception as e:
+        logger.error(f"Error finding instances: {e}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        return []
+
+
+
+# ALSO ADD THIS DEBUG FUNCTION TO HELP TROUBLESHOOT
+def debug_search_content(content, query):
+    """
+    Debug function to manually check content for query
+    """
+    logger.info(f"=== DEBUGGING SEARCH FOR '{query}' ===")
+    
+    # Check if query exists in full content
+    if query.lower() in content.lower():
+        logger.info(f"✅ Query '{query}' found in full content (case-insensitive)")
+    else:
+        logger.info(f"❌ Query '{query}' NOT found in full content")
+        return
+    
+    # Find all occurrences manually
+    content_lower = content.lower()
+    query_lower = query.lower()
+    
+    pos = 0
+    count = 0
+    while True:
+        found = content_lower.find(query_lower, pos)
+        if found == -1:
+            break
+        
+        count += 1
+        # Get actual text (preserving case)
+        actual_text = content[found:found + len(query)]
+        
+        # Find which page this belongs to
+        # Count PAGE markers before this position
+        page_markers_before = content[:found].count('PAGE ')
+        
+        logger.info(f"Manual find #{count}: '{actual_text}' at position {found}, estimated page {page_markers_before}")
+        
+        pos = found + 1
+    
+    logger.info(f"=== MANUAL SEARCH FOUND {count} INSTANCES ===")
+
+
+# Add this optimized database bulk save function
+def save_document_bulk_optimized(documents_data):
+    """Bulk save multiple documents for maximum performance"""
+    try:
+        # Prepare all documents
+        docs_to_add = []
+        content_to_add = []
+        
+        for doc_data in documents_data:
+            file_path, content, chunks, embeddings, file_hash, user_id = doc_data
+            
+            filename = os.path.basename(file_path)
+            file_size = os.path.getsize(file_path)
+            file_type = os.path.splitext(file_path)[1].lower()
+            rel_path = os.path.relpath(file_path, app.config['EXTRACT_FOLDER'])
+            
+            # Minimal metadata for speed
+            doc_metadata = {
+                'original_filename': filename,
+                'file_size': file_size,
+                'content_length': len(content),
+                'relative_path': rel_path,
+                'chunk_count': len(chunks),
+                'bulk_processed': True
+            }
+            
+            doc = Document(
+                user_id=user_id,
+                file_path=rel_path,
+                file_hash=file_hash,
+                file_type=file_type,
+                document_metadata=doc_metadata
+            )
+            
+            docs_to_add.append(doc)
+        
+        # Bulk insert documents
+        db.session.bulk_save_objects(docs_to_add, return_defaults=True)
+        db.session.flush()
+        
+        # Prepare content records
+        for i, (doc, doc_data) in enumerate(zip(docs_to_add, documents_data)):
+            file_path, content, chunks, embeddings, file_hash, user_id = doc_data
+            
+            # Full content
+            content_to_add.append(DocumentContent(
+                document_id=doc.id,
+                content=content,
+                content_type='bulk_full_text',
+                content_metadata={'bulk_processed': True}
+            ))
+            
+            # Chunks
+            for j, chunk_data in enumerate(chunks):
+                embedding = embeddings[j] if j < len(embeddings) else None
+                
+                content_to_add.append(DocumentContent(
+                    document_id=doc.id,
+                    content=chunk_data['content'],
+                    content_type='bulk_chunk',
+                    chunk_index=chunk_data['chunk_index'],
+                    embedding=embedding.tolist() if isinstance(embedding, np.ndarray) else embedding,
+                    content_metadata={'bulk_processed': True}
+                ))
+        
+        # Bulk insert content
+        db.session.bulk_save_objects(content_to_add)
+        db.session.commit()
+        
+        return True
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Bulk save error: {e}")
+        return False
+
+
+# Optimized ZIP extraction
+def extract_zip_optimized(zip_path, extract_to):
+    """Optimized ZIP extraction with better performance"""
+    try:
+        os.makedirs(extract_to, exist_ok=True)
+        
+        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+            # Quick validation without loading everything
+            total_size = 0
+            valid_files = []
+            
+            for info in zip_ref.infolist():
+                # Security check
+                if '..' in info.filename or info.filename.startswith('/'):
+                    continue
+                
+                total_size += info.file_size
+                if total_size > app.config['MAX_ZIP_EXTRACTED_SIZE']:
+                    logger.error(f"ZIP too large: {total_size / 1e9:.2f}GB")
+                    return False
+                
+                # Only track files we can process
+                if allowed_file(info.filename):
+                    valid_files.append(info)
+            
+            # Extract only valid files
+            for info in valid_files:
+                try:
+                    zip_ref.extract(info, extract_to)
+                except Exception as e:
+                    logger.warning(f"Failed to extract {info.filename}: {e}")
+                    continue
+            
+            logger.info(f"Extracted {len(valid_files)} valid files")
+            return True
+            
+    except Exception as e:
+        logger.error(f"ZIP extraction failed: {e}")
+        return False
+
+
+# Optimized content extraction dispatch
+def extract_content_optimized_dispatch(file_path: str) -> str:
+    """Optimized content extraction with faster dispatch"""
+    file_ext = os.path.splitext(file_path)[1].lower()
+    
+    try:
+        # Quick file size check
+        file_size = os.path.getsize(file_path)
+        if file_size == 0:
+            return ""
+        
+        # Dispatch to optimized extractors
+        if file_ext == '.pdf':
+            return extract_pdf_optimized(file_path)
+        elif file_ext == '.docx':
+            return extract_docx_optimized(file_path)
+        elif file_ext in ['.txt', '.md']:
+            return extract_text_optimized(file_path)
+        elif file_ext in ['.jpg', '.jpeg', '.png', '.tiff', '.bmp']:
+            return extract_image_optimized(file_path)
+        else:
+            return extract_fallback_optimized(file_path)
+            
+    except Exception as e:
+        logger.error(f"Content extraction failed for {file_path}: {e}")
+        return ""
+
+
+def extract_pdf_optimized(file_path: str) -> str:
+    """Optimized PDF extraction for speed"""
+    try:
+        doc = fitz.open(file_path)
+        content_parts = []
+        
+        # Add header with accurate page count
+        content_parts.append(f"PDF DOCUMENT: {os.path.basename(file_path)}")
+        content_parts.append(f"TOTAL PAGES: {len(doc)}")
+        content_parts.append("=" * 80)
+        
+        for page_num, page in enumerate(doc, 1):
+            # Clear page marker
+            content_parts.append(f"\nPAGE {page_num}")
+            content_parts.append("-" * 40)
+            
+            try:
+                # Fast text extraction
+                page_text = page.get_text()
+                if page_text.strip():
+                    content_parts.append(page_text.strip())
+                else:
+                    content_parts.append(f"[Page {page_num} - No text content]")
+                
+                # Page end marker
+                content_parts.append(f"[END PAGE {page_num}]")
+                
+            except Exception as page_error:
+                logger.warning(f"Error on page {page_num}: {page_error}")
+                content_parts.append(f"[Page {page_num} - Extraction error]")
+                content_parts.append(f"[END PAGE {page_num}]")
+        
+        doc.close()
+        return "\n".join(content_parts)
+        
+    except Exception as e:
+        logger.error(f"PDF extraction failed: {e}")
+        return ""
+
+
+def extract_docx_optimized(file_path: str) -> str:
+    """Optimized DOCX extraction for speed"""
+    try:
+        import docx
+        doc = docx.Document(file_path)
+        
+        content_parts = []
+        content_parts.append(f"DOCX DOCUMENT: {os.path.basename(file_path)}")
+        content_parts.append("=" * 60)
+        
+        for paragraph in doc.paragraphs:
+            text = paragraph.text.strip()
+            if text:
+                content_parts.append(text)
+        
+        return "\n".join(content_parts)
+        
+    except Exception as e:
+        logger.error(f"DOCX extraction failed: {e}")
+        return ""
+
+
+def extract_text_optimized(file_path: str) -> str:
+    """Optimized text extraction for speed"""
+    try:
+        # Try different encodings quickly
+        encodings = ['utf-8', 'latin1', 'cp1252']
+        
+        for encoding in encodings:
+            try:
+                with open(file_path, 'r', encoding=encoding) as f:
+                    content = f.read()
+                
+                # Add header
+                header = f"TEXT DOCUMENT: {os.path.basename(file_path)}\n" + "=" * 60 + "\n"
+                return header + content
+                
+            except UnicodeDecodeError:
+                continue
+        
+        return ""
+        
+    except Exception as e:
+        logger.error(f"Text extraction failed: {e}")
+        return ""
+
+
+def extract_image_optimized(file_path: str) -> str:
+    """Optimized image extraction with OCR"""
+    global ocr_reader
+    
+    try:
+        if not ocr_reader:
+            return f"IMAGE FILE: {os.path.basename(file_path)} (OCR not available)"
+        
+        ocr_text = ocr_reader.extract_text_from_image(file_path)
+        
+        if ocr_text.strip():
+            header = f"IMAGE DOCUMENT: {os.path.basename(file_path)}\n" + "=" * 60 + "\n"
+            return header + "[OCR CONTENT]\n" + ocr_text + "\n[END OCR CONTENT]"
+        else:
+            return f"IMAGE FILE: {os.path.basename(file_path)} (No text detected)"
+            
+    except Exception as e:
+        logger.error(f"Image extraction failed: {e}")
+        return f"IMAGE FILE: {os.path.basename(file_path)} (Extraction failed)"
+
+
+def extract_fallback_optimized(file_path: str) -> str:
+    """Optimized fallback extraction"""
+    try:
+        # Try as text file
+        with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+            content = f.read(10000)  # Read first 10KB only
+        
+        header = f"UNKNOWN FORMAT: {os.path.basename(file_path)}\n" + "=" * 60 + "\n"
+        return header + content
+        
+    except Exception as e:
+        return f"FILE: {os.path.basename(file_path)} (Cannot extract content)"
+
+
+# Update the main upload handler to use optimizations
+def handle_streaming_upload_optimized():
+    """ULTRA-OPTIMIZED streaming upload"""
+    def generate_progress():
+        try:
+            # Quick subscription check
+            is_valid, reason = validate_user_subscription_strict(current_user)
+            if not is_valid:
+                yield f"data: {json.dumps({'status': 'error', 'message': f'Upload not allowed: {reason}'})}\n\n"
+                return
+            
+            user_id = current_user.id
+            user_upload_dir = os.path.join(app.config['UPLOAD_FOLDER'], str(user_id))
+            user_extract_dir = os.path.join(app.config['EXTRACT_FOLDER'], str(user_id))
+            
+            # Fast directory setup
+            os.makedirs(user_upload_dir, exist_ok=True)
+            os.makedirs(user_extract_dir, exist_ok=True)
+            clean_directory(user_upload_dir)
+            clean_directory(user_extract_dir)
+            
+            files = request.files.getlist('files')
+            if not files or all(f.filename == '' for f in files):
+                yield f"data: {json.dumps({'status': 'error', 'message': 'No files uploaded'})}\n\n"
+                return
+            
+            # ULTRA-FAST extraction
+            yield f"data: {json.dumps({'status': 'extracting', 'message': '⚡ Ultra-fast extraction...', 'percent': 5})}\n\n"
+            
+            extracted_files = []
+            
+            # Process files with minimal overhead
+            for file_idx, file in enumerate(files):
+                if file.filename == '':
+                    continue
+                    
+                filename = secure_filename(file.filename)
+                
+                # Quick progress
+                if file_idx % 5 == 0:  # Update every 5 files
+                    progress = 5 + (file_idx / len(files)) * 10
+                    yield f"data: {json.dumps({'status': 'extracting', 'percent': int(progress)})}\n\n"
+                
+                try:
+                    if filename.lower().endswith('.zip'):
+                        zip_path = os.path.join(user_upload_dir, filename)
+                        file.save(zip_path)
+                        
+                        if extract_zip_optimized(zip_path, user_extract_dir):
+                            for root, _, zip_files in os.walk(user_extract_dir):
+                                for f in zip_files:
+                                    if allowed_file(f):
+                                        extracted_files.append(os.path.join(root, f))
+                        
+                        os.remove(zip_path)
+                    else:
+                        if allowed_file(filename):
+                            file_path = os.path.join(user_extract_dir, filename)
+                            file.save(file_path)
+                            extracted_files.append(file_path)
+                            
+                except Exception as e:
+                    logger.error(f"Error processing {filename}: {e}")
+                    continue
+            
+            if not extracted_files:
+                yield f"data: {json.dumps({'status': 'error', 'message': 'No valid files found'})}\n\n"
+                return
+            
+            # Files ready
+            yield f"data: {json.dumps({'status': 'files_ready', 'total': len(extracted_files), 'percent': 15})}\n\n"
+            
+            # ULTRA-FAST processing with batch operations
+            processed_count = 0
+            failed_files = []
+            batch_data = []
+            
+            # Process in larger batches
+            batch_size = 10
+            
+            for i, file_path in enumerate(extracted_files):
+                filename = os.path.basename(file_path)
+                
+                # Progress every 10%
+                if i % max(1, len(extracted_files) // 10) == 0:
+                    progress = 15 + (i / len(extracted_files)) * 85
+                    yield f"data: {json.dumps({'status': 'processing', 'current_file': filename, 'percent': int(progress)})}\n\n"
+                
+                try:
+                    # Fast content extraction
+                    content = extract_content_optimized_dispatch(file_path)
+                    
+                    if content and len(content.strip()) > 10:
+                        # Prepare for batch processing
+                        file_hash = get_file_hash_optimized(file_path)
+                        
+                        # Quick duplicate check
+                        existing = Document.query.filter_by(file_hash=file_hash, user_id=user_id).first()
+                        if not existing:
+                            # Fast chunking
+                            chunks = create_chunks_optimized(content)
+                            embeddings = generate_embeddings_fast(chunks)
+                            
+                            batch_data.append((file_path, content, chunks, embeddings, file_hash, user_id))
+                            processed_count += 1
+                        else:
+                            processed_count += 1  # Already exists
+                    else:
+                        failed_files.append(filename)
+                        
+                except Exception as e:
+                    failed_files.append(filename)
+                    logger.error(f"Error processing {file_path}: {e}")
+                
+                # Process batch when full
+                if len(batch_data) >= batch_size:
+                    try:
+                        save_document_bulk_optimized(batch_data)
+                        batch_data = []
+                    except Exception as batch_error:
+                        logger.error(f"Batch processing error: {batch_error}")
+                        failed_files.extend([os.path.basename(data[0]) for data in batch_data])
+                        batch_data = []
+            
+            # Process remaining batch
+            if batch_data:
+                try:
+                    save_document_bulk_optimized(batch_data)
+                except Exception as final_batch_error:
+                    logger.error(f"Final batch error: {final_batch_error}")
+                    failed_files.extend([os.path.basename(data[0]) for data in batch_data])
+            
+            # Completion
+            success_rate = round((processed_count / len(extracted_files)) * 100, 1)
+            
+            yield f"data: {json.dumps({'status': 'completed', 'processed_count': processed_count, 'total_files': len(extracted_files), 'failed_files': failed_files, 'percent': 100, 'success_rate': success_rate, 'message': f'⚡ Ultra-fast processing completed: {processed_count}/{len(extracted_files)} files'})}\n\n"
+            
+        except Exception as e:
+            logger.error(f"Ultra-optimized upload error: {e}")
+            yield f"data: {json.dumps({'status': 'error', 'message': f'Upload failed: {str(e)}'})}\n\n"
+    
+    return Response(
+        stream_with_context(generate_progress()),
+        mimetype='text/event-stream',
+        headers={'Cache-Control': 'no-cache', 'Connection': 'keep-alive'}
+    )
+
+
+def create_chunks_optimized(content):
+    """Fast chunking for performance"""
+    chunk_size = 1200
+    overlap = 200
+    
+    if len(content) <= chunk_size:
+        return [{'content': content, 'chunk_index': 0, 'metadata': {}}]
+    
+    chunks = []
+    start = 0
+    chunk_index = 0
+    
+    while start < len(content):
+        end = start + chunk_size
+        chunk_content = content[start:end]
+        
+        chunks.append({
+            'content': chunk_content,
+            'chunk_index': chunk_index,
+            'metadata': {'optimized_chunk': True}
+        })
+        
+        start += chunk_size - overlap
+        chunk_index += 1
+    
+    return chunks
+
+
+def generate_embeddings_fast(chunks):
+    """Fast embedding generation"""
+    if not ensure_processor_initialized():
+        return [np.zeros(768) for _ in chunks]
+    
+    try:
+        texts = [chunk['content'] for chunk in chunks]
+        embeddings = global_processor.embedding_model.encode(
+            texts,
+            convert_to_tensor=False,
+            show_progress_bar=False,
+            batch_size=32  # Larger batch for speed
+        )
+        return embeddings
+    except Exception as e:
+        logger.error(f"Fast embedding generation failed: {e}")
+        return [np.zeros(768) for _ in chunks]
+@app.route('/chat/<chat_id>', methods=['GET', 'POST'])
+@login_required
+def chat(chat_id):
+    """Enhanced chat with intelligent question handling and message persistence"""
+    try:
+        conversation = Conversation.query.filter_by(
+            id=chat_id,
+            user_id=current_user.id
+        ).first_or_404()
+
+        # Get document count
+        doc_count = Document.query.filter_by(user_id=current_user.id).count()
+        logger.info(f"Found {doc_count} documents for user {current_user.id}")
+
+        # Get all documents for this user
+        documents = Document.query.filter_by(
+            user_id=current_user.id
+        ).order_by(Document.processed_at.desc()).all()
+
+        if request.method == 'GET':
+            # Load existing messages from database
+            messages = Message.query.filter_by(
+                conversation_id=chat_id
+            ).order_by(Message.timestamp.asc()).all()
+            
+            # Debug logging
+            logger.info(f"Loading chat {chat_id}: Found {len(messages)} messages")
+            for i, msg in enumerate(messages):
+                logger.info(f"Message {i+1}: {msg.role} - {len(msg.content)} chars - {msg.timestamp}")
+
+            # Get user conversations for sidebar
+            user_conversations = Conversation.query.filter_by(
+                user_id=current_user.id
+            ).order_by(Conversation.updated_at.desc()).all()
+
+            # Prepare template context
+            template_context = {
+                'chat_id': chat_id,
+                'conversation': conversation,
+                'messages': messages,
+                'conversations': user_conversations,
+                'documents': documents,
+                'chat_title': conversation.title,
+                'doc_count': doc_count,
+                'gpu_available': torch.cuda.is_available(),
+                'enhanced_processing': True,
+                'accuracy_focused': True,
+                'comprehensive_search': True,
+                'ai_model': app.config['GEMINI_MODEL'],
+                'gemini_powered': True
+            }
+            
+            logger.info(f"Rendering chat template with {len(messages)} messages")
+            return render_template('chat.html', **template_context)
+
+        elif request.method == 'POST':
+            def generate_response():
+                try:
+                    data = request.get_json()
+                    question = data.get('question', '').strip()
+                    
+                    if not question:
+                        yield json.dumps({'status': 'error', 'message': 'Please enter a question'})
+                        return
+
+                    # Save user message to database
+                    user_msg = Message(
+                        conversation_id=chat_id,
+                        role='user',
+                        content=question,
+                        timestamp=datetime.now(timezone.utc)
+                    )
+                    db.session.add(user_msg)
+                    db.session.commit()
+                    logger.info(f"Saved user message to database: {user_msg.id}")
+
+                    # Update conversation title if it's the first question
+                    if conversation.title == 'New Query':
+                        short_title = question[:50] + '...' if len(question) > 50 else question
+                        conversation.title = short_title
+                    
+                    conversation.updated_at = datetime.now(timezone.utc)
+                    db.session.commit()
+
+                    # INTELLIGENT QUESTION PROCESSING
+                    yield json.dumps({'status': 'status_update', 'message': '🧠 Analyzing question type...'}) + "\n"
+                    time.sleep(0.3)
+                    
+                    # Detect question type
+                    detector = QuestionTypeDetector()
+                    question_analysis = detector.detect_question_type(question)
+                    
+                    yield json.dumps({
+                        'status': 'status_update', 
+                        'message': f'🎯 Detected: {question_analysis["type"].title()} question ({question_analysis["confidence"]:.0%} confidence)'
+                    }) + "\n"
+                    time.sleep(0.3)
+                    
+                    # Show appropriate processing message based on question type
+                    if question_analysis['type'] == 'search':
+                        yield json.dumps({'status': 'status_update', 'message': '🔍 Executing comprehensive search for all instances...'}) + "\n"
+                        yield json.dumps({'status': 'status_update', 'message': '📄 Scanning every page for occurrences...'}) + "\n"
+                    elif question_analysis['type'] == 'generic':
+                        yield json.dumps({'status': 'status_update', 'message': '📚 Analyzing documents to answer your question...'}) + "\n"
+                        yield json.dumps({'status': 'status_update', 'message': '🤖 Preparing AI-powered explanation...'}) + "\n"
+                    else:  # hybrid
+                        yield json.dumps({'status': 'status_update', 'message': '🔄 Processing hybrid search and explanation...'}) + "\n"
+                        yield json.dumps({'status': 'status_update', 'message': '🎯 Combining search results with conceptual analysis...'}) + "\n"
+                    
+                    time.sleep(0.3)
+                    
+                    # Process the question intelligently
+                    search_start_time = time.time()
+                    
+                    try:
+                        yield json.dumps({'status': 'status_update', 'message': '⚡ Processing with AI...'}) + "\n"
+                        
+                        response_data = generate_intelligent_response(question, current_user.id)
+                        search_time = time.time() - search_start_time
+                        
+                        if not response_data['success']:
+                            yield json.dumps({
+                                'status': 'error',
+                                'message': response_data['content']
+                            }) + "\n"
+                            return
+                        
+                        # Show processing complete
+                        yield json.dumps({
+                            'status': 'status_update', 
+                            'message': f'✅ Analysis completed in {search_time:.1f}s - Generating response...'
+                        }) + "\n"
+                        time.sleep(0.2)
+                        
+                        # Start streaming the response
+                        yield json.dumps({'status': 'stream_start'}) + "\n"
+                        
+                        # Get the full response content
+                        full_answer = response_data['content']
+                        
+                        # Stream the content in chunks for better user experience
+                        chunk_size = 150
+                        for i in range(0, len(full_answer), chunk_size):
+                            chunk = full_answer[i:i + chunk_size]
+                            yield json.dumps({'status': 'stream_chunk', 'content': chunk}) + "\n"
+                            time.sleep(0.03)  # Small delay for streaming effect
+                        
+                        # Save assistant response to database
+                        assistant_msg = Message(
+                            conversation_id=chat_id,
+                            role='assistant',
+                            content=full_answer,
+                            sources=response_data['sources'],
+                            timestamp=datetime.now(timezone.utc)
+                        )
+                        db.session.add(assistant_msg)
+                        
+                        conversation.updated_at = datetime.now(timezone.utc)
+                        db.session.commit()
+                        logger.info(f"Saved assistant message to database: {assistant_msg.id}")
+
+                        # Prepare final status with comprehensive information
+                        analysis = response_data['question_analysis']
+                        
+                        # Count different types of information based on question type
+                        final_status = {
+                            'status': 'stream_end',
+                            'sources': [{'filename': s, 'path': s} for s in response_data['sources']],
+                            'search_time': search_time,
+                            'question_type': analysis['type'],
+                            'confidence': analysis['confidence'],
+                            'reasoning': analysis['reasoning'],
+                            'sources_count': len(response_data['sources']),
+                            'ai_model': 'Gemini AI',
+                            'intelligent_processing': True,
+                            'comprehensive_analysis': True
+                        }
+                        
+                        # Add specific metrics based on question type
+                        if analysis['type'] == 'search':
+                            # For search questions, try to extract instance count
+                            instance_count = full_answer.count('Instance #') or full_answer.count('instances found:')
+                            if instance_count == 0:
+                                # Try to parse from content
+                                import re
+                                match = re.search(r'(\d+)\s+instances?', full_answer, re.IGNORECASE)
+                                instance_count = int(match.group(1)) if match else 0
+                            
+                            final_status.update({
+                                'total_instances_found': instance_count,
+                                'search_method': 'bulletproof_comprehensive_search',
+                                'all_instances_captured': True,
+                                'accurate_page_numbers': True
+                            })
+                            
+                        elif analysis['type'] == 'generic':
+                            final_status.update({
+                                'answer_type': 'AI_explanation_from_documents',
+                                'gemini_enhanced': True,
+                                'document_based_response': True
+                            })
+                            
+                        elif analysis['type'] == 'hybrid':
+                            final_status.update({
+                                'response_type': 'search_plus_explanation',
+                                'hybrid_processing': True,
+                                'combined_analysis': True
+                            })
+
+                        yield json.dumps(final_status) + "\n"
+
+                    except Exception as processing_error:
+                        logger.error(f"Intelligent processing failed: {processing_error}")
+                        logger.error(f"Traceback: {traceback.format_exc()}")
+                        
+                        # Provide fallback response
+                        yield json.dumps({
+                            'status': 'error',
+                            'message': f'Processing failed: {str(processing_error)}. Please try rephrasing your question.'
+                        }) + "\n"
+
+                except Exception as e:
+                    logger.error(f"Chat generation error: {e}")
+                    logger.error(f"Traceback: {traceback.format_exc()}")
+                    yield json.dumps({
+                        'status': 'error',
+                        'message': f"Error: {str(e)}"
+                    }) + "\n"
+
+            return Response(stream_with_context(generate_response()), mimetype='application/x-ndjson')
+
+    except Exception as e:
+        logger.error(f"Chat route error: {e}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        if request.method == 'GET':
+            flash('Error loading chat', 'error')
+            return redirect(url_for('index'))
+        else:
+            return jsonify({'error': str(e)}), 500
+
+
+# UPDATE STARTUP FUNCTIONS FOR GEMINI
+
+def startup_exact_match_priority_system():
+    """Initialize the exact match priority system with Gemini AI on startup"""
+    try:
+        logger.info("🎯 Starting EXACT MATCH PRIORITY DocumentIQ System with Gemini AI...")
+        
+        # Initialize processor
+        success = initialize_enhanced_processor()
+        
+        # Initialize Gemini
+        gemini_success = initialize_gemini()
+        
+        # Update search configuration
+        update_search_configuration()
+        
+        if success and gemini_success:
+            logger.info("✅ EXACT MATCH PRIORITY system with Gemini AI initialized successfully")
+            logger.info("🎯 EXACT MATCH PRIORITY features enabled:")
+            logger.info("   - GUARANTEED exact phrase matching with massive score boost")
+            logger.info("   - Multiple exact match patterns (normalized, case-sensitive, etc.)")
+            logger.info("   - Word boundary detection for precise matching")
+            logger.info("   - Context prioritization for exact matches (70% of context space)")
+            logger.info("   - Exact match content always shown first")
+            logger.info("   - Emergency fallbacks ensure 100% search success")
+            logger.info("   - Enhanced RAG prompt prioritizes exact match answers")
+            logger.info("   - Powered by Gemini AI for superior language understanding")
+        else:
+            logger.error("❌ EXACT MATCH PRIORITY system initialization failed")
+            if not success:
+                logger.error("   - Document processor initialization failed")
+            if not gemini_success:
+                logger.error("   - Gemini AI initialization failed")
+            
+        return success and gemini_success
+        
+    except Exception as e:
+        logger.error(f"❌ EXACT MATCH PRIORITY system startup error: {e}")
+        return False
+
+# UPDATE CONTEXT PROCESSOR TO INCLUDE GEMINI INFO
+
+@app.context_processor
+def inject_now():
+    """Inject current time and enhanced system status into templates"""
+    return {
+        'now': datetime.now(timezone.utc),
+        'gpu_available': torch.cuda.is_available(),
+        'gpu_name': torch.cuda.get_device_name() if torch.cuda.is_available() else 'N/A',
+        'enhanced_processing': True,
+        'perfect_formatting': True,
+        'comprehensive_search': True,
+        'accuracy_focused': True,
+        'rtx_a6000_optimized': torch.cuda.is_available(),
+        'max_upload_gb': app.config['MAX_CONTENT_LENGTH'] / 1e9,
+        'max_file_gb': app.config['MAX_FILE_SIZE'] / 1e9,
+        'max_extracted_gb': app.config['MAX_ZIP_EXTRACTED_SIZE'] / 1e9,
+        'ai_model': 'Gemini AI',
+        'model_name': app.config['GEMINI_MODEL'],
+        'gemini_powered': True
+    }
+
+
+# Add route to replace the existing upload handler
+@app.route('/upload', methods=['POST'])
+@login_required
+def upload_files_optimized():
+    """OPTIMIZED upload endpoint"""
+    if request.headers.get('Accept') == 'text/event-stream':
+        return handle_streaming_upload_optimized()
+    else:
+        return jsonify({'error': 'Invalid request format'}), 400
 
 @app.route('/clear_documents', methods=['POST'])
 @login_required
@@ -4892,303 +6120,9 @@ def new_chat():
         flash('Error creating new chat', 'error')
         return redirect(url_for('index'))
 
-
-@app.route('/chat/<chat_id>', methods=['GET', 'POST'])
-@login_required
-def chat(chat_id):
-    """Enhanced chat with bulletproof comprehensive search"""
-    try:
-        conversation = Conversation.query.filter_by(
-            id=chat_id,
-            user_id=current_user.id
-        ).first_or_404()
-
-        # Get document count
-        doc_count = Document.query.filter_by(user_id=current_user.id).count()
-        logger.info(f"Found {doc_count} documents for user {current_user.id}")
-
-        # Get all documents for this user
-        documents = Document.query.filter_by(
-            user_id=current_user.id
-        ).order_by(Document.processed_at.desc()).all()
-
-        if request.method == 'GET':
-            messages = Message.query.filter_by(
-                conversation_id=chat_id
-            ).order_by(Message.timestamp.asc()).all()
-
-            user_conversations = Conversation.query.filter_by(
-                user_id=current_user.id
-            ).order_by(Conversation.updated_at.desc()).all()
-
-            return render_template(
-                'chat.html',
-                chat_id=chat_id,
-                conversation=conversation,
-                messages=messages,
-                conversations=user_conversations,
-                documents=documents,
-                chat_title=conversation.title
-            )
-
-        elif request.method == 'POST':
-            def generate_response():
-                try:
-                    data = request.get_json()
-                    question = data.get('question', '').strip()
-                    
-                    if not question:
-                        yield json.dumps({'status': 'error', 'message': 'Please enter a question'})
-                        return
-
-                    # Save user message
-                    user_msg = Message(
-                        conversation_id=chat_id,
-                        role='user',
-                        content=question,
-                        timestamp=datetime.now(timezone.utc)
-                    )
-                    db.session.add(user_msg)
-                    db.session.commit()
-
-                    # Update conversation title
-                    if conversation.title == 'New Query':
-                        short_title = question[:50] + '...' if len(question) > 50 else question
-                        conversation.title = short_title
-                        db.session.commit()
-
-                    # BULLETPROOF COMPREHENSIVE SEARCH
-                    yield json.dumps({'status': 'status_update', 'message': '🎯 Starting bulletproof search for ALL instances...'}) + "\n"
-                    
-                    search_start_time = time.time()
-                    
-                    yield json.dumps({'status': 'status_update', 'message': '📄 Loading complete document content...'}) + "\n"
-                    time.sleep(0.3)
-                    
-                    yield json.dumps({'status': 'status_update', 'message': '🔍 Scanning every page for all occurrences...'}) + "\n"
-                    time.sleep(0.3)
-                    
-                    yield json.dumps({'status': 'status_update', 'message': '📊 Analyzing positions and contexts...'}) + "\n"
-                    
-                    # Use the BULLETPROOF search function
-                    try:
-                        all_instances, comprehensive_summary = search_all_instances_bulletproof(question, current_user.id)
-                        
-                        search_time = time.time() - search_start_time
-                        
-                        if not all_instances:
-                            yield json.dumps({
-                                'status': 'completed',
-                                'message': f'No instances of "{question}" were found in your documents after comprehensive search.',
-                                'search_time': search_time,
-                                'instances_found': 0,
-                                'bulletproof_search': True
-                            }) + "\n"
-                            return
-                        
-                        # Show search completion with accurate statistics
-                        documents_with_matches = len(set(i['filename'] for i in all_instances))
-                        pages_with_matches = len(set(f"{i['filename']}_page_{i['page_number']}" for i in all_instances))
-                        exact_matches = len([i for i in all_instances if i['exact_match']])
-                        
-                        yield json.dumps({
-                            'status': 'status_update', 
-                            'message': f'✅ Found {len(all_instances)} instances ({exact_matches} exact matches) across {documents_with_matches} documents on {pages_with_matches} pages in {search_time:.1f}s'
-                        }) + "\n"
-                        
-                        # Convert instances to expected format for compatibility
-                        results = []
-                        for instance in all_instances:
-                            results.append({
-                                'filename': instance['filename'],
-                                'content': instance['context'],
-                                'score': 1000 if instance['exact_match'] else 800,
-                                'page_number': instance['page_number'],
-                                'matched_text': instance['matched_text'],
-                                'exact_match': instance['exact_match'],
-                                'position_in_page': instance['position_in_page']
-                            })
-                        
-                        # Build bulletproof context showing ALL instances
-                        context = build_bulletproof_context(all_instances, question)
-                        
-                        logger.info(f"Bulletproof search found {len(all_instances)} instances")
-                        
-                    except Exception as search_error:
-                        logger.error(f"Bulletproof search failed: {search_error}")
-                        yield json.dumps({
-                            'status': 'error',
-                            'message': f'Search failed: {str(search_error)}'
-                        }) + "\n"
-                        return
-                    
-                    # Collect sources
-                    sources = []
-                    seen_documents = set()
-
-                    for result in results:
-                        filename = result['filename']
-                        if filename not in seen_documents:
-                            sources.append(filename)
-                            seen_documents.add(filename)
-
-                    yield json.dumps({'status': 'status_update', 'message': '🤖 Generating comprehensive analysis with ALL instances...'}) + "\n"
-
-                    # Check Ollama health before generating response
-                    ollama_healthy, health_message = check_ollama_health()
-                    if not ollama_healthy:
-                        # Provide comprehensive fallback response
-                        fallback_response = f"""I found **{len(all_instances)} instances** of "{question}" in your documents.
-
-{comprehensive_summary}
-
-The search was completed successfully and all instances have been captured with exact page numbers and locations."""
-                        
-                        yield json.dumps({'status': 'stream_start'}) + "\n"
-                        yield json.dumps({'status': 'stream_chunk', 'content': fallback_response}) + "\n"
-                        yield json.dumps({
-                            'status': 'stream_end',
-                            'sources': [{'filename': s, 'path': s} for s in sources],
-                            'total_instances_found': len(all_instances),
-                            'ai_service_error': True,
-                            'bulletproof_search_completed': True
-                        }) + "\n"
-                        return
-
-                    yield json.dumps({'status': 'stream_start'}) + "\n"
-
-                    # Use bulletproof RAG prompt
-                    prompt = build_bulletproof_rag_prompt(context, question, len(all_instances))
-                    full_answer = ""
-                    
-                    try:
-                        response_started = False
-                        for chunk in get_ollama_response_stream(prompt):
-                            if chunk.strip():
-                                response_started = True
-                                yield json.dumps({'status': 'stream_chunk', 'content': chunk}) + "\n"
-                                full_answer += chunk
-                        
-                        if not response_started or not full_answer.strip():
-                            # Comprehensive fallback response
-                            full_answer = f"""# Comprehensive Analysis of "{question}"
-
-I found **{len(all_instances)} instances** of "{question}" across **{len(seen_documents)} documents** on **{len(set(r['page_number'] for r in results))} pages**.
-
-## Summary
-- **Total instances:** {len(all_instances)}
-- **Exact case matches:** {len([r for r in results if r['exact_match']])}
-- **Documents with matches:** {len(seen_documents)}
-- **Pages with matches:** {len(set(r['page_number'] for r in results))}
-
-## Detailed Results
-
-{comprehensive_summary}
-
-All instances have been found and analyzed with exact page numbers and locations. No instances were missed in this comprehensive search."""
-                            
-                            yield json.dumps({'status': 'stream_chunk', 'content': full_answer}) + "\n"
-                            
-                    except Exception as ai_error:
-                        logger.error(f"AI response generation failed: {ai_error}")
-                        full_answer = f"""# Search Results for "{question}"
-
-I successfully found **{len(all_instances)} instances** of "{question}" in your documents.
-
-{comprehensive_summary}
-
-The bulletproof search was completed successfully and all instances have been captured with their exact page numbers and locations."""
-                        yield json.dumps({'status': 'stream_chunk', 'content': full_answer}) + "\n"
-
-                    # Save response
-                    assistant_msg = Message(
-                        conversation_id=chat_id,
-                        role='assistant',
-                        content=full_answer,
-                        sources=sources,
-                        timestamp=datetime.now(timezone.utc)
-                    )
-                    db.session.add(assistant_msg)
-                    
-                    conversation.updated_at = datetime.now(timezone.utc)
-                    db.session.commit()
-
-                    # Final status with bulletproof statistics
-                    yield json.dumps({
-                        'status': 'stream_end',
-                        'sources': [{'filename': s, 'path': s} for s in sources],
-                        'search_time': search_time,
-                        'total_instances_found': len(all_instances),
-                        'exact_matches': len([r for r in results if r['exact_match']]),
-                        'documents_with_matches': len(seen_documents),
-                        'pages_with_matches': len(set(r['page_number'] for r in results)),
-                        'search_method': 'bulletproof_comprehensive_search',
-                        'bulletproof_search': True,
-                        'all_instances_captured': True,
-                        'no_instances_missed': True,
-                        'accurate_page_numbers': True,
-                        'context_characters': len(context),
-                        'search_coverage': 'Complete - all content searched'
-                    }) + "\n"
-
-                except Exception as e:
-                    logger.error(f"Bulletproof chat error: {e}")
-                    logger.error(f"Traceback: {traceback.format_exc()}")
-                    yield json.dumps({
-                        'status': 'error',
-                        'message': f"Error: {str(e)}"
-                    }) + "\n"
-
-            return Response(stream_with_context(generate_response()), mimetype='application/x-ndjson')
-
-    except Exception as e:
-        logger.error(f"Chat route error: {e}")
-        if request.method == 'GET':
-            flash('Error loading chat', 'error')
-            return redirect(url_for('index'))
-        else:
-            return jsonify({'error': str(e)}), 500
-
-
-def build_bulletproof_rag_prompt(context, query, total_instances):
-    """
-    RAG prompt specifically designed for bulletproof instance display.
-    """
-    
-    prompt = f"""You are a comprehensive document analysis assistant. You have completed a thorough search across all documents and found ALL instances of the query "{query}".
-
-COMPREHENSIVE SEARCH RESULTS WITH ALL INSTANCES:
-{context}
-
-QUERY: {query}
-TOTAL INSTANCES FOUND: {total_instances}
-
-INSTRUCTIONS:
-1. Present a comprehensive analysis showing ALL {total_instances} instances found
-2. Provide the exact distribution across documents and pages
-3. Include specific page numbers and locations for each instance
-4. Show the actual matched text and context for key instances
-5. Confirm that this is a complete analysis with no instances missed
-6. Organize the response clearly with proper formatting
-
-RESPONSE STRUCTURE:
-- Executive summary with total count and distribution
-- Key findings and patterns observed
-- Specific examples with page references
-- Statistical breakdown by document and page
-- Conclusion confirming completeness of the search
-
-Provide a thorough, well-organized response that demonstrates the comprehensive nature of this analysis.
-
-ANSWER:"""
-    
-    return prompt
-
-
 def search_all_instances_bulletproof(query, user_id):
     """
-    BULLETPROOF search that actually works correctly.
-    No complex logic - just reliable, simple string matching.
+    BULLETPROOF search with debugging - UPDATED VERSION
     """
     logger.info(f"🎯 BULLETPROOF SEARCH: Finding ALL instances of '{query}' for user {user_id}")
     
@@ -5209,7 +6143,7 @@ def search_all_instances_bulletproof(query, user_id):
                 filename = document.document_metadata.get('original_filename', 'Unknown') if document.document_metadata else 'Unknown'
                 logger.info(f"Processing: {filename}")
                 
-                # Get the full document content - try different content types
+                # Get the full document content
                 content = get_full_document_content(document.id)
                 
                 if not content:
@@ -5218,7 +6152,10 @@ def search_all_instances_bulletproof(query, user_id):
                 
                 logger.info(f"Content length: {len(content)} characters")
                 
-                # Find all instances in this document using simple method
+                # ADD DEBUG CHECK
+                debug_search_content(content, query)
+                
+                # Find all instances in this document
                 doc_instances = find_instances_simple(content, query, filename, document.id)
                 all_instances.extend(doc_instances)
                 
@@ -5231,7 +6168,7 @@ def search_all_instances_bulletproof(query, user_id):
         # Remove exact duplicates
         unique_instances = remove_duplicate_instances(all_instances)
         
-        # Build simple summary
+        # Build summary
         summary = build_bulletproof_summary(unique_instances, query, len(user_documents))
         
         logger.info(f"✅ BULLETPROOF SEARCH COMPLETED: {len(unique_instances)} unique instances found")
@@ -5280,87 +6217,24 @@ def get_full_document_content(document_id):
     except Exception as e:
         logger.error(f"Error getting document content: {e}")
         return None
-
-
 def find_instances_simple(content, query, filename, document_id):
     """
-    Find all instances using the simplest possible method.
+    Find all instances using the simplest possible method - FIXED VERSION
     """
     instances = []
     
     try:
-        # Split content into pages using the most reliable method
+        # Split content into pages using the reliable method
         pages = split_into_pages_reliable(content)
         logger.info(f"Split into {len(pages)} pages")
         
-        # Search variations
-        search_terms = [
-            query.strip(),
-            query.lower().strip(),
-            query.upper().strip()
-        ]
+        # Search each page individually
+        for page_data in pages:
+            # Search for query in this page
+            page_instances = search_page_for_query(page_data, query, 1, filename, document_id)
+            instances.extend(page_instances)
         
-        # Remove duplicates
-        search_terms = list(set([t for t in search_terms if t]))
-        
-        # Track positions to avoid duplicates
-        found_positions = set()
-        
-        # Search each page
-        for page_num, page_content in enumerate(pages, 1):
-            # Calculate absolute position offset
-            page_offset = sum(len(pages[i]) for i in range(page_num - 1))
-            
-            # Search for each term
-            for search_term in search_terms:
-                # Find all occurrences
-                pos = 0
-                while True:
-                    # Case-sensitive search first
-                    found_pos = page_content.find(search_term, pos)
-                    if found_pos == -1:
-                        # Try case-insensitive
-                        found_pos = page_content.lower().find(search_term.lower(), pos)
-                        if found_pos == -1:
-                            break
-                    
-                    # Calculate absolute position
-                    abs_pos = page_offset + found_pos
-                    
-                    # Skip if we already found this position
-                    if abs_pos in found_positions:
-                        pos = found_pos + 1
-                        continue
-                    
-                    found_positions.add(abs_pos)
-                    
-                    # Get actual matched text
-                    actual_match = page_content[found_pos:found_pos + len(search_term)]
-                    
-                    # Get context (500 chars before and after)
-                    context_start = max(0, found_pos - 500)
-                    context_end = min(len(page_content), found_pos + len(search_term) + 500)
-                    context = page_content[context_start:context_end].strip()
-                    
-                    # Clean context (remove excessive whitespace)
-                    context = ' '.join(context.split())
-                    
-                    # Create instance
-                    instance = {
-                        'filename': filename,
-                        'document_id': document_id,
-                        'page_number': page_num,
-                        'position_in_page': found_pos,
-                        'absolute_position': abs_pos,
-                        'matched_text': actual_match,
-                        'context': context,
-                        'exact_match': actual_match == query.strip(),
-                        'instance_key': f"{document_id}_{abs_pos}_{actual_match}"
-                    }
-                    
-                    instances.append(instance)
-                    pos = found_pos + 1
-        
+        logger.info(f"Found {len(instances)} instances across {len(pages)} pages in {filename}")
         return instances
         
     except Exception as e:
@@ -5371,60 +6245,106 @@ def find_instances_simple(content, query, filename, document_id):
 def split_into_pages_reliable(content):
     """
     Split content into pages using the most reliable method possible.
+    FIXED VERSION - handles your PDF format correctly
     """
     try:
-        # Method 1: Look for clear page markers
-        page_markers = [
-            r'\n\s*=+\s*PAGE\s+\d+\s*=+\s*\n',
-            r'\n\s*PAGE\s+\d+\s*\n',
-            r'\n\s*\d+\s*\n(?=[A-Z])',  # Number on line followed by capital letter
-        ]
+        # Look for the specific page markers in your PDF format
+        # Pattern: "PAGE X" followed by dashes, then "[END PAGE X]" 
         
-        for pattern in page_markers:
-            if re.search(pattern, content, re.IGNORECASE):
-                parts = re.split(pattern, content, flags=re.IGNORECASE)
-                # Filter out empty parts
-                pages = [part.strip() for part in parts if part.strip() and len(part.strip()) > 100]
-                if len(pages) > 1:
-                    logger.info(f"Found {len(pages)} pages using pattern: {pattern}")
-                    return pages
+        # Method 1: Use your specific page pattern
+        page_pattern = r'PAGE (\d+)\s*\n-{40}\s*(.*?)\s*\[END PAGE \1\]'
+        page_matches = list(re.finditer(page_pattern, content, re.DOTALL))
         
-        # Method 2: Split by estimated length (based on 7-page document)
-        content_length = len(content)
-        estimated_page_length = content_length // 7  # 7 pages as mentioned by user
-        
-        if estimated_page_length > 500:  # Reasonable page size
+        if page_matches:
             pages = []
-            for i in range(0, content_length, estimated_page_length):
-                page = content[i:i + estimated_page_length].strip()
-                if page:
-                    pages.append(page)
+            for match in page_matches:
+                page_num = int(match.group(1))
+                page_content = match.group(2).strip()
+                
+                if page_content:  # Only add non-empty pages
+                    # Add page marker for identification
+                    formatted_page = f"[PAGE {page_num}]\n{page_content}"
+                    pages.append(formatted_page)
             
-            logger.info(f"Split into {len(pages)} pages using estimated length method")
+            if pages:
+                logger.info(f"Successfully split into {len(pages)} pages using PAGE markers")
+                return pages
+        
+        # Method 2: Alternative pattern - split by "PAGE X" headers
+        page_splits = re.split(r'\nPAGE (\d+)\n-{40}', content)
+        
+        if len(page_splits) > 2:  # We have actual page splits
+            pages = []
+            
+            # Skip the first empty split
+            for i in range(1, len(page_splits), 2):
+                if i + 1 < len(page_splits):
+                    page_num = int(page_splits[i])
+                    page_content = page_splits[i + 1]
+                    
+                    # Clean up the page content
+                    # Remove the [END PAGE X] marker
+                    page_content = re.sub(r'\[END PAGE \d+\].*$', '', page_content, flags=re.DOTALL)
+                    page_content = page_content.strip()
+                    
+                    if page_content:
+                        formatted_page = f"[PAGE {page_num}]\n{page_content}"
+                        pages.append(formatted_page)
+            
+            if pages:
+                logger.info(f"Successfully split into {len(pages)} pages using split method")
+                return pages
+        
+        # Method 3: Manual extraction based on your exact format
+        pages = []
+        lines = content.split('\n')
+        current_page = None
+        current_content = []
+        
+        for line in lines:
+            # Look for page start
+            page_start_match = re.match(r'^PAGE (\d+)$', line.strip())
+            if page_start_match:
+                # Save previous page if it exists
+                if current_page is not None and current_content:
+                    page_text = '\n'.join(current_content).strip()
+                    if page_text:
+                        pages.append(f"[PAGE {current_page}]\n{page_text}")
+                
+                # Start new page
+                current_page = int(page_start_match.group(1))
+                current_content = []
+                continue
+            
+            # Look for page end
+            if re.match(r'^\[END PAGE \d+\]$', line.strip()):
+                continue  # Skip end markers
+            
+            # Skip the dashes separator
+            if re.match(r'^-{40}$', line.strip()):
+                continue
+            
+            # Add content to current page
+            if current_page is not None:
+                current_content.append(line)
+        
+        # Don't forget the last page
+        if current_page is not None and current_content:
+            page_text = '\n'.join(current_content).strip()
+            if page_text:
+                pages.append(f"[PAGE {current_page}]\n{page_text}")
+        
+        if pages:
+            logger.info(f"Successfully split into {len(pages)} pages using manual extraction")
             return pages
         
-        # Method 3: Split by form feeds or major breaks
-        if '\f' in content:
-            pages = [page.strip() for page in content.split('\f') if page.strip()]
-            if len(pages) > 1:
-                logger.info(f"Found {len(pages)} pages using form feeds")
-                return pages
-        
-        # Method 4: Split by double line breaks with length threshold
-        potential_pages = content.split('\n\n\n')  # Triple line break
-        if len(potential_pages) > 3:
-            pages = [page.strip() for page in potential_pages if len(page.strip()) > 200]
-            if len(pages) > 1:
-                logger.info(f"Found {len(pages)} pages using triple line breaks")
-                return pages
-        
         # Fallback: treat as single page
-        logger.warning("Using fallback: treating as single page")
-        return [content]
+        logger.warning("Could not split pages properly, treating as single page")
+        return [f"[PAGE 1]\n{content}"]
         
     except Exception as e:
         logger.error(f"Error splitting pages: {e}")
-        return [content]
+        return [f"[PAGE 1]\n{content}"]
 
 
 def remove_duplicate_instances(instances):
@@ -5544,9 +6464,9 @@ No instances of '{query}' found in your documents.
         
         for instance in doc_instances:
             instance_counter += 1
-            summary_parts.append(f"   🎯 Instance #{instance_counter}:")
+            summary_parts.append(f"   <b> Instance #{instance_counter}: </b>")
             summary_parts.append(f"      • Page: {instance['page_number']}")
-            summary_parts.append(f"      • Position in page: Character {instance['position_in_page']}")
+            # summary_parts.append(f"      • Position in page: Character {instance['position_in_page']}")
             summary_parts.append(f"      • Matched text: '{instance['matched_text']}'")
             summary_parts.append(f"      • Case match: {'Exact' if instance['exact_match'] else 'Variation'}")
             
@@ -5558,13 +6478,13 @@ No instances of '{query}' found in your documents.
             summary_parts.append("")
     
     # Footer
-    summary_parts.append("=" * 80)
+    summary_parts.append("=" * 50)
     summary_parts.append("🎯 ANALYSIS COMPLETE")
-    summary_parts.append("=" * 80)
+    summary_parts.append("=" * 50)
     summary_parts.append(f"✅ Successfully found and analyzed ALL {len(instances)} instances of '{query}'")
     summary_parts.append(f"✅ Covered {total_docs} document(s) across {total_pages} page(s)")
     summary_parts.append("✅ No instances missed - comprehensive search completed")
-    summary_parts.append("=" * 80)
+    summary_parts.append("=" * 50)
     
     return "\n".join(summary_parts)
 
@@ -5658,11 +6578,10 @@ def update_chat_title(chat_id):
     except Exception as e:
         logger.error(f'Error updating chat title: {e}')
         return jsonify({'error': str(e)}), 500
-
 @app.route('/get_file_content')
 @login_required
 def get_file_content():
-    """Get file content with enhanced formatting"""
+    """Get file content with enhanced formatting - FIXED VERSION"""
     rel_path = request.args.get('path')
     if not rel_path:
         return jsonify({'error': 'File path required'}), 400
@@ -5672,13 +6591,62 @@ def get_file_content():
         if '..' in rel_path or rel_path.startswith('/'):
             return jsonify({'error': 'Invalid file path'}), 400
         
-        # Find document by relative path
-        doc = Document.query.filter_by(
-            file_path=rel_path,
-            user_id=current_user.id
-        ).first()
+        # Clean the path
+        rel_path = rel_path.strip().replace('\\', '/')
+        
+        # Try multiple strategies to find the document
+        doc = None
+        search_paths = [
+            rel_path,  # Original path
+            rel_path.split('/')[-1],  # Just filename
+            f"{current_user.id}/{rel_path}",  # User ID + path
+            f"{current_user.id}/{rel_path.split('/')[-1]}"  # User ID + filename
+        ]
+        
+        logger.info(f"Searching for document with paths: {search_paths}")
+        
+        # Try each search path
+        for search_path in search_paths:
+            # Try exact match first
+            doc = Document.query.filter_by(
+                file_path=search_path,
+                user_id=current_user.id
+            ).first()
+            
+            if doc:
+                logger.info(f"Found document with exact path: {search_path}")
+                break
+            
+            # Try partial match (contains)
+            doc = Document.query.filter(
+                Document.file_path.contains(search_path.split('/')[-1]),
+                Document.user_id == current_user.id
+            ).first()
+            
+            if doc:
+                logger.info(f"Found document with partial match: {search_path}")
+                break
+        
+        # Also try matching by original filename in metadata
+        if not doc:
+            filename = rel_path.split('/')[-1]
+            docs_with_metadata = Document.query.filter(
+                Document.user_id == current_user.id,
+                Document.document_metadata.isnot(None)
+            ).all()
+            
+            for potential_doc in docs_with_metadata:
+                try:
+                    if (potential_doc.document_metadata and 
+                        potential_doc.document_metadata.get('original_filename') == filename):
+                        doc = potential_doc
+                        logger.info(f"Found document by metadata filename: {filename}")
+                        break
+                except Exception:
+                    continue
         
         if not doc:
+            logger.warning(f"Document not found for any of these paths: {search_paths}")
             return jsonify({'error': 'Document not found'}), 404
         
         # Get accuracy-focused content from DocumentContent table
@@ -5697,29 +6665,44 @@ def get_file_content():
         # Further fallback to any text content
         if not content_record:
             content_record = DocumentContent.query.filter_by(
-                document_id=doc.id,
-                content_type='text'
+                document_id=doc.id
+            ).filter(
+                DocumentContent.content_type.like('%text%')
             ).first()
         
+        # Last resort - any content
         if not content_record:
+            content_record = DocumentContent.query.filter_by(
+                document_id=doc.id
+            ).first()
+        
+        if not content_record or not content_record.content:
+            logger.warning(f"No content found for document {doc.id}")
             return jsonify({'error': 'Document content not found'}), 404
         
         filename = doc.document_metadata.get('original_filename', 'Unknown') if doc.document_metadata else 'Unknown'
         
+        logger.info(f"Successfully retrieved content for {filename} (type: {content_record.content_type})")
+        
         return jsonify({
             'file': filename,
             'content': content_record.content,
-            'path': rel_path,
+            'path': doc.file_path,
             'structure_preserved': content_record.content_type in ['accuracy_focused_full_text', 'enhanced_full_text', 'structured_text'],
             'perfect_formatting': content_record.content_type in ['accuracy_focused_full_text', 'enhanced_full_text'],
             'extraction_method': doc.document_metadata.get('processing_method', 'unknown') if doc.document_metadata else 'unknown',
             'accuracy_focused_processing': 'accuracy_focused' in content_record.content_type,
-            'gpu_processed': doc.document_metadata.get('gpu_processed', False) if doc.document_metadata else False
+            'gpu_processed': doc.document_metadata.get('gpu_processed', False) if doc.document_metadata else False,
+            'content_type': content_record.content_type,
+            'content_length': len(content_record.content),
+            'document_id': doc.id
         })
     
     except Exception as e:
-        logger.error(f"Error serving file: {e}")
+        logger.error(f"Error serving file content: {e}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
         return jsonify({'error': str(e)}), 500
+
 
 # Subscription and Billing Routes
 @app.route('/start_trial', methods=['POST'])
@@ -6061,7 +7044,6 @@ def debug_processor_status():
         'device': global_processor.device if global_processor else 'unknown',
         'accuracy_focused_features_active': True,
         'search_weights': app.config['SEARCH_WEIGHTS'],
-        'model_name': app.config['OLLAMA_MODEL'],
         'embedding_model': app.config['EMBEDDING_MODEL']
     })
 
@@ -6190,7 +7172,6 @@ def inject_now():
         'max_upload_gb': app.config['MAX_CONTENT_LENGTH'] / 1e9,
         'max_file_gb': app.config['MAX_FILE_SIZE'] / 1e9,
         'max_extracted_gb': app.config['MAX_ZIP_EXTRACTED_SIZE'] / 1e9,
-        'model_name': app.config['OLLAMA_MODEL']
     }
 
 @app.before_request
@@ -6203,21 +7184,21 @@ def check_subscription():
             current_user.documents_uploaded = 0
             db.session.commit()
 
-@app.before_request
-def check_trial():
-    """Check trial status"""
-    if current_user.is_authenticated and not current_user.is_admin:
-        if (current_user.subscription_plan == 'trial' and 
-            current_user.trial_end_date and 
-            not request.path.startswith('/static') and
-            not request.path.startswith('/pricing')):
+# @app.before_request
+# def check_trial():
+#     """Check trial status"""
+#     if current_user.is_authenticated and not current_user.is_admin:
+#         if (current_user.subscription_plan == 'trial' and 
+#             current_user.trial_end_date and 
+#             not request.path.startswith('/static') and
+#             not request.path.startswith('/pricing')):
             
-            now = datetime.now(timezone.utc)
-            trial_end = current_user._make_aware(current_user.trial_end_date)
-            days_left = (trial_end - now).days
+#             now = datetime.now(timezone.utc)
+#             trial_end = current_user._make_aware(current_user.trial_end_date)
+#             days_left = (trial_end - now).days
             
-            if days_left <= 3:
-                flash(f'Your trial ends in {days_left} day(s). Upgrade now!', 'warning')
+#             if days_left <= 3:
+#                 flash(f'Your trial ends in {days_left} day(s). Upgrade now!', 'warning')
 
 @app.after_request
 def after_request(response):
@@ -6272,7 +7253,6 @@ def startup_accuracy_focused_system():
             logger.info("   - RTX A6000 optimization with mixed precision")
             logger.info("   - Accuracy-focused search with weighted ranking")
             logger.info("   - 100% search accuracy guarantee with emergency fallbacks")
-            logger.info(f"   - Improved model: {app.config['OLLAMA_MODEL']} for better comprehension")
             logger.info("   - Smaller chunks (800 chars) with higher overlap for precision")
         else:
             logger.error("❌ Accuracy-focused system initialization failed")
@@ -6369,41 +7349,16 @@ def debug_test_exact_match():
         })
 
 
-# 5. Add exact match validation
-def validate_exact_match_system():
-    """Validate that exact match system is working correctly"""
-    try:
-        if not global_processor or not search_engine:
-            return False, "Search engine not initialized"
-        
-        # Test with a simple exact match
-        test_queries = ["test", "document", "the"]
-        
-        for query in test_queries:
-            results = search_engine._exact_phrase_search_GUARANTEED(query, 5)
-            if results:
-                logger.info(f"✅ Exact match system working - found {len(results)} results for '{query}'")
-                return True, f"Exact match system validated with query '{query}'"
-        
-        return False, "No exact matches found for test queries"
-        
-    except Exception as e:
-        return False, f"Validation error: {str(e)}"
-
-
-
-
+# Main application startup
 # Main application startup
 if __name__ == '__main__':
     try:
         # Initialize database first
         create_app_with_postgres()
         
-        # Validate system requirements
+        # Validate system requirements (now includes Gemini)
         all_systems_ready, system_issues = validate_system_requirements()
         
-        # Create OCR directories
-        create_ocr_directories()
         
         # Try to initialize OCR
         try:
@@ -6415,16 +7370,16 @@ if __name__ == '__main__':
         except Exception as ocr_error:
             logger.error(f"OCR initialization error at startup: {ocr_error}")
         
-        # Initialize accuracy-focused system
+        # Initialize accuracy-focused system with Gemini
         accuracy_success = startup_exact_match_priority_system()
         
-        # Check Ollama specifically
-        ollama_ready = startup_ollama_check()
+        # Check Gemini specifically (instead of Ollama)
+        gemini_ready = startup_gemini_check()
         
         # Enhanced GPU initialization logging
         if torch.cuda.is_available():
             gpu_props = torch.cuda.get_device_properties(0)
-            logger.info('🎯 DocumentIQ - Accuracy-Focused RTX A6000 GPU System')
+            logger.info('🎯 DocumentIQ - Accuracy-Focused RTX A6000 GPU System with Gemini AI')
             logger.info(f'GPU: {torch.cuda.get_device_name()}')
             logger.info(f'GPU Memory: {gpu_props.total_memory / 1e9:.1f}GB')
             logger.info(f'CUDA Cores: ~{gpu_props.multi_processor_count * 64}')
@@ -6436,14 +7391,14 @@ if __name__ == '__main__':
         
         # Show startup summary
         logger.info("=" * 80)
-        logger.info("STARTUP SUMMARY")
+        logger.info("STARTUP SUMMARY - GEMINI AI POWERED")
         logger.info("=" * 80)
         logger.info(f"🔹 GPU Available: {'Yes' if torch.cuda.is_available() else 'No'}")
         logger.info(f"🔹 OCR Initialized: {'Yes' if 'ocr_init_success' in locals() and ocr_init_success else 'No'}")
-        logger.info(f"🔹 Ollama Service: {'Ready' if ollama_ready else 'Not Ready'}")
+        logger.info(f"🔹 Gemini AI Service: {'Ready' if gemini_ready else 'Not Ready'}")
         logger.info(f"🔹 Database: {'Connected' if all_systems_ready else 'Check required'}")
         logger.info(f"🔹 Processing Mode: {'GPU-Accelerated' if torch.cuda.is_available() else 'CPU'}")
-        logger.info(f"🔹 AI Model: {app.config['OLLAMA_MODEL']}")
+        logger.info(f"🔹 AI Model: {app.config['GEMINI_MODEL']} (Gemini AI)")
         logger.info("=" * 80)
         
         if system_issues:
@@ -6452,22 +7407,23 @@ if __name__ == '__main__':
                 logger.error(f"   🔧 {issue}")
             logger.error("=" * 80)
         
-        if not ollama_ready:
-            logger.error("🚨 CRITICAL: Ollama service is not running!")
-            logger.error("   🔧 Start Ollama: ollama serve")
-            logger.error(f"   🔧 Pull model: ollama pull {app.config['OLLAMA_MODEL']}")
-            logger.error("   🔧 Without Ollama, AI responses will fail!")
+        if not gemini_ready:
+            logger.error("🚨 CRITICAL: Gemini AI service is not ready!")
+            logger.error("   🔧 Set API key: export GEMINI_API_KEY='your-api-key-here'")
+            logger.error("   🔧 Get API key: https://makersuite.google.com/app/apikey")
+            logger.error("   🔧 Install library: pip install google-generativeai")
+            logger.error("   🔧 Without Gemini AI, AI responses will fail!")
             logger.error("=" * 80)
         
-        if accuracy_success and all_systems_ready and ollama_ready:
-            logger.info('🌟 ALL SYSTEMS READY - DocumentIQ server starting with full functionality...')
+        if accuracy_success and all_systems_ready and gemini_ready:
+            logger.info('🌟 ALL SYSTEMS READY - DocumentIQ server starting with Gemini AI...')
         elif accuracy_success:
             logger.warning('⚠️ PARTIAL SYSTEM READY - Some features may not work correctly')
         else:
             logger.warning('⚠️ MINIMAL SYSTEM READY - Running with fallback systems')
         
         # Start development server
-        logger.info('🌟 DocumentIQ server starting...')
+        logger.info('🌟 DocumentIQ server with Gemini AI starting...')
         app.run(host='0.0.0.0', port=8000, threaded=True, debug=False)
         
     except Exception as e:
