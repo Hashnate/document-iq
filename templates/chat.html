@@ -2070,94 +2070,108 @@
             </div>
         </div>
        
-        <div class="chat-messages" id="chat-messages">
-            {% for message in conversation.messages|default([]) %}
-            <div class="message {% if message.role == 'assistant' %}message-assistant comprehensive-search{% else %}message-user{% endif %}">
-                <div class="message-avatar {% if message.role == 'assistant' %}accuracy-focused{% endif %}">
-                    {% if message.role == 'user' %}
-                    <i class="bi bi-person-fill"></i> 
-                    {% else %}
-                    <i class="bi bi-robot"></i> 
-                    {% endif %}
-                </div>
-                <div class="message-content">
-                    <div class="message-actions">
-                        <button class="copy-message-btn" onclick="copyMessageToClipboard(this)" title="Copy message">
-                            <i class="bi bi-copy"></i>
-                        </button>
-                    </div>
-                    <div class="message-text">
-                        {% if message.role == 'assistant' %} 
-                        {{ message.content|process_references|safe }} 
-                        {% else %} 
-                        {{ message.content|replace('\n', '<br>')|safe }} 
-                        {% endif %}
-                    </div>
-                    {% if message.role == 'assistant' and message.sources %}
-                    <div class="message-sources comprehensive-search">
-                        <div class="sources-header">
-                            <span class="sources-title comprehensive-search">Sources</span>
-                            <div class="search-strategy-info">
-                                <span class="strategy-count">6-Strategy</span>
-                                <span>Comprehensive Search</span>
-                            </div>
-                            {% if message.sources|length > 2 %}
-                            <button class="toggle-sources-btn" onclick="toggleSources(this)">
-                                Show more
-                            </button> 
-                            {% endif %}
-                        </div>
-                        <div class="sources-list" style="{% if message.sources|length > 2 %}display: none;{% endif %}">
-                            {% for source in message.sources %}
-                            <div class="message-source accuracy-processed" data-source="{% if source is string %}{{ source }}{% else %}{{ source.path|default('') }}{% endif %}">
-                                <i class="bi bi-file-text message-source-icon"></i>
-                                <span>
-                                    {% if source is string %}
-                                    {{ source.split('/')[-1] }}
-                                    {% else %}
-                                    {{ source.path.split('/')[-1] if source.path else 'Document' }}
-                                    {% endif %}
-                                </span>
-                            </div>
-                            {% endfor %}
-                        </div>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-            {% endfor %}
 
-            <!-- Enhanced Empty State with Comprehensive Features -->
-            <div id="empty-state-placeholder" class="empty-state {% if conversation.messages %}hidden{% endif %}">
-                <div class="empty-state-content">
-                    <i class="bi bi-folder2-open"></i>
-                    <h4>Documents Ready</h4>
-                    <p>Your files have been processed with comprehensive accuracy-focused technology.</p>
-                    
-                    <div class="comprehensive-features-notice">
-                        <i class="bi bi-lightning-fill"></i>
-                        Active: 6-Strategy Search, GPU Acceleration, Perfect Formatting, 100% Accuracy Guarantee
-                    </div>
-                    
-                    {% if uploaded_files %}
-                    <div class="uploaded-files-preview">
-                        {% for file in uploaded_files|slice(3) %}
-                        <div class="file-preview-item accuracy-processed">
-                            <i class="bi bi-file-text"></i>
-                            <span>{{ file }}</span>
+        <!-- In your chat.html template, make sure the messages section looks like this: -->
+
+<div class="chat-messages" id="chat-messages">
+    <!-- FIXED: Check if messages exist and render them -->
+    {% if messages %}
+        {% for message in messages %}
+        <div class="message {% if message.role == 'assistant' %}message-assistant comprehensive-search{% else %}message-user{% endif %}">
+            <div class="message-avatar {% if message.role == 'assistant' %}accuracy-focused{% endif %}">
+                {% if message.role == 'user' %}
+                <i class="bi bi-person-fill"></i> 
+                {% else %}
+                <i class="bi bi-robot"></i> 
+                {% endif %}
+            </div>
+            <div class="message-content">
+                <div class="message-actions">
+                    <button class="copy-message-btn" onclick="copyMessageToClipboard(this)" title="Copy message">
+                        <i class="bi bi-copy"></i>
+                    </button>
+                </div>
+                <div class="message-text">
+                    {% if message.role == 'assistant' %} 
+                    {{ message.content|process_references|safe }} 
+                    {% else %} 
+                    {{ message.content|replace('\n', '<br>')|safe }} 
+                    {% endif %}
+                </div>
+                
+                <!-- FIXED: Check if message has sources and render them -->
+                {% if message.role == 'assistant' and message.sources %}
+                <div class="message-sources comprehensive-search">
+                    <div class="sources-header">
+                        <span class="sources-title comprehensive-search">Sources</span>
+                        <div class="search-strategy-info">
+                            <span class="strategy-count">{{ message.sources|length }}</span>
+                            <span>sources</span>
                         </div>
-                        {% endfor %} 
-                        {% if uploaded_files|length > 3 %}
-                        <div class="file-preview-more">
-                            +{{ uploaded_files|length - 3 }} more files processed with accuracy focus
-                        </div>
+                        {% if message.sources|length > 2 %}
+                        <button class="toggle-sources-btn" onclick="toggleSources(this)">
+                            Show more
+                        </button> 
                         {% endif %}
                     </div>
-                    {% endif %}
-                    <p class="prompt-text">Ask your first question to experience comprehensive document analysis...</p>
+                    <div class="sources-list" style="{% if message.sources|length > 2 %}display: none;{% endif %}">
+                        {% for source in message.sources %}
+                        <div class="message-source accuracy-processed" data-source="{% if source is string %}{{ source }}{% else %}{{ source.path|default('') }}{% endif %}">
+                            <i class="bi bi-file-text message-source-icon"></i>
+                            <span>
+                                {% if source is string %}
+                                {{ source.split('/')[-1] }}
+                                {% else %}
+                                {{ source.path.split('/')[-1] if source.path else 'Document' }}
+                                {% endif %}
+                            </span>
+                        </div>
+                        {% endfor %}
+                    </div>
                 </div>
+                {% endif %}
             </div>
         </div>
+        {% endfor %}
+    {% else %}
+        <!-- DEBUG: Show when no messages are found -->
+        <div style="text-align: center; padding: 2rem; color: #666;">
+            <p>No messages found in this conversation.</p>
+            <p><small>Debug: Conversation ID: {{ chat_id }}</small></p>
+        </div>
+    {% endif %}
+
+    <!-- Enhanced Empty State (shown when no messages) -->
+    <div id="empty-state-placeholder" class="empty-state {% if messages %}hidden{% endif %}">
+        <div class="empty-state-content">
+            <i class="bi bi-folder2-open"></i>
+            <h4>Documents Ready</h4>
+            <p>Your files have been processed with comprehensive accuracy-focused technology.</p>
+            
+            <div class="comprehensive-features-notice">
+                <i class="bi bi-lightning-fill"></i>
+                Active: 6-Strategy Search, GPU Acceleration, Perfect Formatting, 100% Accuracy Guarantee
+            </div>
+            
+            {% if documents %}
+            <div class="uploaded-files-preview">
+                {% for document in documents[:3] %}
+                <div class="file-preview-item accuracy-processed">
+                    <i class="bi bi-file-text"></i>
+                    <span>{{ document.document_metadata.original_filename if document.document_metadata else document.file_path.split('/')[-1] }}</span>
+                </div>
+                {% endfor %} 
+                {% if documents|length > 3 %}
+                <div class="file-preview-more">
+                    +{{ documents|length - 3 }} more files processed with accuracy focus
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+            <p class="prompt-text">Ask your first question to experience comprehensive document analysis...</p>
+        </div>
+    </div>
+</div>
 
         <!-- Enhanced Preview Modal -->
         <div id="preview-modal" class="preview-modal accuracy-focused">
@@ -2242,1284 +2256,1257 @@
 
 {% block extra_scripts %}
 <script>
-    // Make user ID available to JavaScript
-    window.currentUserId = "{{ current_user.id|tojson|safe }}";
-    window.comprehensiveProcessing = true;
-    window.accuracyFocused = true;
-    window.gpuAccelerated = {{ gpu_available|tojson|safe }};
-    window.multiStrategySearch = true;
+// Make user ID available to JavaScript
+window.currentUserId = "{{ current_user.id|tojson|safe }}";
+window.comprehensiveProcessing = true;
+window.accuracyFocused = true;
+window.gpuAccelerated = {{ gpu_available|tojson|safe }};
+window.multiStrategySearch = true;
 
-    // Global variables
-    let currentRequestController = null;
-    let isPreviewModalOpen = false;
-    let previewModalHeight = 400;
-    let isMobileSidebarOpen = false;
-    let isPreviewMinimized = false;
-    let isPreviewMaximized = false;
-    let previewDragState = { isDragging: false, startY: 0, startHeight: 0 };
-    let currentSearchStrategies = [];
+// Global variables
+let currentRequestController = null;
+let isPreviewModalOpen = false;
+let previewModalHeight = 400;
+let isMobileSidebarOpen = false;
+let isPreviewMinimized = false;
+let isPreviewMaximized = false;
+let previewDragState = { isDragging: false, startY: 0, startHeight: 0 };
+let currentSearchStrategies = [];
 
-    // DOM elements
-    const previewContent = document.getElementById('preview-content');
-    const previewTitle = document.querySelector('.preview-filename');
-    const previewMeta = document.getElementById('preview-meta');
-    const sidebar = document.getElementById('sidebar');
-    const backdrop = document.querySelector('.mobile-sidebar-backdrop');
-    const copyToast = document.getElementById('copy-toast');
-    const previewModal = document.getElementById('preview-modal');
-    const previewResizeHandle = document.getElementById('preview-resize-handle');
-    const previewHeader = document.getElementById('preview-header');
-    const maximizeBtn = document.getElementById('maximize-btn');
+// DOM elements (will be initialized after DOM loads)
+let previewContent, previewTitle, previewMeta, sidebar, backdrop, copyToast, previewModal, previewResizeHandle, previewHeader, maximizeBtn;
 
-    // Process existing messages on page load
-    function processExistingMessages() {
-        document.querySelectorAll('.message-assistant .message-text').forEach(messageText => {
-            // Skip if already processed (has HTML elements)
-            if (messageText.querySelector('strong, em, h1, h2, h3, li, p')) {
-                return;
-            }
-            
-            // Get the raw content and process it
-            const rawContent = messageText.textContent || messageText.innerText || '';
-            if (rawContent.trim()) {
-                const processedContent = processContentWithReferences(rawContent);
-                messageText.innerHTML = processedContent;
-            }
-        });
+// GLOBAL FUNCTIONS - Define these BEFORE DOMContentLoaded
+window.togglePreviewModal = function() {
+    if (!previewModal) {
+        console.warn('Preview modal not initialized yet');
+        return;
+    }
+    isPreviewModalOpen = !isPreviewModalOpen;
+    updatePreviewModalState();
+};
+
+window.closePreview = function() {
+    if (!previewModal) return;
+    isPreviewModalOpen = false;
+    isPreviewMinimized = false;
+    isPreviewMaximized = false;
+    updatePreviewModalState();
+};
+
+window.minimizePreview = function() {
+    if (!isPreviewModalOpen || !previewModal) return;
+    isPreviewMinimized = true;
+    isPreviewMaximized = false;
+    updatePreviewModalState();
+};
+
+window.restorePreview = function() {
+    if (!isPreviewModalOpen || !previewModal) return;
+    isPreviewMinimized = false;
+    isPreviewMaximized = false;
+    updatePreviewModalState();
+};
+
+window.toggleMaximizePreview = function() {
+    if (!isPreviewModalOpen || isPreviewMinimized || !previewModal) return;
+    isPreviewMaximized = !isPreviewMaximized;
+    updatePreviewModalState();
+};
+
+function updatePreviewModalState() {
+    if (!previewModal) return;
+    
+    if (!isPreviewModalOpen) {
+        previewModal.style.display = 'none';
+        previewModal.classList.remove('minimized', 'maximized', 'enhanced', 'accuracy-focused');
+        return;
     }
 
-    // Enhanced copy to clipboard functionality
-    async function copyMessageToClipboard(button) {
-        const messageContent = button.closest('.message-content');
-        const messageTextElement = messageContent.querySelector('.message-text');
+    previewModal.style.display = 'flex';
+    previewModal.classList.toggle('minimized', isPreviewMinimized);
+    previewModal.classList.toggle('maximized', isPreviewMaximized);
+    previewModal.classList.add('accuracy-focused');
+
+    if (maximizeBtn) {
+        const icon = maximizeBtn.querySelector('i');
+        if (isPreviewMaximized) {
+            icon.className = 'bi bi-arrows-angle-contract';
+            maximizeBtn.title = 'Restore (Ctrl+↓)';
+        } else {
+            icon.className = 'bi bi-arrows-fullscreen';
+            maximizeBtn.title = 'Maximize (Ctrl+↑)';
+        }
+    }
+
+    if (!isPreviewMinimized && !isPreviewMaximized) {
+        previewModal.style.height = `${previewModalHeight}px`;
+    }
+}
+
+// FIXED FILE PREVIEW FUNCTION
+async function showFilePreview(filename, page = '', highlight = '') {
+    if (!filename || typeof filename !== 'string') {
+        handlePreviewError('Invalid filename provided');
+        return;
+    }
+
+    filename = filename.replace(/\\/g, '/').trim();
+    filename = filename.split('#')[0].split('?')[0];
+    const shortName = filename.split('/').pop();
+
+    if (!previewContent) {
+        console.error('Preview content element not found');
+        return;
+    }
+
+    previewContent.innerHTML = `
+        <div class="preview-loading">
+            <div style="display: flex; align-items: center; justify-content: center; height: 200px; flex-direction: column;">
+                <div style="width: 2rem; height: 2rem; border: 3px solid var(--primary-color); border-top: 3px solid transparent; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 1rem;"></div>
+                <span>Loading document with accuracy-focused formatting...</span>
+                <div style="margin-top: 0.5rem; font-weight: bold;">${escapeHtml(shortName)}</div>
+            </div>
+        </div>
+    `;
+
+    if (!isPreviewModalOpen) {
+        window.togglePreviewModal();
+    } else if (isPreviewMinimized) {
+        window.restorePreview();
+    }
+
+    try {
+        if (previewTitle) {
+            previewTitle.textContent = shortName;
+        }
+
+        const urlsToTry = [
+            `/get_file_content?path=${encodeURIComponent(filename)}`,
+            `/get_file_content?path=${encodeURIComponent(shortName)}`,
+            `/get_file_content?path=${encodeURIComponent(getCurrentUserId() + '/' + shortName)}`,
+            `/get_file_content?path=${encodeURIComponent(getCurrentUserId() + '/' + filename)}`
+        ];
+
+        let response = null;
+        let workingUrl = null;
+
+        for (const url of urlsToTry) {
+            try {
+                console.log('Trying URL:', url);
+                const testResponse = await fetch(url);
+                if (testResponse.ok) {
+                    response = testResponse;
+                    workingUrl = url;
+                    break;
+                }
+            } catch (e) {
+                console.log('URL failed:', url, e.message);
+                continue;
+            }
+        }
+
+        if (!response || !response.ok) {
+            throw new Error('File not found - tried multiple paths');
+        }
+
+        console.log('Success with URL:', workingUrl);
+
+        const contentType = response.headers.get('content-type') || '';
+
+        if (contentType.includes('application/json')) {
+            const data = await response.json();
+            if (data.error) throw new Error(data.error);
+
+            let content = data.content || 'No content available';
+
+            if (highlight) {
+                try {
+                    const escapedHighlight = highlight.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                    const highlightRegex = new RegExp(`(${escapedHighlight})`, 'gi');
+                    content = content.replace(highlightRegex, '<mark>$1</mark>');
+                } catch (e) {
+                    console.warn('Failed to apply highlight:', e);
+                }
+            }
+
+            const formattedContent = escapeHtml(content)
+                .replace(/\n/g, '<br>')
+                .replace(/\t/g, '&nbsp;&nbsp;&nbsp;&nbsp;');
+
+            const documentClass = data.accuracy_focused_processing ? 'accuracy-focused' : 
+                                (data.perfect_formatting ? 'enhanced' : '');
+
+            previewContent.innerHTML = `
+                <div class="preview-document ${documentClass}">
+                    <pre>${formattedContent}</pre>
+                </div>
+            `;
+
+            updatePreviewMeta(shortName, page, highlight, workingUrl, data);
+
+        } else {
+            const text = await response.text();
+            previewContent.innerHTML = `
+                <div class="preview-document accuracy-focused">
+                    <pre>${escapeHtml(text)}</pre>
+                </div>
+            `;
+
+            updatePreviewMeta(shortName, page, highlight, workingUrl);
+        }
+
+    } catch (error) {
+        console.error('Error loading preview:', error);
+        handlePreviewError(`Failed to load ${shortName}: ${error.message}`);
+    }
+}
+
+function updatePreviewMeta(filename, page, highlight, url, data = null) {
+    if (!previewMeta) return;
+
+    const processingInfo = data ? (
+        data.accuracy_focused_processing ? 'Accuracy-Focused Processing' :
+        data.perfect_formatting ? 'Enhanced Processing' : 'Standard Processing'
+    ) : 'Document Preview';
+
+    previewMeta.innerHTML = `
+        <div class="preview-meta-item accuracy-focused">
+            <i class="bi bi-file-earmark"></i>
+            <span>${escapeHtml(filename)}</span>
+        </div>
+        ${page ? `<div class="preview-meta-item accuracy-focused">
+            <i class="bi bi-file-text"></i>
+            <span>Page ${escapeHtml(page)}</span>
+        </div>` : ''}
+        ${highlight ? `<div class="preview-meta-item accuracy-focused">
+            <i class="bi bi-search"></i>
+            <span>"${escapeHtml(highlight)}"</span>
+        </div>` : ''}
+        <div class="preview-meta-item accuracy-focused">
+            <i class="bi bi-bullseye"></i>
+            <span>${processingInfo}</span>
+        </div>
+        <div class="preview-meta-item accuracy-focused">
+            <i class="bi bi-download"></i>
+            <a href="${url}&download=true" download="${escapeHtml(filename)}">Download</a>
+        </div>
+        <div class="preview-meta-item accuracy-focused">
+            <i class="bi bi-info-circle"></i>
+            <span>ESC to close • Ctrl+M to minimize • Perfect formatting preserved</span>
+        </div>
+    `;
+}
+
+function handlePreviewError(message) {
+    if (!previewContent) return;
+    
+    previewContent.innerHTML = `
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 200px; color: var(--error-color, #f94144); text-align: center; padding: 2rem;">
+            <i class="bi bi-exclamation-triangle" style="font-size: 2rem; margin-bottom: 1rem;"></i>
+            <p style="margin: 0; font-size: 1rem;">${message}</p>
+            <p style="margin: 0.5rem 0 0 0; font-size: 0.9rem; opacity: 0.8;">
+                Check if the document exists or try refreshing the page.
+            </p>
+        </div>
+    `;
+}
+
+function getCurrentUserId() {
+    return window.currentUserId || '1';
+}
+
+function escapeHtml(unsafe) {
+    if (typeof unsafe !== 'string') {
+        console.warn('Non-string value passed to escapeHtml:', unsafe);
+        return '';
+    }
+    return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+// CONTINUE WITH REST OF YOUR FUNCTIONS...
+// [Include all your other functions here: initChatForm, copyMessageToClipboard, etc.]
+
+// Global function assignments
+window.copyMessageToClipboard = copyMessageToClipboard;
+window.toggleSources = toggleSources;
+window.toggleMobileSidebar = toggleMobileSidebar;
+window.closeMobileSidebar = closeMobileSidebar;
+window.clearDocumentsAndRedirect = clearDocumentsAndRedirect;
+
+// DOM READY INITIALIZATION
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize DOM elements
+    previewContent = document.getElementById('preview-content');
+    previewTitle = document.querySelector('.preview-filename');
+    previewMeta = document.getElementById('preview-meta');
+    sidebar = document.getElementById('sidebar');
+    backdrop = document.querySelector('.mobile-sidebar-backdrop');
+    copyToast = document.getElementById('copy-toast');
+    previewModal = document.getElementById('preview-modal');
+    previewResizeHandle = document.getElementById('preview-resize-handle');
+    previewHeader = document.getElementById('preview-header');
+    maximizeBtn = document.getElementById('maximize-btn');
+
+    // Initialize all functionality
+    initChatForm();
+    initReferenceHandlers();
+    initPreviewModal();
+    initChatHistory();
+    initResponsiveHandlers();
+    initDocumentTree();
+    
+    processExistingMessages();
+    scrollToBottom();
+
+    const chatInput = document.querySelector('.chat-input');
+    if (chatInput) {
+        chatInput.focus();
+    }
+
+    if (window.comprehensiveProcessing) {
+        console.log('🎯 DocumentIQ Comprehensive Features Active:');
+        console.log('   - 100% Accuracy-focused processing');
+        console.log('   - 6-Strategy comprehensive search guarantee');
+        console.log('   - Perfect formatting preservation');
+        console.log('   - GPU acceleration:', window.gpuAccelerated ? 'Active (RTX A6000 Optimized)' : 'Fallback CPU');
+    }
+});
+
+// Process existing messages on page load
+function processExistingMessages() {
+    document.querySelectorAll('.message-assistant .message-text').forEach(messageText => {
+        if (messageText.querySelector('strong, em, h1, h2, h3, li, p')) {
+            return;
+        }
         
-        let textToCopy = getPlainTextFromElement(messageTextElement);
+        const rawContent = messageText.textContent || messageText.innerText || '';
+        if (rawContent.trim()) {
+            const processedContent = processContentWithReferences(rawContent);
+            messageText.innerHTML = processedContent;
+        }
+    });
+}
+
+// Enhanced copy to clipboard functionality
+async function copyMessageToClipboard(button) {
+    const messageContent = button.closest('.message-content');
+    const messageTextElement = messageContent.querySelector('.message-text');
+    
+    let textToCopy = getPlainTextFromElement(messageTextElement);
+    
+    try {
+        await navigator.clipboard.writeText(textToCopy);
+        
+        const originalIcon = button.innerHTML;
+        button.innerHTML = '<i class="bi bi-check"></i>';
+        button.classList.add('copied');
+        
+        showCopyToast('Message copied to clipboard!');
+        
+        setTimeout(() => {
+            button.innerHTML = originalIcon;
+            button.classList.remove('copied');
+        }, 2000);
+        
+    } catch (err) {
+        console.error('Failed to copy: ', err);
+        
+        const textArea = document.createElement('textarea');
+        textArea.value = textToCopy;
+        textArea.style.position = 'fixed';
+        textArea.style.opacity = '0';
+        document.body.appendChild(textArea);
+        textArea.select();
         
         try {
-            await navigator.clipboard.writeText(textToCopy);
+            document.execCommand('copy');
+            showCopyToast('Message copied to clipboard!');
             
             const originalIcon = button.innerHTML;
             button.innerHTML = '<i class="bi bi-check"></i>';
             button.classList.add('copied');
-            
-            showCopyToast('Message copied to clipboard!');
             
             setTimeout(() => {
                 button.innerHTML = originalIcon;
                 button.classList.remove('copied');
             }, 2000);
             
-        } catch (err) {
-            console.error('Failed to copy: ', err);
-            
-            const textArea = document.createElement('textarea');
-            textArea.value = textToCopy;
-            textArea.style.position = 'fixed';
-            textArea.style.opacity = '0';
-            document.body.appendChild(textArea);
-            textArea.select();
-            
-            try {
-                document.execCommand('copy');
-                showCopyToast('Message copied to clipboard!');
-                
-                const originalIcon = button.innerHTML;
-                button.innerHTML = '<i class="bi bi-check"></i>';
-                button.classList.add('copied');
-                
-                setTimeout(() => {
-                    button.innerHTML = originalIcon;
-                    button.classList.remove('copied');
-                }, 2000);
-                
-            } catch (fallbackErr) {
-                console.error('Fallback copy failed: ', fallbackErr);
-                showCopyToast('Failed to copy message', true);
-            }
-            
-            document.body.removeChild(textArea);
-        }
-    }
-
-    function getPlainTextFromElement(element) {
-        const clone = element.cloneNode(true);
-        
-        const refLinks = clone.querySelectorAll('.reference-link');
-        refLinks.forEach(link => {
-            link.replaceWith(link.textContent);
-        });
-        
-        clone.innerHTML = clone.innerHTML
-            .replace(/<br\s*\/?>/gi, '\n')
-            .replace(/<\/p>/gi, '\n\n')
-            .replace(/<\/div>/gi, '\n')
-            .replace(/<\/h[1-6]>/gi, '\n\n')
-            .replace(/<li>/gi, '• ')
-            .replace(/<\/li>/gi, '\n')
-            .replace(/<strong>(.*?)<\/strong>/gi, '$1')
-            .replace(/<em>(.*?)<\/em>/gi, '$1')
-            .replace(/<code>(.*?)<\/code>/gi, '$1');
-        
-        let text = clone.textContent || clone.innerText || '';
-        text = text.replace(/\n\s*\n\s*\n/g, '\n\n');
-        text = text.trim();
-        
-        return text;
-    }
-
-    function showCopyToast(message = 'Message copied to clipboard!', isError = false) {
-        const toast = document.getElementById('copy-toast');
-        const icon = toast.querySelector('i');
-        const text = toast.querySelector('span');
-        
-        text.textContent = message;
-        
-        if (isError) {
-            icon.className = 'bi bi-exclamation-triangle';
-            toast.style.background = 'var(--error-color)';
-        } else {
-            icon.className = 'bi bi-check-circle';
-            toast.style.background = 'var(--success-color)';
+        } catch (fallbackErr) {
+            console.error('Fallback copy failed: ', fallbackErr);
+            showCopyToast('Failed to copy message', true);
         }
         
-        toast.classList.add('show');
-        
-        setTimeout(() => {
-            toast.classList.remove('show');
-        }, 3000);
+        document.body.removeChild(textArea);
     }
+}
 
-    // Mobile sidebar functions
-    function toggleMobileSidebar() {
-        isMobileSidebarOpen = !isMobileSidebarOpen;
-        if (isMobileSidebarOpen) {
-            sidebar.classList.add('mobile-open');
-            backdrop.classList.add('show');
-            document.body.style.overflow = 'hidden';
-        } else {
+function getPlainTextFromElement(element) {
+    const clone = element.cloneNode(true);
+    
+    const refLinks = clone.querySelectorAll('.reference-link');
+    refLinks.forEach(link => {
+        link.replaceWith(link.textContent);
+    });
+    
+    clone.innerHTML = clone.innerHTML
+        .replace(/<br\s*\/?>/gi, '\n')
+        .replace(/<\/p>/gi, '\n\n')
+        .replace(/<\/div>/gi, '\n')
+        .replace(/<\/h[1-6]>/gi, '\n\n')
+        .replace(/<li>/gi, '• ')
+        .replace(/<\/li>/gi, '\n')
+        .replace(/<strong>(.*?)<\/strong>/gi, '$1')
+        .replace(/<em>(.*?)<\/em>/gi, '$1')
+        .replace(/<code>(.*?)<\/code>/gi, '$1');
+    
+    let text = clone.textContent || clone.innerText || '';
+    text = text.replace(/\n\s*\n\s*\n/g, '\n\n');
+    text = text.trim();
+    
+    return text;
+}
+
+function showCopyToast(message = 'Message copied to clipboard!', isError = false) {
+    const toast = document.getElementById('copy-toast');
+    const icon = toast.querySelector('i');
+    const text = toast.querySelector('span');
+    
+    text.textContent = message;
+    
+    if (isError) {
+        icon.className = 'bi bi-exclamation-triangle';
+        toast.style.background = 'var(--error-color)';
+    } else {
+        icon.className = 'bi bi-check-circle';
+        toast.style.background = 'var(--success-color)';
+    }
+    
+    toast.classList.add('show');
+    
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, 3000);
+}
+
+// Mobile sidebar functions
+function toggleMobileSidebar() {
+    isMobileSidebarOpen = !isMobileSidebarOpen;
+    if (isMobileSidebarOpen) {
+        sidebar.classList.add('mobile-open');
+        backdrop.classList.add('show');
+        document.body.style.overflow = 'hidden';
+    } else {
+        closeMobileSidebar();
+    }
+}
+
+function closeMobileSidebar() {
+    isMobileSidebarOpen = false;
+    sidebar.classList.remove('mobile-open');
+    backdrop.classList.remove('show');
+    document.body.style.overflow = 'auto';
+}
+
+function initResponsiveHandlers() {
+    window.addEventListener('resize', function() {
+        if (window.innerWidth > 768 && isMobileSidebarOpen) {
             closeMobileSidebar();
-        }
-    }
-
-    function closeMobileSidebar() {
-        isMobileSidebarOpen = false;
-        sidebar.classList.remove('mobile-open');
-        backdrop.classList.remove('show');
-        document.body.style.overflow = 'auto';
-    }
-
-    function getCurrentUserId() {
-        return window.currentUserId || '1';
-    }
-
-    document.addEventListener('DOMContentLoaded', function() {
-        initChatForm();
-        initReferenceHandlers();
-        initPreviewModal();
-        initChatHistory();
-        initResponsiveHandlers();
-        initDocumentTree();
-        
-        // Process existing messages on page load - FIX FOR STYLING ISSUE
-        processExistingMessages();
-        
-        scrollToBottom();
-
-        const chatInput = document.querySelector('.chat-input');
-        if (chatInput) {
-            chatInput.focus();
-        }
-
-        // Show comprehensive features notification
-        if (window.comprehensiveProcessing) {
-            console.log('🎯 DocumentIQ Comprehensive Features Active:');
-            console.log('   - 100% Accuracy-focused processing');
-            console.log('   - 6-Strategy comprehensive search guarantee');
-            console.log('   - Perfect formatting preservation');
-            console.log('   - GPU acceleration:', window.gpuAccelerated ? 'Active (RTX A6000 Optimized)' : 'Fallback CPU');
-            console.log('   - Multi-strategy search with weighted ranking');
-            console.log('   - Context-aware chunking with enhanced overlap');
-            console.log('   - Emergency fallbacks ensure 100% search success');
         }
     });
 
-    function initResponsiveHandlers() {
-        window.addEventListener('resize', function() {
-            if (window.innerWidth > 768 && isMobileSidebarOpen) {
-                closeMobileSidebar();
-            }
-        });
-
-        document.getElementById('chat-messages').addEventListener('click', function() {
-            if (window.innerWidth <= 768 && isMobileSidebarOpen) {
-                closeMobileSidebar();
-            }
-        });
-    }
-
-    function initDocumentTree() {
-        document.querySelectorAll('.document-item').forEach(item => {
-            item.addEventListener('click', function(e) {
-                if (e.target.closest('.document-preview-btn')) {
-                    const path = this.getAttribute('data-path');
-                    showFilePreview(path);
-                } else {
-                    document.querySelectorAll('.document-item').forEach(i => {
-                        i.classList.remove('active');
-                    });
-                    this.classList.add('active');
-                }
-            });
-        });
-    }
-
-    async function clearDocumentsAndRedirect() {
-        const button = document.getElementById('new-upload-btn');
-        
-        // Show confirmation dialog
-        if (!confirm('This will delete all your uploaded documents and start fresh. Are you sure?')) {
-            return;
+    document.getElementById('chat-messages').addEventListener('click', function() {
+        if (window.innerWidth <= 768 && isMobileSidebarOpen) {
+            closeMobileSidebar();
         }
-        
-        // Disable button and show loading state
-        const originalHTML = button.innerHTML;
-        button.innerHTML = '<i class="bi bi-hourglass-split spin"></i> Clearing...';
-        button.disabled = true;
-        
-        try {
-            // Show progress in chat if we're in a chat
-            const placeholder = document.getElementById('empty-state-placeholder');
-            if (placeholder) {
-                placeholder.innerHTML = `
-                    <div class="empty-state-content">
-                        <i class="bi bi-trash spin"></i>
-                        <h4>Clearing Documents</h4>
-                        <p>Removing all uploaded documents and comprehensive processing data...</p>
-                        <div class="comprehensive-features-notice">
-                            <i class="bi bi-lightning-fill"></i>
-                            Clearing cache and GPU processing data...
-                        </div>
-                    </div>
-                `;
-                placeholder.classList.remove('hidden');
-            }
-            
-            const response = await fetch('/clear_documents', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                credentials: 'include'
-            });
-            
-            const result = await response.json();
-            
-            if (response.ok && result.success) {
-                // Show success message briefly
-                button.innerHTML = '<i class="bi bi-check-circle"></i>Clear Complete!';
-                
-                // Show detailed success message
-                let message = result.message;
-                if (result.deleted_documents > 0) {
-                    message = `Cleared ${result.deleted_documents} documents and ${result.deleted_content} content records with comprehensive accuracy`;
-                }
-                
-                showSuccessToast(message);
-                
-                // Redirect after short delay
-                setTimeout(() => {
-                    window.location.href = '/';
-                }, 1500);
-                
+    });
+}
+
+function initDocumentTree() {
+    document.querySelectorAll('.document-item').forEach(item => {
+        item.addEventListener('click', function(e) {
+            if (e.target.closest('.document-preview-btn')) {
+                const path = this.getAttribute('data-path');
+                showFilePreview(path);
             } else {
-                throw new Error(result.error || 'Failed to clear documents');
-            }
-            
-        } catch (error) {
-            console.error('Error clearing documents:', error);
-            
-            // Show error
-            showErrorToast(`Failed to clear documents: ${error.message}`);
-            
-            // Reset button
-            button.innerHTML = originalHTML;
-            button.disabled = false;
-            
-            // Reset placeholder if we changed it
-            const placeholder = document.getElementById('empty-state-placeholder');
-            if (placeholder && placeholder.innerHTML.includes('Clearing Documents')) {
-                placeholder.innerHTML = `
-                    <div class="empty-state-content">
-                        <i class="bi bi-folder2-open"></i>
-                        <h4>Documents Ready</h4>
-                        <p>Your files have been processed with comprehensive accuracy-focused technology.</p>
-                        <div class="comprehensive-features-notice">
-                            <i class="bi bi-lightning-fill"></i>
-                            Active: 6-Strategy Search, GPU Acceleration, Perfect Formatting, 100% Accuracy Guarantee
-                        </div>
-                        <p class="prompt-text">Ask your first question to experience comprehensive document analysis.</p>
-                    </div>
-                `;
-            }
-        }
-    }
-
-    // Enhanced toast notification functions
-    function showSuccessToast(message) {
-        const toast = document.createElement('div');
-        toast.style.cssText = `
-            position: fixed; top: 20px; right: 20px; 
-            background: linear-gradient(135deg, #00b4d8, #38b000);
-            color: white; padding: 15px 20px; border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15), 0 0 20px rgba(0, 180, 216, 0.4); 
-            z-index: 1001; animation: slideIn 0.3s ease-out;
-        `;
-        toast.innerHTML = `<i class="bi bi-bullseye"></i> ${message}`;
-        document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 4000);
-    }
-
-    function showErrorToast(message) {
-        const toast = document.createElement('div');
-        toast.style.cssText = `
-            position: fixed; top: 20px; right: 20px; 
-            background: linear-gradient(135deg, #f94144, #ff006e);
-            color: white; padding: 15px 20px; border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 1001;
-            animation: slideIn 0.3s ease-out;
-        `;
-        toast.innerHTML = `<i class="bi bi-exclamation-triangle"></i> ${message}`;
-        document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 6000);
-    }
-
-    function initChatForm() {
-        const chatForm = document.getElementById('chat-form');
-        if (!chatForm) return;
-
-        const textarea = chatForm.querySelector('textarea');
-        const sendButton = document.getElementById('send-button');
-
-        textarea.addEventListener('input', function() {
-            this.style.height = 'auto';
-            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
-        });
-
-        textarea.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                chatForm.dispatchEvent(new Event('submit'));
-            }
-        });
-
-        chatForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const question = textarea.value.trim();
-            if (!question) return;
-
-            if (isMobileSidebarOpen) {
-                closeMobileSidebar();
-            }
-
-            const placeholder = document.getElementById('empty-state-placeholder');
-            if (placeholder) {
-                placeholder.classList.add('hidden');
-            }
-
-            sendButton.innerHTML = '<i class="bi bi-stop-circle"></i>';
-            sendButton.classList.add('stop-btn');
-            sendButton.onclick = stopProcessing;
-
-            textarea.disabled = true;
-            sendButton.disabled = false;
-
-            addMessageToUI('user', question);
-
-            const assistantMessageId = addMessageToUI('assistant',
-                `<div class="dynamic-status-container">
-                    <div class="status-message enhanced" id="status-message">🎯 Initializing comprehensive search...</div>
-                    <div class="multi-strategy-status" id="strategy-status">
-                        <div>Activating 6-strategy search for guaranteed results:</div>
-                        <div class="strategy-list" id="strategy-list">
-                            <div class="strategy-item" data-strategy="exact">📍 Exact Phrase</div>
-                            <div class="strategy-item" data-strategy="keyword">🔑 Multi-Keyword</div>
-                            <div class="strategy-item" data-strategy="semantic">🧠 Semantic GPU</div>
-                            <div class="strategy-item" data-strategy="context">🔗 Context-Aware</div>
-                            <div class="strategy-item" data-strategy="fuzzy">🔍 Fuzzy Match</div>
-                            <div class="strategy-item" data-strategy="fallback">⚡ Emergency Fallback</div>
-                        </div>
-                    </div>
-                </div>`
-            );
-
-            try {
-                const controller = new AbortController();
-                currentRequestController = controller;
-
-                const chatId = window.location.pathname.split('/').pop();
-                const response = await fetch(`/chat/${chatId}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        question: question
-                    }),
-                    signal: controller.signal
+                document.querySelectorAll('.document-item').forEach(i => {
+                    i.classList.remove('active');
                 });
-
-                if (!response.ok) throw new Error(await response.text());
-
-                const reader = response.body.getReader();
-                const decoder = new TextDecoder('utf-8');
-                let buffer = '';
-                let fullAnswer = '';
-                let strategiesActivated = [];
-
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
-
-                    buffer += decoder.decode(value, { stream: true });
-                    const lines = buffer.split('\n');
-
-                    for (let i = 0; i < lines.length - 1; i++) {
-                        const line = lines[i].trim();
-                        if (!line) continue;
-
-                        try {
-                            const data = JSON.parse(line);
-
-                            if (data.status === 'status_update') {
-                                // Handle different types of status updates
-                                if (data.message.includes('🧠 Analyzing document structure')) {
-                                    updateStrategyStatus('semantic', 'active');
-                                } else if (data.message.includes('🔍 Loading all document chunks')) {
-                                    updateStrategyStatus('context', 'active');
-                                } else if (data.message.includes('🎯 Executing multi-strategy search')) {
-                                    updateStrategyStatus('exact', 'active');
-                                    updateStrategyStatus('keyword', 'active');
-                                } else if (data.message.includes('⚡ Processing semantic embeddings')) {
-                                    updateStrategyStatus('semantic', 'completed');
-                                    updateStrategyStatus('fuzzy', 'active');
-                                }
-                                
-                                updateProcessingStatus(data.message, null, data.error);
-                            } else if (data.status === 'stream_chunk') {
-                                const statusContainer = document.querySelector('.dynamic-status-container');
-                                if (statusContainer) {
-                                    statusContainer.remove();
-                                }
-                                fullAnswer += data.content;
-                                updateMessageInUI(assistantMessageId, 'assistant', fullAnswer);
-                            } else if (data.status === 'stream_end') {
-                                // Mark all strategies as completed
-                                ['exact', 'keyword', 'semantic', 'context', 'fuzzy'].forEach(strategy => {
-                                    updateStrategyStatus(strategy, 'completed');
-                                });
-
-                                updateMessageInUI(
-                                    assistantMessageId,
-                                    'assistant',
-                                    fullAnswer,
-                                    data.sources || [],
-                                    true, // Enhanced message
-                                    data // Pass full data for comprehensive info
-                                );
-
-                                const chatId = window.location.pathname.split('/').pop();
-                                const chatTitleElement = document.querySelector(`#chat-title-${chatId}`);
-                                if (chatTitleElement && chatTitleElement.textContent.trim() === 'New Query') {
-                                    const shortTitle = question.length > 50 ?
-                                        question.substring(0, 50) + '...' :
-                                        question;
-                                    updateChatTitle(chatId, shortTitle);
-                                }
-
-                                // Show comprehensive completion notification
-                                if (data.comprehensive_analysis) {
-                                    const resultsCount = data.results_count || 0;
-                                    const searchTime = data.search_time || 0;
-                                    const docsSearched = data.documents_searched || 0;
-                                    showSuccessToast(`Comprehensive Search: ${resultsCount} results from ${docsSearched} documents in ${searchTime.toFixed(1)}s`);
-                                }
-                            }
-                        } catch (e) {
-                            console.error('Error parsing chunk:', e);
-                        }
-                    }
-
-                    buffer = lines[lines.length - 1];
-                }
-
-            } catch (error) {
-                if (error.name !== 'AbortError') {
-                    console.error('Chat error:', error);
-                    updateProcessingStatus(`❌ Processing error: ${error.message}`, 100, true);
-                    updateMessageInUI(assistantMessageId, 'assistant',
-                        'Error: Failed to process your request. Please try again.');
-                }
-            } finally {
-                resetForm();
+                this.classList.add('active');
             }
         });
+    });
+}
 
-        function stopProcessing() {
-            if (currentRequestController) {
-                currentRequestController.abort();
-                currentRequestController = null;
-                updateProcessingStatus('🛑 Processing stopped by user', 100, true);
-                resetForm();
-            }
+async function clearDocumentsAndRedirect() {
+    const button = document.getElementById('new-upload-btn');
+    
+    if (!confirm('This will delete all your uploaded documents and start fresh. Are you sure?')) {
+        return;
+    }
+    
+    const originalHTML = button.innerHTML;
+    button.innerHTML = '<i class="bi bi-hourglass-split spin"></i> Clearing...';
+    button.disabled = true;
+    
+    try {
+        const placeholder = document.getElementById('empty-state-placeholder');
+        if (placeholder) {
+            placeholder.innerHTML = `
+                <div class="empty-state-content">
+                    <i class="bi bi-trash spin"></i>
+                    <h4>Clearing Documents</h4>
+                    <p>Removing all uploaded documents and comprehensive processing data...</p>
+                    <div class="comprehensive-features-notice">
+                        <i class="bi bi-lightning-fill"></i>
+                        Clearing cache and GPU processing data...
+                    </div>
+                </div>
+            `;
+            placeholder.classList.remove('hidden');
         }
-
-        function resetForm() {
-            const sendButton = document.getElementById('send-button');
-            const textarea = document.querySelector('.chat-input');
-
-            sendButton.innerHTML = '<i class="bi bi-send"></i>';
-            sendButton.classList.remove('stop-btn');
-            sendButton.onclick = null;
-            sendButton.disabled = false;
-
-            currentRequestController = null;
-            textarea.disabled = false;
-            textarea.value = '';
-            textarea.style.height = 'auto';
-            textarea.focus();
+        
+        const response = await fetch('/clear_documents', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'include'
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok && result.success) {
+            button.innerHTML = '<i class="bi bi-check-circle"></i>Clear Complete!';
+            
+            let message = result.message;
+            if (result.deleted_documents > 0) {
+                message = `Cleared ${result.deleted_documents} documents and ${result.deleted_content} content records with comprehensive accuracy`;
+            }
+            
+            showSuccessToast(message);
+            
+            setTimeout(() => {
+                window.location.href = '/';
+            }, 1500);
+            
+        } else {
+            throw new Error(result.error || 'Failed to clear documents');
+        }
+        
+    } catch (error) {
+        console.error('Error clearing documents:', error);
+        showErrorToast(`Failed to clear documents: ${error.message}`);
+        
+        button.innerHTML = originalHTML;
+        button.disabled = false;
+        
+        const placeholder = document.getElementById('empty-state-placeholder');
+        if (placeholder && placeholder.innerHTML.includes('Clearing Documents')) {
+            placeholder.innerHTML = `
+                <div class="empty-state-content">
+                    <i class="bi bi-folder2-open"></i>
+                    <h4>Documents Ready</h4>
+                    <p>Your files have been processed with comprehensive accuracy-focused technology.</p>
+                    <div class="comprehensive-features-notice">
+                        <i class="bi bi-lightning-fill"></i>
+                        Active: 6-Strategy Search, GPU Acceleration, Perfect Formatting, 100% Accuracy Guarantee
+                    </div>
+                    <p class="prompt-text">Ask your first question to experience comprehensive document analysis.</p>
+                </div>
+            `;
         }
     }
+}
 
-    function updateStrategyStatus(strategy, status) {
-        const strategyElement = document.querySelector(`[data-strategy="${strategy}"]`);
-        if (strategyElement) {
-            strategyElement.classList.remove('active', 'completed');
-            if (status !== 'inactive') {
-                strategyElement.classList.add(status);
-            }
+function showSuccessToast(message) {
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+        position: fixed; top: 20px; right: 20px; 
+        background: linear-gradient(135deg, #00b4d8, #38b000);
+        color: white; padding: 15px 20px; border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15), 0 0 20px rgba(0, 180, 216, 0.4); 
+        z-index: 1001; animation: slideIn 0.3s ease-out;
+    `;
+    toast.innerHTML = `<i class="bi bi-bullseye"></i> ${message}`;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 4000);
+}
+
+function showErrorToast(message) {
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+        position: fixed; top: 20px; right: 20px; 
+        background: linear-gradient(135deg, #f94144, #ff006e);
+        color: white; padding: 15px 20px; border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 1001;
+        animation: slideIn 0.3s ease-out;
+    `;
+    toast.innerHTML = `<i class="bi bi-exclamation-triangle"></i> ${message}`;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 6000);
+}
+
+function initChatForm() {
+    const chatForm = document.getElementById('chat-form');
+    if (!chatForm) return;
+
+    const textarea = chatForm.querySelector('textarea');
+    const sendButton = document.getElementById('send-button');
+
+    textarea.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+    });
+
+    textarea.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            chatForm.dispatchEvent(new Event('submit'));
         }
-    }
+    });
 
-    function updateChatTitle(chatId, newTitle) {
-        document.querySelectorAll(`#chat-title-${chatId}`).forEach(el => {
-            el.textContent = newTitle;
-        });
+    chatForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const question = textarea.value.trim();
+        if (!question) return;
 
-        document.querySelectorAll(`.chat-item-container[data-chat-id="${chatId}"] .chat-item-title`).forEach(el => {
-            el.textContent = newTitle;
-        });
+        if (isMobileSidebarOpen) {
+            closeMobileSidebar();
+        }
 
-        fetch(`/update_chat_title/${chatId}`, {
+        const placeholder = document.getElementById('empty-state-placeholder');
+        if (placeholder) {
+            placeholder.classList.add('hidden');
+        }
+
+        sendButton.innerHTML = '<i class="bi bi-stop-circle"></i>';
+        sendButton.classList.add('stop-btn');
+        sendButton.onclick = stopProcessing;
+
+        textarea.disabled = true;
+        sendButton.disabled = false;
+
+        addMessageToUI('user', question);
+
+        const assistantMessageId = addMessageToUI('assistant',
+            `<div class="dynamic-status-container">
+                <div class="status-message enhanced" id="status-message">🎯 Initializing comprehensive search...</div>
+                <div class="multi-strategy-status" id="strategy-status">
+                    <div>Activating 6-strategy search for guaranteed results:</div>
+                    <div class="strategy-list" id="strategy-list">
+                        <div class="strategy-item" data-strategy="exact">📍 Exact Phrase</div>
+                        <div class="strategy-item" data-strategy="keyword">🔑 Multi-Keyword</div>
+                        <div class="strategy-item" data-strategy="semantic">🧠 Semantic GPU</div>
+                        <div class="strategy-item" data-strategy="context">🔗 Context-Aware</div>
+                        <div class="strategy-item" data-strategy="fuzzy">🔍 Fuzzy Match</div>
+                        <div class="strategy-item" data-strategy="fallback">⚡ Emergency Fallback</div>
+                    </div>
+                </div>
+            </div>`
+        );
+
+        try {
+            const controller = new AbortController();
+            currentRequestController = controller;
+
+            const chatId = window.location.pathname.split('/').pop();
+            const response = await fetch(`/chat/${chatId}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    title: newTitle
-                })
-            })
-            .catch(error => {
-                console.error('Error updating chat title:', error);
+                    question: question
+                }),
+                signal: controller.signal
             });
-    }
 
-    function initPreviewModal() {
-        if (!previewModal || !previewResizeHandle) return;
+            if (!response.ok) throw new Error(await response.text());
 
-        // Initialize resize functionality
-        initPreviewResize();
-        
-        // Initialize drag functionality for maximized mode
-        initPreviewDrag();
-        
-        // Initialize keyboard shortcuts
-        initPreviewKeyboardShortcuts();
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder('utf-8');
+            let buffer = '';
+            let fullAnswer = '';
 
-        // Double-click header to maximize/restore
-        previewHeader.addEventListener('dblclick', function(e) {
-            if (!isPreviewMinimized) {
-                toggleMaximizePreview();
-            }
-        });
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
 
-        // Click minimized header to restore
-        previewHeader.addEventListener('click', function(e) {
-            if (isPreviewMinimized) {
-                restorePreview();
-            }
-        });
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split('\n');
 
-        window.togglePreviewModal = function() {
-            isPreviewModalOpen = !isPreviewModalOpen;
-            updatePreviewModalState();
-        };
+                for (let i = 0; i < lines.length - 1; i++) {
+                    const line = lines[i].trim();
+                    if (!line) continue;
 
-        window.closePreview = function() {
-            isPreviewModalOpen = false;
-            isPreviewMinimized = false;
-            isPreviewMaximized = false;
-            updatePreviewModalState();
-        };
-
-        window.minimizePreview = function() {
-            if (!isPreviewModalOpen) return;
-            isPreviewMinimized = true;
-            isPreviewMaximized = false;
-            updatePreviewModalState();
-        };
-
-        window.restorePreview = function() {
-            if (!isPreviewModalOpen) return;
-            isPreviewMinimized = false;
-            isPreviewMaximized = false;
-            updatePreviewModalState();
-        };
-
-        window.toggleMaximizePreview = function() {
-            if (!isPreviewModalOpen || isPreviewMinimized) return;
-            isPreviewMaximized = !isPreviewMaximized;
-            updatePreviewModalState();
-        };
-
-        function updatePreviewModalState() {
-            if (!isPreviewModalOpen) {
-                previewModal.style.display = 'none';
-                previewModal.classList.remove('minimized', 'maximized', 'enhanced', 'accuracy-focused');
-                return;
-            }
-
-            previewModal.style.display = 'flex';
-
-            // Update classes
-            previewModal.classList.toggle('minimized', isPreviewMinimized);
-            previewModal.classList.toggle('maximized', isPreviewMaximized);
-            previewModal.classList.add('accuracy-focused'); // Always accuracy-focused
-
-            // Update maximize button icon
-            if (maximizeBtn) {
-                const icon = maximizeBtn.querySelector('i');
-                if (isPreviewMaximized) {
-                    icon.className = 'bi bi-arrows-angle-contract';
-                    maximizeBtn.title = 'Restore (Ctrl+↓)';
-                } else {
-                    icon.className = 'bi bi-arrows-fullscreen';
-                    maximizeBtn.title = 'Maximize (Ctrl+↑)';
-                }
-            }
-
-            // Set appropriate height for non-maximized, non-minimized state
-            if (!isPreviewMinimized && !isPreviewMaximized) {
-                previewModal.style.height = `${previewModalHeight}px`;
-            }
-        }
-    }
-
-    function initPreviewResize() {
-        let isResizing = false;
-
-        previewResizeHandle.addEventListener('mousedown', function(e) {
-            if (isPreviewMinimized || isPreviewMaximized) return;
-            
-            isResizing = true;
-            previewDragState.startY = e.clientY;
-            previewDragState.startHeight = previewModal.offsetHeight;
-            
-            document.addEventListener('mousemove', handleResize);
-            document.addEventListener('mouseup', stopResize);
-            
-            previewModal.style.userSelect = 'none';
-            document.body.style.cursor = 'ns-resize';
-            
-            e.preventDefault();
-        });
-
-        function handleResize(e) {
-            if (!isResizing) return;
-            
-            const deltaY = previewDragState.startY - e.clientY;
-            const newHeight = Math.max(200, Math.min(window.innerHeight * 0.8, previewDragState.startHeight + deltaY));
-            
-            previewModalHeight = newHeight;
-            previewModal.style.height = `${newHeight}px`;
-        }
-
-        function stopResize() {
-            isResizing = false;
-            document.removeEventListener('mousemove', handleResize);
-            document.removeEventListener('mouseup', stopResize);
-            
-            previewModal.style.userSelect = '';
-            document.body.style.cursor = '';
-        }
-    }
-
-    function initPreviewDrag() {
-        let isDragging = false;
-        let dragStart = { x: 0, y: 0 };
-        let modalStart = { x: 0, y: 0 };
-
-        previewHeader.addEventListener('mousedown', function(e) {
-            if (!isPreviewMaximized || e.target.closest('.preview-modal-actions')) return;
-            
-            isDragging = true;
-            dragStart.x = e.clientX;
-            dragStart.y = e.clientY;
-            
-            const rect = previewModal.getBoundingClientRect();
-            modalStart.x = rect.left;
-            modalStart.y = rect.top;
-            
-            document.addEventListener('mousemove', handleDrag);
-            document.addEventListener('mouseup', stopDrag);
-            
-            previewModal.style.userSelect = 'none';
-            previewHeader.style.cursor = 'grabbing';
-            
-            e.preventDefault();
-        });
-
-        function handleDrag(e) {
-            if (!isDragging) return;
-            
-            const deltaX = e.clientX - dragStart.x;
-            const deltaY = e.clientY - dragStart.y;
-            
-            let newX = modalStart.x + deltaX;
-            let newY = modalStart.y + deltaY;
-            
-            // Keep modal within viewport bounds
-            const maxX = window.innerWidth - previewModal.offsetWidth;
-            const maxY = window.innerHeight - previewModal.offsetHeight;
-            
-            newX = Math.max(0, Math.min(maxX, newX));
-            newY = Math.max(0, Math.min(maxY, newY));
-            
-            previewModal.style.left = `${newX}px`;
-            previewModal.style.top = `${newY}px`;
-            previewModal.style.right = 'auto';
-            previewModal.style.bottom = 'auto';
-        }
-
-        function stopDrag() {
-            isDragging = false;
-            document.removeEventListener('mousemove', handleDrag);
-            document.removeEventListener('mouseup', stopDrag);
-            
-            previewModal.style.userSelect = '';
-            previewHeader.style.cursor = 'move';
-        }
-    }
-
-    function initPreviewKeyboardShortcuts() {
-        document.addEventListener('keydown', function(e) {
-            if (!isPreviewModalOpen) return;
-
-            // ESC to close
-            if (e.key === 'Escape') {
-                closePreview();
-                e.preventDefault();
-            }
-            
-            // Ctrl+M to minimize
-            if (e.ctrlKey && e.key === 'm') {
-                if (isPreviewMinimized) {
-                    restorePreview();
-                } else {
-                    minimizePreview();
-                }
-                e.preventDefault();
-            }
-            
-            // Ctrl+ArrowUp to maximize, Ctrl+ArrowDown to restore
-            if (e.ctrlKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
-                if (e.key === 'ArrowUp' && !isPreviewMaximized) {
-                    toggleMaximizePreview();
-                } else if (e.key === 'ArrowDown' && isPreviewMaximized) {
-                    toggleMaximizePreview();
-                }
-                e.preventDefault();
-            }
-        });
-    }
-
-    async function showFilePreview(filename, page = '', highlight = '') {
-        if (!filename || typeof filename !== 'string') {
-            handlePreviewError('Invalid filename provided');
-            return;
-        }
-
-        filename = filename.replace(/\\/g, '/').trim();
-        filename = filename.split('#')[0].split('?')[0];
-        const shortName = filename.split('/').pop();
-
-        previewContent.innerHTML = `
-            <div class="preview-loading">
-                <div class="loading-spinner"></div>
-                <span>Loading document with accuracy-focused formatting...</span>
-                <div class="loading-file-name">${escapeHtml(shortName)}</div>
-            </div>
-        `;
-
-        if (!isPreviewModalOpen) {
-            togglePreviewModal();
-        } else if (isPreviewMinimized) {
-            restorePreview();
-        }
-
-        try {
-            previewTitle.textContent = `${shortName}`;
-
-            let url = `/get_file_content?path=${encodeURIComponent(filename)}`;
-            if (page) url += `&page=${encodeURIComponent(page)}`;
-            if (highlight) url += `&highlight=${encodeURIComponent(highlight)}`;
-
-            let response = await fetch(url);
-
-            // Try alternative path if not OK
-            if (!response.ok) {
-                const alternativePath = `${getCurrentUserId()}/${filename}`;
-                const alternativeUrl = `/get_file_content?path=${encodeURIComponent(alternativePath)}`;
-                const altResponse = await fetch(alternativeUrl);
-
-                if (!altResponse.ok) {
-                    throw new Error('File not found');
-                }
-
-                url = alternativeUrl;
-                response = altResponse;
-            }
-
-            const contentType = response.headers.get('content-type') || '';
-
-            if (contentType.includes('application/json')) {
-                const data = await response.json();
-                if (data.error) throw new Error(data.error);
-
-                let content = data.content || 'No content available';
-
-                // Highlight if needed
-                if (highlight) {
                     try {
-                        const escapedHighlight = highlight.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                        const highlightRegex = new RegExp(`(${escapedHighlight})`, 'gi');
-                        content = content.replace(highlightRegex, '<mark>$1</mark>');
+                        const data = JSON.parse(line);
+
+                        if (data.status === 'status_update') {
+                            if (data.message.includes('🧠 Analyzing document structure')) {
+                                updateStrategyStatus('semantic', 'active');
+                            } else if (data.message.includes('🔍 Loading all document chunks')) {
+                                updateStrategyStatus('context', 'active');
+                            } else if (data.message.includes('🎯 Executing multi-strategy search')) {
+                                updateStrategyStatus('exact', 'active');
+                                updateStrategyStatus('keyword', 'active');
+                            } else if (data.message.includes('⚡ Processing semantic embeddings')) {
+                                updateStrategyStatus('semantic', 'completed');
+                                updateStrategyStatus('fuzzy', 'active');
+                            }
+                            
+                            updateProcessingStatus(data.message, null, data.error);
+                        } else if (data.status === 'stream_chunk') {
+                            const statusContainer = document.querySelector('.dynamic-status-container');
+                            if (statusContainer) {
+                                statusContainer.remove();
+                            }
+                            fullAnswer += data.content;
+                            updateMessageInUI(assistantMessageId, 'assistant', fullAnswer);
+                        } else if (data.status === 'stream_end') {
+                            ['exact', 'keyword', 'semantic', 'context', 'fuzzy'].forEach(strategy => {
+                                updateStrategyStatus(strategy, 'completed');
+                            });
+
+                            updateMessageInUI(
+                                assistantMessageId,
+                                'assistant',
+                                fullAnswer,
+                                data.sources || [],
+                                true,
+                                data
+                            );
+
+                            const chatId = window.location.pathname.split('/').pop();
+                            const chatTitleElement = document.querySelector(`#chat-title-${chatId}`);
+                            if (chatTitleElement && chatTitleElement.textContent.trim() === 'New Query') {
+                                const shortTitle = question.length > 50 ?
+                                    question.substring(0, 50) + '...' :
+                                    question;
+                                updateChatTitle(chatId, shortTitle);
+                            }
+
+                            if (data.comprehensive_analysis) {
+                                const resultsCount = data.results_count || 0;
+                                const searchTime = data.search_time || 0;
+                                const docsSearched = data.documents_searched || 0;
+                                showSuccessToast(`Comprehensive Search: ${resultsCount} results from ${docsSearched} documents in ${searchTime.toFixed(1)}s`);
+                            }
+                        }
                     } catch (e) {
-                        console.warn('Failed to apply highlight:', e);
+                        console.error('Error parsing chunk:', e);
                     }
                 }
 
-                const formattedContent = escapeHtml(content)
-                    .replace(/\n/g, '<br>')
-                    .replace(/\t/g, '&nbsp;&nbsp;&nbsp;&nbsp;');
-
-                const documentClass = data.accuracy_focused_processing ? 'accuracy-focused' : 
-                                    (data.perfect_formatting ? 'enhanced' : '');
-
-                previewContent.innerHTML = `
-                    <div class="preview-document ${documentClass}">
-                        <pre>${formattedContent}</pre>
-                    </div>
-                `;
-            } else {
-                // For plain text or other types
-                const text = await response.text();
-                previewContent.innerHTML = `
-                    <div class="preview-document accuracy-focused">
-                        <pre>${escapeHtml(text)}</pre>
-                    </div>
-                `;
+                buffer = lines[lines.length - 1];
             }
-
-            updatePreviewMeta(shortName, page, highlight, url);
 
         } catch (error) {
-            console.error('Error loading preview:', error);
-            handlePreviewError(`Failed to load ${shortName}: ${error.message}`);
+            if (error.name !== 'AbortError') {
+                console.error('Chat error:', error);
+                updateProcessingStatus(`❌ Processing error: ${error.message}`, 100, true);
+                updateMessageInUI(assistantMessageId, 'assistant',
+                    'Error: Failed to process your request. Please try again.');
+            }
+        } finally {
+            resetForm();
+        }
+    });
+
+    function stopProcessing() {
+        if (currentRequestController) {
+            currentRequestController.abort();
+            currentRequestController = null;
+            updateProcessingStatus('🛑 Processing stopped by user', 100, true);
+            resetForm();
         }
     }
 
-    function updatePreviewMeta(filename, page, highlight, url) {
-        previewMeta.innerHTML = `
-            <div class="preview-meta-item accuracy-focused">
-                <i class="bi bi-file-earmark"></i>
-                <span>${escapeHtml(filename)}</span>
-            </div>
-            ${page ? `<div class="preview-meta-item accuracy-focused">
-                <i class="bi bi-file-text"></i>
-                <span>Page ${escapeHtml(page)}</span>
-            </div>` : ''}
-            ${highlight ? `<div class="preview-meta-item accuracy-focused">
-                <i class="bi bi-search"></i>
-                <span>"${escapeHtml(highlight)}"</span>
-            </div>` : ''}
-            <div class="preview-meta-item accuracy-focused">
-                <i class="bi bi-bullseye"></i>
-                <span>Processing</span>
-            </div>
-            <div class="preview-meta-item accuracy-focused">
-                <i class="bi bi-download"></i>
-                <a href="${url}&download=true" download="${escapeHtml(filename)}">Download</a>
-            </div>
-            <div class="preview-meta-item accuracy-focused">
-                <i class="bi bi-info-circle"></i>
-                <span>ESC to close • Ctrl+M to minimize • Perfect formatting preserved</span>
-            </div>
-        `;
+    function resetForm() {
+        const sendButton = document.getElementById('send-button');
+        const textarea = document.querySelector('.chat-input');
+
+        sendButton.innerHTML = '<i class="bi bi-send"></i>';
+        sendButton.classList.remove('stop-btn');
+        sendButton.onclick = null;
+        sendButton.disabled = false;
+
+        currentRequestController = null;
+        textarea.disabled = false;
+        textarea.value = '';
+        textarea.style.height = 'auto';
+        textarea.focus();
     }
+}
 
-    function handlePreviewError(message) {
-        previewContent.innerHTML = `
-            <div class="preview-error">
-                <i class="bi bi-exclamation-triangle"></i>
-                <p>${message}</p>
-            </div>
-        `;
+function updateStrategyStatus(strategy, status) {
+    const strategyElement = document.querySelector(`[data-strategy="${strategy}"]`);
+    if (strategyElement) {
+        strategyElement.classList.remove('active', 'completed');
+        if (status !== 'inactive') {
+            strategyElement.classList.add(status);
+        }
     }
+}
 
-    function initReferenceHandlers() {
-        document.addEventListener('click', function(e) {
-            const sourceElement = e.target.closest('.message-source');
-            if (sourceElement) {
-                e.preventDefault();
-                e.stopPropagation();
+function updateChatTitle(chatId, newTitle) {
+    document.querySelectorAll(`#chat-title-${chatId}`).forEach(el => {
+        el.textContent = newTitle;
+    });
 
-                document.querySelectorAll('.last-clicked-source').forEach(el => {
-                    el.classList.remove('last-clicked-source');
-                });
-                sourceElement.classList.add('last-clicked-source');
+    document.querySelectorAll(`.chat-item-container[data-chat-id="${chatId}"] .chat-item-title`).forEach(el => {
+        el.textContent = newTitle;
+    });
 
-                const sourceText = sourceElement.dataset.source ||
-                    sourceElement.querySelector('span').textContent;
-                showFilePreview(sourceText);
-                return;
+    fetch(`/update_chat_title/${chatId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                title: newTitle
+            })
+        })
+        .catch(error => {
+            console.error('Error updating chat title:', error);
+        });
+}
+
+function initPreviewModal() {
+    if (!previewModal || !previewResizeHandle) return;
+
+    initPreviewResize();
+    initPreviewDrag();
+    initPreviewKeyboardShortcuts();
+
+    if (previewHeader) {
+        previewHeader.addEventListener('dblclick', function(e) {
+            if (!isPreviewMinimized) {
+                window.toggleMaximizePreview();
             }
+        });
 
-            const refLink = e.target.closest('.reference-link');
-            if (refLink) {
-                e.preventDefault();
-                e.stopPropagation();
-
-                document.querySelectorAll('.last-clicked-source').forEach(el => {
-                    el.classList.remove('last-clicked-source');
-                });
-                refLink.classList.add('last-clicked-source');
-
-                const filename = refLink.dataset.filename;
-                const page = refLink.dataset.page || '';
-                const highlight = refLink.dataset.highlight || '';
-                showFilePreview(filename, page, highlight);
+        previewHeader.addEventListener('click', function(e) {
+            if (isPreviewMinimized) {
+                window.restorePreview();
             }
         });
     }
+}
 
-    function initChatHistory() {
-        document.querySelectorAll('.delete-chat-btn').forEach(button => {
-            button.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
+function initPreviewResize() {
+    let isResizing = false;
 
-                const chatId = this.getAttribute('data-chat-id');
-                const chatItem = this.closest('.chat-item-container');
+    previewResizeHandle.addEventListener('mousedown', function(e) {
+        if (isPreviewMinimized || isPreviewMaximized) return;
+        
+        isResizing = true;
+        previewDragState.startY = e.clientY;
+        previewDragState.startHeight = previewModal.offsetHeight;
+        
+        document.addEventListener('mousemove', handleResize);
+        document.addEventListener('mouseup', stopResize);
+        
+        previewModal.style.userSelect = 'none';
+        document.body.style.cursor = 'ns-resize';
+        
+        e.preventDefault();
+    });
 
-                if (confirm('Are you sure you want to delete this chat?')) {
-                    const originalHTML = this.innerHTML;
-                    this.innerHTML = '<i class="bi bi-arrow-clockwise spin"></i>';
-                    this.disabled = true;
+    function handleResize(e) {
+        if (!isResizing) return;
+        
+        const deltaY = previewDragState.startY - e.clientY;
+        const newHeight = Math.max(200, Math.min(window.innerHeight * 0.8, previewDragState.startHeight + deltaY));
+        
+        previewModalHeight = newHeight;
+        previewModal.style.height = `${newHeight}px`;
+    }
 
-                    fetch(`/delete_chat/${chatId}`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        }
-                    })
-                    .then(response => {
-                        if (!response.ok) {
-                            return response.json().then(err => { throw err; });
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        if (data.success) {
-                            chatItem.style.opacity = '0';
-                            setTimeout(() => chatItem.remove(), 300);
-                        } else {
-                            throw new Error(data.error || 'Failed to delete chat');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Delete error:', error);
-                        alert(error.message || 'Error deleting chat');
-                        this.innerHTML = originalHTML;
-                        this.disabled = false;
-                    });
-                }
+    function stopResize() {
+        isResizing = false;
+        document.removeEventListener('mousemove', handleResize);
+        document.removeEventListener('mouseup', stopResize);
+        
+        previewModal.style.userSelect = '';
+        document.body.style.cursor = '';
+    }
+}
+
+function initPreviewDrag() {
+    let isDragging = false;
+    let dragStart = { x: 0, y: 0 };
+    let modalStart = { x: 0, y: 0 };
+
+    previewHeader.addEventListener('mousedown', function(e) {
+        if (!isPreviewMaximized || e.target.closest('.preview-modal-actions')) return;
+        
+        isDragging = true;
+        dragStart.x = e.clientX;
+        dragStart.y = e.clientY;
+        
+        const rect = previewModal.getBoundingClientRect();
+        modalStart.x = rect.left;
+        modalStart.y = rect.top;
+        
+        document.addEventListener('mousemove', handleDrag);
+        document.addEventListener('mouseup', stopDrag);
+        
+        previewModal.style.userSelect = 'none';
+        previewHeader.style.cursor = 'grabbing';
+        
+        e.preventDefault();
+    });
+
+    function handleDrag(e) {
+        if (!isDragging) return;
+        
+        const deltaX = e.clientX - dragStart.x;
+        const deltaY = e.clientY - dragStart.y;
+        
+        let newX = modalStart.x + deltaX;
+        let newY = modalStart.y + deltaY;
+        
+        const maxX = window.innerWidth - previewModal.offsetWidth;
+        const maxY = window.innerHeight - previewModal.offsetHeight;
+        
+        newX = Math.max(0, Math.min(maxX, newX));
+        newY = Math.max(0, Math.min(maxY, newY));
+        
+        previewModal.style.left = `${newX}px`;
+        previewModal.style.top = `${newY}px`;
+        previewModal.style.right = 'auto';
+        previewModal.style.bottom = 'auto';
+    }
+
+    function stopDrag() {
+        isDragging = false;
+        document.removeEventListener('mousemove', handleDrag);
+        document.removeEventListener('mouseup', stopDrag);
+        
+        previewModal.style.userSelect = '';
+        previewHeader.style.cursor = 'move';
+    }
+}
+
+function initPreviewKeyboardShortcuts() {
+    document.addEventListener('keydown', function(e) {
+        if (!isPreviewModalOpen) return;
+
+        if (e.key === 'Escape') {
+            window.closePreview();
+            e.preventDefault();
+        }
+        
+        if (e.ctrlKey && e.key === 'm') {
+            if (isPreviewMinimized) {
+                window.restorePreview();
+            } else {
+                window.minimizePreview();
+            }
+            e.preventDefault();
+        }
+        
+        if (e.ctrlKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+            if (e.key === 'ArrowUp' && !isPreviewMaximized) {
+                window.toggleMaximizePreview();
+            } else if (e.key === 'ArrowDown' && isPreviewMaximized) {
+                window.toggleMaximizePreview();
+            }
+            e.preventDefault();
+        }
+    });
+}
+
+function initReferenceHandlers() {
+    document.addEventListener('click', function(e) {
+        const sourceElement = e.target.closest('.message-source');
+        if (sourceElement) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            document.querySelectorAll('.last-clicked-source').forEach(el => {
+                el.classList.remove('last-clicked-source');
             });
+            sourceElement.classList.add('last-clicked-source');
+
+            const sourceText = sourceElement.dataset.source ||
+                sourceElement.querySelector('span').textContent;
+            showFilePreview(sourceText);
+            return;
+        }
+
+        const refLink = e.target.closest('.reference-link');
+        if (refLink) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            document.querySelectorAll('.last-clicked-source').forEach(el => {
+                el.classList.remove('last-clicked-source');
+            });
+            refLink.classList.add('last-clicked-source');
+
+            const filename = refLink.dataset.filename;
+            const page = refLink.dataset.page || '';
+            const highlight = refLink.dataset.highlight || '';
+            showFilePreview(filename, page, highlight);
+        }
+    });
+}
+
+function initChatHistory() {
+    document.querySelectorAll('.delete-chat-btn').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const chatId = this.getAttribute('data-chat-id');
+            const chatItem = this.closest('.chat-item-container');
+
+            if (confirm('Are you sure you want to delete this chat?')) {
+                const originalHTML = this.innerHTML;
+                this.innerHTML = '<i class="bi bi-arrow-clockwise spin"></i>';
+                this.disabled = true;
+
+                fetch(`/delete_chat/${chatId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(err => { throw err; });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        chatItem.style.opacity = '0';
+                        setTimeout(() => chatItem.remove(), 300);
+                    } else {
+                        throw new Error(data.error || 'Failed to delete chat');
+                    }
+                })
+                .catch(error => {
+                    console.error('Delete error:', error);
+                    alert(error.message || 'Error deleting chat');
+                    this.innerHTML = originalHTML;
+                    this.disabled = false;
+                });
+            }
         });
+    });
+}
+
+function toggleSources(button) {
+    const sourcesList = button.closest('.message-sources').querySelector('.sources-list');
+    const isHidden = sourcesList.style.display === 'none';
+
+    if (isHidden) {
+        sourcesList.style.display = 'block';
+        button.textContent = 'Hide';
+    } else {
+        sourcesList.style.display = 'none';
+        button.textContent = 'Show more';
     }
+}
 
-    function toggleSources(button) {
-        const sourcesList = button.closest('.message-sources').querySelector('.sources-list');
-        const isHidden = sourcesList.style.display === 'none';
+function addMessageToUI(role, content) {
+    const messageId = 'msg-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+    const chatMessages = document.getElementById('chat-messages');
 
-        if (isHidden) {
-            sourcesList.style.display = 'block';
-            button.textContent = 'Hide';
-        } else {
-            sourcesList.style.display = 'none';
-            button.textContent = 'Show more';
-        }
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message message-${role}`;
+    if (role === 'assistant') {
+        messageDiv.classList.add('comprehensive-search');
     }
-
-    function addMessageToUI(role, content) {
-        const messageId = 'msg-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
-        const chatMessages = document.getElementById('chat-messages');
-
-        const messageDiv = document.createElement('div');
-        messageDiv.className = `message message-${role}`;
-        if (role === 'assistant') {
-            messageDiv.classList.add('comprehensive-search');
-        }
-        messageDiv.id = messageId;
-        messageDiv.innerHTML = `
-            <div class="message-avatar ${role === 'assistant' ? 'accuracy-focused' : ''}">
-                <i class="bi ${role === 'user' ? 'bi-person-fill' : 'bi-robot'}"></i>
-            </div>
-            <div class="message-content">
-                <div class="message-actions">
-                    <button class="copy-message-btn" onclick="copyMessageToClipboard(this)" title="Copy message">
-                        <i class="bi bi-copy"></i>
-                    </button>
-                </div>
-                <div class="message-text">
-                    ${role === 'assistant' ? processContentWithReferences(content) : content.replace(/\n/g, '<br>')}
-                </div>
-            </div>
-        `;
-
-        chatMessages.appendChild(messageDiv);
-        scrollToBottom();
-        return messageId;
-    }
-
-    function updateMessageInUI(messageId, role, content, sources = [], enhanced = false, comprehensiveData = null) {
-        const messageDiv = document.getElementById(messageId);
-        if (!messageDiv) return;
-
-        const processedContent = processContentWithReferences(content);
-        let sourcesHTML = '';
-
-        if (sources && sources.length > 0) {
-            const showToggle = sources.length > 2;
-            const strategyInfo = comprehensiveData ? `
-                <div class="search-strategy-info">
-                    <span class="strategy-count">${comprehensiveData.results_count || sources.length}</span>
-                    <span>results in ${(comprehensiveData.search_time || 0).toFixed(1)}s</span>
-                </div>
-            ` : '';
-
-            sourcesHTML = `
-                <div class="message-sources comprehensive-search">
-                    <div class="sources-header">
-                        <span class="sources-title comprehensive-search">Sources</span>
-                        ${strategyInfo}
-                        ${showToggle ? '<button class="toggle-sources-btn" onclick="toggleSources(this)">Show more</button>' : ''}
-                    </div>
-                    <div class="sources-list" style="${showToggle ? 'display: none;' : ''}">
-                        ${sources.map(source => {
-                            let sourcePath, displayName;
-                            
-                            if (typeof source === 'string') {
-                                sourcePath = source;
-                                displayName = source.split('/').pop().split('\\').pop();
-                            } else {
-                                sourcePath = source.path || source.filename || '';
-                                displayName = source.filename || sourcePath.split('/').pop().split('\\').pop();
-                            }
-                            
-                            return `
-                                <div class="message-source accuracy-processed" data-source="${escapeHtml(sourcePath)}">
-                                    <i class="bi bi-file-text message-source-icon"></i>
-                                    <span>${escapeHtml(displayName)}</span>
-                                </div>
-                            `;
-                        }).join('')}
-                    </div>
-                </div>
-            `;
-        }
-
-        messageDiv.querySelector('.message-content').innerHTML = `
+    messageDiv.id = messageId;
+    messageDiv.innerHTML = `
+        <div class="message-avatar ${role === 'assistant' ? 'accuracy-focused' : ''}">
+            <i class="bi ${role === 'user' ? 'bi-person-fill' : 'bi-robot'}"></i>
+        </div>
+        <div class="message-content">
             <div class="message-actions">
                 <button class="copy-message-btn" onclick="copyMessageToClipboard(this)" title="Copy message">
                     <i class="bi bi-copy"></i>
                 </button>
             </div>
             <div class="message-text">
-                ${processedContent}
+                ${role === 'assistant' ? processContentWithReferences(content) : content}
             </div>
-            ${sourcesHTML}
+        </div>
+    `;
+
+    chatMessages.appendChild(messageDiv);
+    scrollToBottom();
+    return messageId;
+}
+
+function updateMessageInUI(messageId, role, content, sources = [], enhanced = false, comprehensiveData = null) {
+    const messageDiv = document.getElementById(messageId);
+    if (!messageDiv) return;
+
+    const processedContent = processContentWithReferences(content);
+    let sourcesHTML = '';
+
+    if (sources && sources.length > 0) {
+        const showToggle = sources.length > 2;
+        const strategyInfo = comprehensiveData ? `
+            <div class="search-strategy-info">
+                <span class="strategy-count">${comprehensiveData.results_count || sources.length}</span>
+                <span>results in ${(comprehensiveData.search_time || 0).toFixed(1)}s</span>
+            </div>
+        ` : '';
+
+        sourcesHTML = `
+            <div class="message-sources comprehensive-search">
+                <div class="sources-header">
+                    <span class="sources-title comprehensive-search">Sources</span>
+                    ${strategyInfo}
+                    ${showToggle ? '<button class="toggle-sources-btn" onclick="toggleSources(this)">Show more</button>' : ''}
+                </div>
+                <div class="sources-list" style="${showToggle ? 'display: none;' : ''}">
+                    ${sources.map(source => {
+                        let sourcePath, displayName;
+                        
+                        if (typeof source === 'string') {
+                            sourcePath = source;
+                            displayName = source.split('/').pop().split('\\').pop();
+                        } else {
+                            sourcePath = source.path || source.filename || '';
+                            displayName = source.filename || sourcePath.split('/').pop().split('\\').pop();
+                        }
+                        
+                        return `
+                            <div class="message-source accuracy-processed" data-source="${escapeHtml(sourcePath)}">
+                                <i class="bi bi-file-text message-source-icon"></i>
+                                <span>${escapeHtml(displayName)}</span>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
         `;
-
-        scrollToBottom();
     }
 
-    // ENHANCED processContentWithReferences function - THIS FIXES THE FORMATTING ISSUE
-    function processContentWithReferences(content) {
-        if (!content || typeof content !== 'string') {
-            return '';
-        }
+    messageDiv.querySelector('.message-content').innerHTML = `
+        <div class="message-actions">
+            <button class="copy-message-btn" onclick="copyMessageToClipboard(this)" title="Copy message">
+                <i class="bi bi-copy"></i>
+            </button>
+        </div>
+        <div class="message-text">
+            ${processedContent}
+        </div>
+        ${sourcesHTML}
+    `;
 
-        let documentCounter = 0;
-        const documentMap = new Map();
+    scrollToBottom();
+}
 
-        // First, escape any existing HTML to prevent conflicts, but preserve basic formatting
-        let processed = content;
+function processContentWithReferences(content) {
+    if (!content || typeof content !== 'string') {
+        return '';
+    }
 
-        // Process markdown formatting BEFORE escaping HTML
-        processed = processed
-            // Headers
-            .replace(/^### (.*$)/gm, '<h3>$1</h3>')
-            .replace(/^## (.*$)/gm, '<h2>$1</h2>')
-            .replace(/^# (.*$)/gm, '<h1>$1</h1>')
-            
-            // Bold and italic
-            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-            .replace(/(?<!\*)\*([^*\n]+)\*(?!\*)/g, '<em>$1</em>')
-            
-            // Code blocks (triple backticks)
-            .replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>')
-            
-            // Inline code (single backticks)
-            .replace(/`([^`\n]+)`/g, '<code>$1</code>')
-            
-            // Lists - handle both bullet points and numbered lists
-            .replace(/^\s*[-*+]\s+(.+)$/gm, '<li>$1</li>')
-            .replace(/^\s*\d+\.\s+(.+)$/gm, '<li>$1</li>')
-            
-            // Line breaks - handle paragraphs and single line breaks
-            .replace(/\n\n+/g, '</p><p>')
-            .replace(/\n/g, '<br>');
+    let documentCounter = 0;
+    const documentMap = new Map();
 
-        // Wrap consecutive list items in ul tags
-        processed = processed.replace(/(<li>.*?<\/li>)(?:\s*<br>\s*<li>.*?<\/li>)*/g, function(match) {
-            // Remove br tags between list items
-            const cleanedMatch = match.replace(/<br>\s*(?=<li>)/g, '');
-            return '<ul>' + cleanedMatch + '</ul>';
-        });
+    let processed = content;
 
-        // Wrap content in paragraph tags if it doesn't have block elements
-        if (!processed.includes('<p>') && !processed.includes('<h') && !processed.includes('<ul>') && !processed.includes('<pre>')) {
-            processed = '<p>' + processed + '</p>';
-        } else if (processed.includes('</p><p>')) {
-            // Add opening and closing p tags
-            processed = '<p>' + processed + '</p>';
-        }
+    // Process markdown formatting BEFORE escaping HTML
+    processed = processed
+        // Headers
+        .replace(/^### (.*$)/gm, '<h3>$1</h3>')
+        .replace(/^## (.*$)/gm, '<h2>$1</h2>')
+        .replace(/^# (.*$)/gm, '<h1>$1</h1>')
+        
+        // Bold and italic
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/(?<!\*)\*([^*\n]+)\*(?!\*)/g, '<em>$1</em>')
+        
+        // Code blocks (triple backticks)
+        .replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>')
+        
+        // Inline code (single backticks)
+        .replace(/`([^`\n]+)`/g, '<code>$1</code>')
+        
+        // Lists - handle both bullet points and numbered lists
+        .replace(/^\s*[-*+]\s+(.+)$/gm, '<li>$1</li>')
+        .replace(/^\s*\d+\.\s+(.+)$/gm, '<li>$1</li>')
+        
+        // Line breaks - handle paragraphs and single line breaks
+        .replace(/\n\n+/g, '</p><p>')
+        .replace(/\n/g, '<br>');
 
-        // Process references
-        processed = processed.replace(
-            /\[\^([^\|\]]+)(?:\|\|([^\|\]]+))?(?:\|\|([^\|\]]+))?\]/g,
-            function(match, filename, page, highlight) {
-                if (!documentMap.has(filename)) {
-                    documentCounter++;
-                    documentMap.set(filename, documentCounter);
-                }
+    // Wrap consecutive list items in ul tags
+    processed = processed.replace(/(<li>.*?<\/li>)(?:\s*<br>\s*<li>.*?<\/li>)*/g, function(match) {
+        const cleanedMatch = match.replace(/<br>\s*(?=<li>)/g, '');
+        return '<ul>' + cleanedMatch + '</ul>';
+    });
 
-                const docNumber = documentMap.get(filename);
-                return `<sup class="reference-link" 
-                          data-filename="${escapeHtml(filename)}"
-                          data-page="${escapeHtml(page || '')}"
-                          data-highlight="${escapeHtml(highlight || '')}">
-                        [${docNumber}]</sup>`;
+    // Wrap content in paragraph tags if it doesn't have block elements
+    if (!processed.includes('<p>') && !processed.includes('<h') && !processed.includes('<ul>') && !processed.includes('<pre>')) {
+        processed = '<p>' + processed + '</p>';
+    } else if (processed.includes('</p><p>')) {
+        processed = '<p>' + processed + '</p>';
+    }
+
+    // Process references
+    processed = processed.replace(
+        /\[\^([^\|\]]+)(?:\|\|([^\|\]]+))?(?:\|\|([^\|\]]+))?\]/g,
+        function(match, filename, page, highlight) {
+            if (!documentMap.has(filename)) {
+                documentCounter++;
+                documentMap.set(filename, documentCounter);
             }
-        );
 
-        return processed;
-    }
+            const docNumber = documentMap.get(filename);
+            return `<sup class="reference-link" 
+                      data-filename="${escapeHtml(filename)}"
+                      data-page="${escapeHtml(page || '')}"
+                      data-highlight="${escapeHtml(highlight || '')}">
+                    [${docNumber}]</sup>`;
+        }
+    );
 
-    function updateProcessingStatus(message, progress, isError = false) {
-        const statusEl = document.getElementById('status-message');
-        if (statusEl) {
-            statusEl.textContent = message;
-            if (isError) {
-                statusEl.style.color = 'var(--error-color)';
-                statusEl.classList.add('error');
-            } else {
-                statusEl.style.color = '';
-                statusEl.classList.remove('error');
-            }
+    return processed;
+}
+
+function updateProcessingStatus(message, progress, isError = false) {
+    const statusEl = document.getElementById('status-message');
+    if (statusEl) {
+        statusEl.textContent = message;
+        if (isError) {
+            statusEl.style.color = 'var(--error-color)';
+            statusEl.classList.add('error');
+        } else {
+            statusEl.style.color = '';
+            statusEl.classList.remove('error');
         }
     }
+}
 
-    function updateFileProgress(processed, total) {
-        const percent = Math.floor((processed / total) * 100);
-
-        let progressContainer = document.getElementById('comprehensive-progress-container');
-        if (!progressContainer) {
-            progressContainer = document.createElement('div');
-            progressContainer.id = 'comprehensive-progress-container';
-            progressContainer.className = 'comprehensive-progress-container';
-            progressContainer.innerHTML = `
-                <div class="progress-header">
-                    <span class="progress-title">Comprehensive Analysis Progress</span>
-                    <span class="progress-stats" id="progress-stats">0%</span>
-                </div>
-                <div class="file-progress-bar">
-                    <div id="file-progress-bar-fill" class="file-progress-bar-fill" style="width: 0%"></div>
-                </div>
-                <div class="strategy-list">
-                    <div class="strategy-item">📍 Exact matching active</div>
-                    <div class="strategy-item">🧠 Semantic analysis running</div>
-                    <div class="strategy-item">🔗 Context building</div>
-                </div>
-            `;
-
-            const statusEl = document.getElementById('status-message');
-            if (statusEl && statusEl.parentNode) {
-                statusEl.parentNode.insertBefore(progressContainer, statusEl);
-            }
-        }
-
-        document.getElementById('file-progress-bar-fill').style.width = `${percent}%`;
-        document.getElementById('progress-stats').textContent = `${percent}%`;
-
-        if (percent === 100) {
-            setTimeout(() => {
-                progressContainer.style.opacity = '0';
-                setTimeout(() => progressContainer.remove(), 300);
-            }, 1000);
-        }
+function scrollToBottom() {
+    const chatMessages = document.getElementById('chat-messages');
+    if (chatMessages) {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
     }
+}
 
-    function escapeHtml(unsafe) {
-        if (typeof unsafe !== 'string') {
-            console.warn('Non-string value passed to escapeHtml:', unsafe);
-            return '';
-        }
-        return unsafe
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
-    }
+// Make functions globally available
+window.copyMessageToClipboard = copyMessageToClipboard;
+window.toggleSources = toggleSources;
+window.toggleMobileSidebar = toggleMobileSidebar;
+window.closeMobileSidebar = closeMobileSidebar;
+window.clearDocumentsAndRedirect = clearDocumentsAndRedirect;
 
-    function scrollToBottom() {
-        const chatMessages = document.getElementById('chat-messages');
-        if (chatMessages) {
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        }
-    }
-
-    // Make functions globally available
-    window.copyMessageToClipboard = copyMessageToClipboard;
-    window.toggleSources = toggleSources;
-    window.toggleMobileSidebar = toggleMobileSidebar;
-    window.closeMobileSidebar = closeMobileSidebar;
-    window.togglePreviewModal = togglePreviewModal;
-    window.closePreview = closePreview;
-    window.minimizePreview = minimizePreview;
-    window.restorePreview = restorePreview;
-    window.toggleMaximizePreview = toggleMaximizePreview;
-    window.clearDocumentsAndRedirect = clearDocumentsAndRedirect;
 </script>
 {% endblock %}

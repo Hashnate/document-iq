@@ -3584,9 +3584,9 @@ def enhanced_context_builder_with_exact_priority(search_results, question, max_c
         remaining_space = max_context_length - total_length
         
         if remaining_space > 1000:  # Only add if we have meaningful space
-            context_parts.append(f"\n{'='*80}")
+            context_parts.append(f"\n{'='*20}")
             context_parts.append(f"📄 ADDITIONAL RELEVANT CONTENT")
-            context_parts.append(f"{'='*80}\n")
+            context_parts.append(f"{'='*20}\n")
             
             # Group by document to avoid fragmentation
             by_document = {}
@@ -5449,7 +5449,7 @@ def handle_streaming_upload_optimized():
                 return
             
             # ULTRA-FAST extraction
-            yield f"data: {json.dumps({'status': 'extracting', 'message': '⚡ Ultra-fast extraction...', 'percent': 5})}\n\n"
+            yield f"data: {json.dumps({'status': 'extracting', 'message': '⚡  Extraction...', 'percent': 5})}\n\n"
             
             extracted_files = []
             
@@ -5557,7 +5557,7 @@ def handle_streaming_upload_optimized():
             # Completion
             success_rate = round((processed_count / len(extracted_files)) * 100, 1)
             
-            yield f"data: {json.dumps({'status': 'completed', 'processed_count': processed_count, 'total_files': len(extracted_files), 'failed_files': failed_files, 'percent': 100, 'success_rate': success_rate, 'message': f'⚡ Ultra-fast processing completed: {processed_count}/{len(extracted_files)} files'})}\n\n"
+            yield f"data: {json.dumps({'status': 'completed', 'processed_count': processed_count, 'total_files': len(extracted_files), 'failed_files': failed_files, 'percent': 100, 'success_rate': success_rate, 'message': f'⚡ Processing completed: {processed_count}/{len(extracted_files)} files'})}\n\n"
             
         except Exception as e:
             logger.error(f"Ultra-optimized upload error: {e}")
