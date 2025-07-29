@@ -8,17 +8,18 @@
         <div class="welcome-card">
             <h1>Welcome to <span class="gradient-text">DOCUMENT IQ</span>!</h1>
             <p class="welcome-description">
-                Revolutionary AI-powered Q&A system with perfect page numbering. Ask natural language questions or search for specific keywords. Get instant, accurate answers with guaranteed page references from your documents.
+                A next-generation, AI-powered platform that transforms how organizations interact with unstructured documents. Your one stop shop for an intelligent knowledge engine, enabling users to ask natural language questions and receive accurate, context-aware
+                answers derived from large volume document repositories—instantly and securely.
             </p>
 
             <div class="features-section">
                 <div class="feature-card">
                     <div class="feature-icon">
-                        <i class="bi bi-chat-dots"></i>
+                        <i class="bi bi-lightning-charge"></i>
                     </div>
                     <div class="feature-content">
-                        <h3>Natural Language Q&A</h3>
-                        <p>Ask questions naturally - "What are the main findings?" or "How does this work?"</p>
+                        <h3>AI-Powered Analysis</h3>
+                        <p>Advanced machine learning extracts insights from your documents automatically</p>
                     </div>
                 </div>
 
@@ -27,73 +28,32 @@
                         <i class="bi bi-search"></i>
                     </div>
                     <div class="feature-content">
-                        <h3>Intelligent Keyword Search</h3>
-                        <p>Find exact phrases and keywords with comprehensive result coverage</p>
+                        <h3>Natural Language Search</h3>
+                        <p>Ask questions in plain English and get precise answers from your documents</p>
                     </div>
                 </div>
 
-                <div class="feature-card">
+                <!-- Enhanced OCR Feature -->
+                <div class="feature-card ocr-feature">
                     <div class="feature-icon">
-                        <i class="bi bi-file-text"></i>
+                        <i class="bi bi-camera"></i>
                     </div>
                     <div class="feature-content">
-                        <h3>Accurate Page References</h3>
-                        <p>Every answer includes exact page numbers from original documents</p>
-                    </div>
-                </div>
-
-                <!-- <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="bi bi-lightning-charge"></i>
-                    </div>
-                    <div class="feature-content">
-                        <h3>Ultra-Fast Processing</h3>
-                        <p>Optimized GPU acceleration with clear progress tracking</p>
-                    </div>
-                </div> -->
-<!-- 
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="bi bi-robot"></i>
-                    </div>
-                    <div class="feature-content">
-                        <h3>Gemini AI Powered</h3>
-                        <p>Advanced language understanding for comprehensive document analysis</p>
-                    </div>
-                </div> -->
-
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="bi bi-eye"></i>
-                    </div>
-                    <div class="feature-content">
-                        <h3>OCR Support</h3>
-                        <p>Extract text from images and scanned documents with GPU acceleration</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Q&A Examples Section -->
-            <div class="qa-examples-section">
-                <h3>💡 What You Can Ask</h3>
-                <div class="example-queries">
-                    <div class="query-type-section">
-                        <h4><i class="bi bi-chat-square-text"></i> Natural Questions</h4>
-                        <div class="example-queries-list">
-                            <span class="example-query">"What are the key findings?"</span>
-                            <span class="example-query">"How does this process work?"</span>
-                            <span class="example-query">"What are the requirements?"</span>
-                            <span class="example-query">"Explain the methodology"</span>
+                        <h3>Advanced OCR Processing</h3>
+                        <p>Extract text from images and scanned documents with AI-powered accuracy</p>
+                        <div class="ocr-badge-feature">
+                            <span class="badge-mini gpu-enabled" id="gpu-status-badge">🚀 GPU Accelerated</span>
                         </div>
                     </div>
-                    <div class="query-type-section">
-                        <h4><i class="bi bi-search"></i> Keyword Search</h4>
-                        <div class="example-queries-list">
-                            <span class="example-query">"budget allocation"</span>
-                            <span class="example-query">"risk assessment"</span>
-                            <span class="example-query">"project timeline"</span>
-                            <span class="example-query">"compliance requirements"</span>
-                        </div>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="bi bi-shield-lock"></i>
+                    </div>
+                    <div class="feature-content">
+                        <h3>Secure Processing</h3>
+                        <p>Enterprise-grade security protects your sensitive documents</p>
                     </div>
                 </div>
             </div>
@@ -105,14 +65,12 @@
     <div class="upload-column">
         <div class="upload-card">
             <div class="upload-header">
-                <h2 class="upload-title">Smart Document Upload</h2>
-                <p class="upload-subtitle">Optimized for Q&A with perfect page numbering</p>
-                <div class="performance-indicator">
-                    <span class="perf-badge qa-optimized">
-                        <i class="bi bi-chat-dots"></i> Q&A Optimized
-                    </span>
-                    <span class="perf-badge page-accurate">
-                        <i class="bi bi-file-text"></i> Page Accurate
+                <h2 class="upload-title">Upload Your Documents</h2>
+                <p class="upload-subtitle">Get started in seconds with your first document upload</p>
+                <!-- OCR Status Indicator -->
+                <div class="ocr-status-indicator" id="ocr-status-indicator">
+                    <span class="ocr-indicator-badge">
+                        <i class="bi bi-camera"></i> OCR Ready
                     </span>
                 </div>
             </div>
@@ -122,18 +80,18 @@
                     <i class="bi bi-cloud-arrow-up"></i>
                 </div>
                 <h5 id="upload-instruction">Drag & drop files here</h5>
-                <p class="text-muted" id="file-name">or click to browse<br>Documents, images, and archives supported</p>
+                <p class="text-muted" id="file-name">or click to browse<br>Supports documents and images</p>
                 <div class="upload-cta">
                     <button class="browse-btn">Browse Files</button>
                 </div>
             </div>
 
-            <!-- Enhanced Progress Container -->
+            <!-- Enhanced Progress Container with Phase Support -->
             <div class="progress-container">
                 <div class="progress-info">
-                    <span class="progress-text">Ready for Q&A processing</span>
+                    <span class="progress-text">Ready to upload</span>
                     <div class="progress-right">
-                        <span class="phase-indicator" id="phase-indicator" style="display: none;">
+                        <span class="phase-indicator upload" id="phase-indicator" style="display: none;">
                             📤 Upload
                         </span>
                         <span class="progress-percent">0%</span>
@@ -143,40 +101,50 @@
                     <div class="progress"></div>
                 </div>
                 
-                <!-- Enhanced Progress Details -->
+                <!-- OCR-Specific Progress Details -->
+                <div class="ocr-progress-details" id="ocr-progress-details" style="display: none;">
+                    <div class="ocr-status-row">
+                        <span class="ocr-status-text" id="ocr-status-text">OCR Processing...</span>
+                        <span class="ocr-method" id="ocr-method"></span>
+                    </div>
+                    <div class="page-progress" id="page-progress" style="display: none;">
+                        <div class="page-indicator">
+                            Page <span id="current-page">1</span> of <span id="total-pages">1</span>
+                        </div>
+                        <div class="page-progress-bar">
+                            <div class="page-progress-fill" id="page-progress-fill"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Enhanced progress details with phase-aware styling -->
                 <div class="progress-details">
                     <span class="progress-speed"></span>
                     <span class="progress-eta"></span>
                 </div>
                 
-                <!-- Processing Phase Details -->
-                <div class="processing-phases" style="display: none;">
-                    <div class="phase-item">
-                        <span class="phase-icon">📋</span>
-                        <span class="phase-text">Phase 1: File Validation & Extraction</span>
-                        <span class="phase-status">⏳</span>
-                    </div>
-                    <div class="phase-item">
-                        <span class="phase-icon">🔍</span>
-                        <span class="phase-text">Phase 2: Q&A Optimization & Page Detection</span>
-                        <span class="phase-status">⏳</span>
-                    </div>
-                    <div class="phase-item">
-                        <span class="phase-icon">🔄</span>
-                        <span class="phase-text">Phase 3: Indexing & Finalization</span>
-                        <span class="phase-status">⏳</span>
+                <!-- File Type Analysis -->
+                <div class="file-type-analysis" id="file-type-analysis" style="display: none;">
+                    <div class="analysis-stats">
+                        <div class="analysis-item">
+                            <span class="analysis-icon">📄</span>
+                            <span class="analysis-count" id="document-count">0</span>
+                            <span class="analysis-label">Documents</span>
+                        </div>
+                        <div class="analysis-item ocr-item">
+                            <span class="analysis-icon">🖼️</span>
+                            <span class="analysis-count" id="image-count">0</span>
+                            <span class="analysis-label">Images (OCR)</span>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- File List -->
+            <!-- Enhanced File List with OCR Status -->
             <div class="file-list"></div>
             
-            <!-- Enhanced Processing Summary -->
+            <!-- Processing Summary -->
             <div class="processing-summary" style="display: none;">
-                <div class="summary-header">
-                    <h4><i class="bi bi-graph-up"></i> Processing Summary</h4>
-                </div>
                 <div class="summary-stats">
                     <div class="stat-item">
                         <span class="stat-label">Total Files:</span>
@@ -187,86 +155,46 @@
                         <span class="stat-value" id="processed-files">0</span>
                     </div>
                     <div class="stat-item">
-                        <span class="stat-label">Pages Detected:</span>
-                        <span class="stat-value" id="pages-detected">0</span>
+                        <span class="stat-label">OCR Processed:</span>
+                        <span class="stat-value" id="ocr-processed-files">0</span>
                     </div>
                     <div class="stat-item">
                         <span class="stat-label">Failed:</span>
                         <span class="stat-value" id="failed-files">0</span>
                     </div>
                 </div>
-                <div class="qa-optimization-status">
-                    <div class="optimization-item">
-                        <i class="bi bi-check-circle-fill"></i>
-                        <span>Q&A chunks optimized</span>
-                    </div>
-                    <div class="optimization-item">
-                        <i class="bi bi-check-circle-fill"></i>
-                        <span>Page references mapped</span>
-                    </div>
-                    <div class="optimization-item">
-                        <i class="bi bi-check-circle-fill"></i>
-                        <span>Search indices built</span>
-                    </div>
-                </div>
             </div>
 
             <p class="error-message"></p>
 
-            <!-- Enhanced Supported Files -->
+            <!-- Enhanced Supported Files with Images -->
             <div class="supported-files">
-                <div class="supported-files-title">Supported File Types for Q&A:</div>
-                <div class="supported-files-categories">
-                    <div class="file-category">
-                        <div class="category-title">📄 Documents</div>
-                        <div class="supported-files-badges">
-                            <span class="badge"><i class="bi bi-filetype-pdf"></i> PDF</span>
-                            <span class="badge"><i class="bi bi-filetype-docx"></i> DOCX</span>
-                            <span class="badge"><i class="bi bi-filetype-txt"></i> TXT</span>
-                            <span class="badge"><i class="bi bi-file-earmark"></i> MD</span>
-                        </div>
-                    </div>
-                    <div class="file-category">
-                        <div class="category-title">📊 Data Files</div>
-                        <div class="supported-files-badges">
-                            <span class="badge"><i class="bi bi-filetype-csv"></i> CSV</span>
-                            <span class="badge"><i class="bi bi-filetype-xlsx"></i> XLSX</span>
-                            <span class="badge"><i class="bi bi-filetype-json"></i> JSON</span>
-                            <span class="badge"><i class="bi bi-filetype-xml"></i> XML</span>
-                        </div>
-                    </div>
-                    <div class="file-category">
-                        <div class="category-title">🖼️ Images (OCR)</div>
-                        <div class="supported-files-badges">
-                            <span class="badge"><i class="bi bi-image"></i> JPG</span>
-                            <span class="badge"><i class="bi bi-image"></i> PNG</span>
-                            <span class="badge"><i class="bi bi-image"></i> TIFF</span>
-                            <span class="badge"><i class="bi bi-file-earmark-zip"></i> ZIP</span>
-                        </div>
-                    </div>
+                <div class="supported-files-title">Supported File Types:</div>
+                <div class="supported-files-badges">
+                    <span class="badge"><i class="bi bi-filetype-pdf"></i> PDF</span>
+                    <span class="badge"><i class="bi bi-filetype-docx"></i> DOCX</span>
+                    <span class="badge"><i class="bi bi-filetype-txt"></i> TXT</span>
+                    <span class="badge"><i class="bi bi-filetype-csv"></i> CSV</span>
+                    <span class="badge"><i class="bi bi-filetype-zip"></i> ZIP</span>
+                    <!-- OCR-supported formats -->
+                    <span class="badge ocr-badge"><i class="bi bi-image"></i> JPG</span>
+                    <span class="badge ocr-badge"><i class="bi bi-image"></i> PNG</span>
+                    <span class="badge ocr-badge"><i class="bi bi-image"></i> TIFF</span>
                 </div>
             </div>
 
-            <!-- Enhanced Upload Tips -->
+            <!-- Enhanced Upload Tips with OCR -->
             <div class="upload-tips">
                 <div class="tip">
-                    <i class="bi bi-chat-dots"></i>
-                    <span>Ask questions naturally after upload - "What are the main points?"</span>
+                    <i class="bi bi-lightbulb"></i>
+                    <span>For best results, upload documents with clear text structure</span>
+                </div>
+                <div class="tip ocr-tip">
+                    <i class="bi bi-camera"></i>
+                    <span>Images and scanned PDFs will be processed with AI OCR for text extraction</span>
                 </div>
                 <div class="tip">
-                    <i class="bi bi-search"></i>
-                    <span>Use quotes for exact keyword search - "project timeline"</span>
-                </div>
-                <div class="tip">
-                    <i class="bi bi-file-text"></i>
-                    <span>Every answer includes accurate page references from your documents</span>
-                </div>
-                <div class="tip">
-                    <i class="bi bi-eye"></i>
-                    <span>Images and scanned documents supported with OCR processing</span>
-                </div>
-                <div class="tip">
-                    <i class="bi bi-shield-check"></i>
+                    <i class="bi bi-exclamation-triangle"></i>
                     <span>Remove passwords from protected files before uploading</span>
                 </div>
             </div>
@@ -275,89 +203,127 @@
     </div>
 </div>
 
-<!-- Enhanced Subscription Modal -->
+<!-- Subscription Modal -->
 <div id="subscriptionModal" class="modal">
     <div class="modal-content">
         <span class="close-modal">&times;</span>
         <div class="modal-body">
             <div class="text-center mb-4">
-                <i class="bi bi-chat-dots" style="font-size: 3rem; color: var(--primary-color);"></i>
+                <i class="bi bi-star" style="font-size: 3rem; color: var(--primary-color);"></i>
             </div>
-            <h3 class="text-center mb-3">Q&A System Access Required</h3>
+            <h3 class="text-center mb-3">Subscription Required</h3>
             <p class="text-center mb-4" id="modalMessage">
-                To use the enhanced Q&A system with natural language processing, you need an active subscription or free trial.
+                To upload documents, you need an active subscription or free trial.
             </p>
             <div class="subscription-info" id="subscriptionInfo">
                 <!-- Dynamic content will be inserted here -->
             </div>
         </div>
         <div class="modal-actions">
-            <button class="btn btn-secondary" id="closeModalBtn">Not Now</button>
-            <button class="btn btn-trial" id="startTrialBtn">
-                <i class="bi bi-gift"></i> Start Free Trial
-            </button>
-            <button class="btn btn-primary" id="goToPricingBtn">
-                <i class="bi bi-star"></i> View Plans
-            </button>
+            <!-- Replace these lines in the modal -->
+<button class="btn btn-secondary" id="closeModalBtn">Not Now</button>
+<button class="btn btn-trial" id="startTrialBtn">
+    <i class="bi bi-gift"></i> Start Free Trial
+</button>
+<button class="btn btn-primary" id="goToPricingBtn">
+    <i class="bi bi-star"></i> View Plans
+</button>
         </div>
     </div>
 </div>
 
 <style>
-    /* Enhanced color scheme for Q&A */
+    /* Modern color scheme with gradients */
     :root {
         --primary-color: #4361ee;
         --secondary-color: #3a0ca3;
         --accent-color: #7209b7;
-        --success-color: #4cc9f0;
-        --warning-color: #f8961e;
-        --error-color: #f94144;
+        --light-accent: #f72585;
         --text-color: #2b2d42;
         --light-text: #8d99ae;
         --background-light: #f8f9fa;
         --card-bg: #ffffff;
-        --qa-color: #10b981;
-        --page-accuracy-color: #8b5cf6;
-        --ocr-color: #f59e0b;
+        --success-color: #4cc9f0;
+        --warning-color: #f8961e;
+        --error-color: #f94144;
+        --ocr-color: #10b981;
+        --gpu-color: #8b5cf6;
+        --upload-color: #3b82f6;
     }
     
-    /* Enhanced gradient text effect */
+    /* Gradient text effect */
     .gradient-text {
-        background: linear-gradient(90deg, var(--primary-color), var(--accent-color), var(--qa-color));
+        background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
         -webkit-background-clip: text;
         background-clip: text;
         color: transparent;
         display: inline-block;
-        background-size: 200% 100%;
-        animation: gradientShift 3s ease-in-out infinite;
     }
     
-    @keyframes gradientShift {
-        0%, 100% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-    }
-    
-    /* Enhanced animations */
+    /* Smooth animations */
     @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
     
     @keyframes pulse {
-        0% { transform: scale(1); }
-        50% { transform: scale(1.05); }
-        100% { transform: scale(1); }
+        0% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.05);
+        }
+        100% {
+            transform: scale(1);
+        }
     }
     
+    /* OCR-specific animations */
+    @keyframes ocrPulse {
+        0%, 100% { 
+            background-color: rgba(16, 185, 129, 0.1);
+            transform: scale(1);
+        }
+        50% { 
+            background-color: rgba(16, 185, 129, 0.2);
+            transform: scale(1.02);
+        }
+    }
+    
+    @keyframes scanLine {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+    }
+    
+    /* Processing animations */
     @keyframes processingPulse {
-        0% { background-color: rgba(76, 201, 240, 0.15); }
-        50% { background-color: rgba(76, 201, 240, 0.25); }
-        100% { background-color: rgba(76, 201, 240, 0.15); }
+        0% {
+            background-color: rgba(76, 201, 240, 0.15);
+            transform: scale(1.02);
+        }
+        50% {
+            background-color: rgba(76, 201, 240, 0.25);
+            transform: scale(1.03);
+        }
+        100% {
+            background-color: rgba(76, 201, 240, 0.15);
+            transform: scale(1.02);
+        }
     }
     
     @keyframes shimmer {
-        0% { transform: translateX(-100%); }
-        100% { transform: translateX(100%); }
+        0% {
+            transform: translateX(-100%);
+        }
+        100% {
+            transform: translateX(100%);
+        }
     }
     
     @keyframes rotate {
@@ -365,7 +331,25 @@
         to { transform: rotate(360deg); }
     }
     
-    /* Main layout */
+    @keyframes successPulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+    
+    @keyframes dotAnimation {
+        0%, 20% { content: '.'; }
+        40% { content: '..'; }
+        60%, 100% { content: '...'; }
+    }
+    
+    /* Loading dots animation */
+    .loading-dots::after {
+        content: '.';
+        animation: dotAnimation 1.5s infinite;
+    }
+    
+    /* Main layout with gradient background */
     body {
         background: linear-gradient(135deg, var(--background-light) 0%, #e9ecef 100%);
         min-height: 100vh;
@@ -415,7 +399,7 @@
         color: var(--light-text);
     }
     
-    /* Enhanced feature cards */
+    /* Feature cards */
     .features-section {
         margin-top: 40px;
         display: flex;
@@ -441,28 +425,10 @@
         border-left: 4px solid var(--primary-color);
     }
     
-    .feature-card:nth-child(1) .feature-icon {
-        background: linear-gradient(135deg, var(--qa-color), #059669);
-    }
-    
-    .feature-card:nth-child(2) .feature-icon {
-        background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
-    }
-    
-    .feature-card:nth-child(3) .feature-icon {
-        background: linear-gradient(135deg, var(--page-accuracy-color), #7c3aed);
-    }
-    
-    .feature-card:nth-child(4) .feature-icon {
-        background: linear-gradient(135deg, var(--warning-color), #ea580c);
-    }
-    
-    .feature-card:nth-child(5) .feature-icon {
-        background: linear-gradient(135deg, var(--accent-color), #a21caf);
-    }
-    
-    .feature-card:nth-child(6) .feature-icon {
-        background: linear-gradient(135deg, var(--ocr-color), #d97706);
+    /* OCR Feature Styling */
+    .feature-card.ocr-feature:hover {
+        border-left: 4px solid var(--ocr-color);
+        box-shadow: 0 8px 25px rgba(16, 185, 129, 0.15);
     }
     
     .feature-icon {
@@ -474,7 +440,12 @@
         justify-content: center;
         font-size: 1.5rem;
         color: white;
+        background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
         flex-shrink: 0;
+    }
+    
+    .ocr-feature .feature-icon {
+        background: linear-gradient(135deg, var(--ocr-color), #059669);
     }
     
     .feature-content h3 {
@@ -486,67 +457,31 @@
     
     .feature-content p {
         color: var(--light-text);
-        margin: 0;
+        margin: 0 0 8px 0;
         font-size: 0.95rem;
     }
     
-    /* Q&A Examples Section */
-    .qa-examples-section {
-        margin-top: 30px;
-        padding: 25px;
-        background: linear-gradient(135deg, rgba(67, 97, 238, 0.05), rgba(114, 9, 183, 0.05));
-        border-radius: 15px;
-        border: 1px solid rgba(67, 97, 238, 0.1);
+    /* OCR Feature Badge */
+    .ocr-badge-feature {
+        margin-top: 8px;
     }
     
-    .qa-examples-section h3 {
-        color: var(--text-color);
-        margin-bottom: 20px;
-        font-size: 1.3rem;
-        text-align: center;
+    .badge-mini {
+        font-size: 0.75rem;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-weight: 600;
+        color: white;
     }
     
-    .example-queries {
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-    }
-    
-    .query-type-section h4 {
-        color: var(--primary-color);
-        margin-bottom: 12px;
-        font-size: 1rem;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-    
-    .example-queries-list {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-    }
-    
-    .example-query {
-        background: rgba(67, 97, 238, 0.1);
-        color: var(--primary-color);
-        padding: 6px 12px;
-        border-radius: 15px;
-        font-size: 0.85rem;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        border: 1px solid rgba(67, 97, 238, 0.2);
-    }
-    
-    .example-query:hover {
-        background: rgba(67, 97, 238, 0.2);
-        transform: translateY(-1px);
+    .gpu-enabled {
+        background: linear-gradient(135deg, var(--gpu-color), #7c3aed);
+        animation: pulse 2s infinite;
     }
     
     /* Upload column styling */
     .upload-column {
-        flex: 0 1 520px;
+        flex: 0 1 500px;
         position: sticky;
         top: 30px;
     }
@@ -580,20 +515,17 @@
     .upload-subtitle {
         color: var(--light-text);
         font-size: 0.95rem;
-        margin-bottom: 15px;
+        margin-bottom: 10px;
     }
     
-    /* Enhanced performance indicators */
-    .performance-indicator {
-        margin-top: 15px;
+    /* OCR Status Indicator */
+    .ocr-status-indicator {
+        margin-top: 10px;
         text-align: center;
-        display: flex;
-        justify-content: center;
-        gap: 10px;
-        flex-wrap: wrap;
     }
     
-    .perf-badge {
+    .ocr-indicator-badge {
+        background: linear-gradient(135deg, var(--ocr-color), #059669);
         color: white;
         padding: 6px 12px;
         border-radius: 20px;
@@ -605,17 +537,9 @@
         animation: pulse 2s infinite;
     }
     
-    .perf-badge.qa-optimized {
-        background: linear-gradient(135deg, var(--qa-color), #059669);
-    }
-    
-    .perf-badge.page-accurate {
-        background: linear-gradient(135deg, var(--page-accuracy-color), #7c3aed);
-    }
-    
-    /* Enhanced file upload area */
+    /* File upload area */
     .file-upload-area {
-        min-height: 240px;
+        min-height: 220px;
         border: 2px dashed rgba(67, 97, 238, 0.3);
         border-radius: 15px;
         display: flex;
@@ -631,15 +555,69 @@
         overflow: hidden;
     }
     
+    .file-upload-area::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(67, 97, 238, 0.1) 0%, transparent 70%);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    
     .file-upload-area:hover {
         border-color: var(--primary-color);
         background-color: rgba(67, 97, 238, 0.05);
+    }
+    
+    .file-upload-area:hover::before {
+        opacity: 1;
     }
     
     .file-upload-area.active {
         border-color: var(--primary-color);
         background-color: rgba(67, 97, 238, 0.08);
         animation: pulse 1.5s infinite;
+    }
+    
+    /* Upload area phase styling */
+    .file-upload-area.uploading {
+        border-color: var(--upload-color);
+        background-color: rgba(59, 130, 246, 0.05);
+    }
+
+    .file-upload-area.uploading::before {
+        background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
+        opacity: 1;
+    }
+
+    .file-upload-area.processing {
+        border-color: var(--primary-color);
+        background-color: rgba(67, 97, 238, 0.05);
+    }
+
+    .file-upload-area.processing::before {
+        background: radial-gradient(circle, rgba(67, 97, 238, 0.1) 0%, transparent 70%);
+        opacity: 1;
+    }
+    
+    /* OCR Upload Area State */
+    .file-upload-area.ocr-processing {
+        border-color: var(--ocr-color);
+        background-color: rgba(16, 185, 129, 0.05);
+    }
+    
+    .file-upload-area.ocr-processing::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, transparent, var(--ocr-color), transparent);
+        animation: scanLine 2s infinite;
     }
     
     .upload-cloud {
@@ -667,7 +645,7 @@
     }
     
     .browse-btn {
-        padding: 12px 30px;
+        padding: 10px 25px;
         border-radius: 30px;
         border: none;
         background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
@@ -676,7 +654,6 @@
         cursor: pointer;
         transition: all 0.3s ease;
         box-shadow: 0 4px 15px rgba(67, 97, 238, 0.3);
-        font-size: 0.95rem;
     }
     
     .browse-btn:hover {
@@ -684,12 +661,13 @@
         box-shadow: 0 6px 20px rgba(67, 97, 238, 0.4);
     }
     
-    /* Enhanced progress system */
+    /* Enhanced Progress bar */
     .progress-container {
         margin-top: 25px;
         display: none;
     }
     
+    /* Updated progress info layout */
     .progress-info {
         display: flex;
         justify-content: space-between;
@@ -719,7 +697,7 @@
         flex-shrink: 0;
     }
     
-    /* Enhanced phase indicators */
+    /* Phase indicator styles */
     .phase-indicator {
         display: inline-flex;
         align-items: center;
@@ -734,7 +712,7 @@
     
     .phase-indicator.upload {
         background: rgba(59, 130, 246, 0.1);
-        color: #3b82f6;
+        color: var(--upload-color);
         border: 1px solid rgba(59, 130, 246, 0.2);
     }
     
@@ -744,16 +722,45 @@
         border: 1px solid rgba(67, 97, 238, 0.2);
     }
     
-    .phase-indicator.completed {
+    .phase-indicator.ocr {
         background: rgba(16, 185, 129, 0.1);
-        color: var(--qa-color);
+        color: var(--ocr-color);
         border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+    
+    .phase-indicator.completed {
+        background: rgba(56, 176, 0, 0.1);
+        color: #38b000;
+        border: 1px solid rgba(56, 176, 0, 0.2);
+    }
+    
+    /* Spinner for initialization phase */
+    .progress-text::before {
+        content: '';
+        display: none;
+        width: 16px;
+        height: 16px;
+        border: 2px solid var(--primary-color);
+        border-top-color: transparent;
+        border-radius: 50%;
+        animation: rotate 1s linear infinite;
+    }
+    
+    .progress-text.initializing::before {
+        display: inline-block;
+    }
+    
+    /* OCR Processing Indicator */
+    .progress-text.ocr-processing::before {
+        border-color: var(--ocr-color);
+        border-top-color: transparent;
     }
     
     .progress-percent {
         font-size: 0.9rem;
         color: var(--primary-color);
         font-weight: 600;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
         min-width: 45px;
         text-align: right;
         transition: color 0.3s ease;
@@ -766,6 +773,7 @@
         overflow: hidden;
         position: relative;
         box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+        transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     }
     
     .progress {
@@ -792,51 +800,214 @@
         opacity: 1;
     }
     
-    /* Processing phases display */
-    .processing-phases {
-        margin-top: 15px;
-        padding: 15px;
-        background: rgba(67, 97, 238, 0.05);
-        border-radius: 10px;
-        border: 1px solid rgba(67, 97, 238, 0.1);
+    .progress-bar.completed::after {
+        opacity: 0;
     }
     
-    .phase-item {
+    .progress-bar.error .progress {
+        background: linear-gradient(90deg, #f94144, #f3722c);
+    }
+    
+    /* Enhanced progress bar styles for different phases */
+    
+    /* Upload phase styling */
+    .progress-bar.uploading .progress {
+        background: linear-gradient(90deg, var(--upload-color), #1d4ed8);
+        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+    }
+    
+    .progress-bar.uploading::after {
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+        animation: shimmer 1.5s infinite;
+        opacity: 1;
+    }
+    
+    .progress-text.uploading {
+        color: var(--upload-color);
+    }
+    
+    .progress-text.uploading::before {
+        border-color: var(--upload-color);
+        border-top-color: transparent;
+    }
+    
+    /* Processing phase styling */
+    .progress-bar.processing .progress {
+        background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+        box-shadow: 0 2px 8px rgba(67, 97, 238, 0.3);
+    }
+    
+    .progress-bar.processing::after {
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+        animation: shimmer 2s infinite;
+        opacity: 1;
+    }
+    
+    .progress-text.processing {
+        color: var(--primary-color);
+    }
+    
+    .progress-text.processing::before {
+        border-color: var(--primary-color);
+        border-top-color: transparent;
+    }
+    
+    /* OCR Processing phase styling */
+    .progress-bar.ocr-processing .progress {
+        background: linear-gradient(90deg, var(--ocr-color), #059669);
+        box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+    }
+    
+    .progress-bar.ocr-processing::after {
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+        animation: shimmer 1.8s infinite;
+        opacity: 1;
+    }
+    
+    .progress-text.ocr-processing {
+        color: var(--ocr-color);
+    }
+    
+    .progress-text.ocr-processing::before {
+        border-color: var(--ocr-color);
+        border-top-color: transparent;
+    }
+    
+    /* Completed phase styling */
+    .progress-bar.completed .progress {
+        background: linear-gradient(90deg, #38b000, #4cc9f0);
+        box-shadow: 0 2px 8px rgba(56, 176, 0, 0.3);
+    }
+    
+    .progress-bar.completed::after {
+        opacity: 0;
+    }
+    
+    /* Progress percentage styling for different phases */
+    .progress-bar.uploading ~ .progress-info .progress-percent {
+        color: var(--upload-color);
+    }
+    
+    .progress-bar.processing ~ .progress-info .progress-percent {
+        color: var(--primary-color);
+    }
+    
+    .progress-bar.ocr-processing ~ .progress-info .progress-percent {
+        color: var(--ocr-color);
+    }
+    
+    .progress-bar.completed ~ .progress-info .progress-percent {
+        color: #38b000;
+    }
+    
+    /* OCR Progress Details */
+    .ocr-progress-details {
+        margin-top: 12px;
+        padding: 10px;
+        background: rgba(16, 185, 129, 0.05);
+        border-radius: 8px;
+        border-left: 3px solid var(--ocr-color);
+    }
+    
+    .ocr-status-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+    }
+    
+    .ocr-status-text {
+        font-size: 0.85rem;
+        color: var(--ocr-color);
+        font-weight: 600;
         display: flex;
         align-items: center;
-        gap: 12px;
-        padding: 8px 0;
-        transition: all 0.3s ease;
+        gap: 6px;
     }
     
-    .phase-item:not(:last-child) {
-        border-bottom: 1px solid rgba(67, 97, 238, 0.1);
+    .ocr-status-text::before {
+        content: '🤖';
+        animation: pulse 1.5s infinite;
     }
     
-    .phase-icon {
-        font-size: 1.1rem;
-        width: 24px;
+    .ocr-method {
+        font-size: 0.75rem;
+        color: var(--light-text);
+        background: rgba(16, 185, 129, 0.1);
+        padding: 2px 6px;
+        border-radius: 4px;
+    }
+    
+    /* Page Progress for PDF OCR */
+    .page-progress {
+        margin-top: 8px;
+    }
+    
+    .page-indicator {
+        font-size: 0.8rem;
+        color: var(--text-color);
+        margin-bottom: 4px;
         text-align: center;
     }
     
-    .phase-text {
-        flex: 1;
-        font-size: 0.85rem;
-        color: var(--text-color);
-        font-weight: 500;
+    .page-progress-bar {
+        height: 4px;
+        background: rgba(16, 185, 129, 0.2);
+        border-radius: 2px;
+        overflow: hidden;
     }
     
-    .phase-status {
-        font-size: 1rem;
-        transition: all 0.3s ease;
+    .page-progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--ocr-color), #059669);
+        width: 0%;
+        transition: width 0.3s ease;
     }
     
-    .phase-item.active .phase-status {
-        animation: rotate 2s linear infinite;
+    /* File Type Analysis */
+    .file-type-analysis {
+        margin-top: 15px;
+        padding: 12px;
+        background: rgba(67, 97, 238, 0.05);
+        border-radius: 8px;
+        border: 1px solid rgba(67, 97, 238, 0.1);
     }
     
-    .phase-item.completed .phase-status {
-        color: var(--qa-color);
+    .analysis-stats {
+        display: flex;
+        justify-content: space-around;
+        gap: 20px;
+    }
+    
+    .analysis-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+    }
+    
+    .analysis-item.ocr-item {
+        color: var(--ocr-color);
+    }
+    
+    .analysis-icon {
+        font-size: 1.2rem;
+    }
+    
+    .analysis-count {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--primary-color);
+    }
+    
+    .analysis-item.ocr-item .analysis-count {
+        color: var(--ocr-color);
+    }
+    
+    .analysis-label {
+        font-size: 0.75rem;
+        color: var(--light-text);
+        text-align: center;
     }
     
     /* Progress details */
@@ -846,9 +1017,35 @@
         margin-top: 5px;
         font-size: 0.8rem;
         color: var(--light-text);
+        transition: all 0.3s ease;
     }
     
-    /* Enhanced file list */
+    .progress-speed {
+        flex: 1;
+    }
+    
+    .progress-eta {
+        text-align: right;
+    }
+    
+    /* Speed and ETA styling for different phases */
+    .progress-bar.uploading ~ .progress-details {
+        color: var(--upload-color);
+    }
+    
+    .progress-bar.processing ~ .progress-details {
+        color: var(--primary-color);
+    }
+    
+    .progress-bar.ocr-processing ~ .progress-details {
+        color: var(--ocr-color);
+    }
+    
+    .progress-bar.completed ~ .progress-details {
+        color: #38b000;
+    }
+    
+    /* File list with enhanced styling */
     .file-list {
         margin-top: 20px;
         max-height: 300px;
@@ -856,6 +1053,26 @@
         display: flex;
         flex-direction: column;
         gap: 8px;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(67, 97, 238, 0.3) transparent;
+    }
+    
+    .file-list::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    .file-list::-webkit-scrollbar-track {
+        background: rgba(67, 97, 238, 0.1);
+        border-radius: 3px;
+    }
+    
+    .file-list::-webkit-scrollbar-thumb {
+        background: rgba(67, 97, 238, 0.3);
+        border-radius: 3px;
+    }
+    
+    .file-list::-webkit-scrollbar-thumb:hover {
+        background: rgba(67, 97, 238, 0.5);
     }
     
     .file-item {
@@ -866,6 +1083,7 @@
         background-color: rgba(67, 97, 238, 0.05);
         transition: all 0.3s ease;
         border-left: 3px solid transparent;
+        position: relative;
     }
     
     .file-item:hover {
@@ -882,6 +1100,7 @@
         flex: 1;
         display: flex;
         flex-direction: column;
+        margin-left: 0;
         margin-right: 12px;
     }
     
@@ -901,10 +1120,37 @@
         margin-top: 2px;
     }
     
+    /* File Type Indicators */
+    .file-type-indicator {
+        font-size: 0.7rem;
+        padding: 2px 6px;
+        border-radius: 4px;
+        margin-top: 4px;
+        font-weight: 600;
+    }
+    
+    .file-type-indicator.ocr {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--ocr-color);
+    }
+    
+    .file-type-indicator.document {
+        background: rgba(67, 97, 238, 0.1);
+        color: var(--primary-color);
+    }
+    
     .file-status {
         font-size: 1.2rem;
         flex-shrink: 0;
         transition: all 0.3s ease;
+    }
+    
+    .file-progress {
+        font-size: 0.75rem;
+        color: var(--primary-color);
+        margin-left: 10px;
+        min-width: 40px;
+        text-align: right;
     }
     
     /* File processing states */
@@ -918,15 +1164,43 @@
         background-color: rgba(76, 201, 240, 0.15);
         border-left-color: #4cc9f0;
         animation: processingPulse 1.5s infinite;
+        transform: scale(1.02);
+        box-shadow: 0 2px 8px rgba(76, 201, 240, 0.2);
+    }
+    
+    /* OCR Processing State */
+    .file-item.ocr-processing {
+        background-color: rgba(16, 185, 129, 0.15);
+        border-left-color: var(--ocr-color);
+        animation: ocrPulse 1.5s infinite;
+        transform: scale(1.02);
+        box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
+    }
+    
+    .file-item.ocr-processing::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, var(--ocr-color), transparent);
+        animation: scanLine 2s infinite;
     }
     
     .file-item.processing .file-status {
         animation: rotate 2s linear infinite;
     }
     
+    .file-item.ocr-processing .file-status {
+        animation: rotate 2s linear infinite;
+        color: var(--ocr-color);
+    }
+    
     .file-item.completed {
-        background-color: rgba(16, 185, 129, 0.1);
-        border-left-color: var(--qa-color);
+        background-color: rgba(56, 176, 0, 0.1);
+        border-left-color: #38b000;
+        animation: successPulse 0.5s ease-out;
     }
     
     .file-item.error {
@@ -934,42 +1208,24 @@
         border-left-color: #f94144;
     }
     
-    /* Enhanced processing summary */
+    /* Processing summary */
     .processing-summary {
         margin-top: 20px;
-        padding: 20px;
-        background: linear-gradient(135deg, rgba(16, 185, 129, 0.05), rgba(67, 97, 238, 0.05));
-        border-radius: 12px;
+        padding: 15px;
+        background-color: rgba(67, 97, 238, 0.05);
+        border-radius: 10px;
         border: 1px solid rgba(67, 97, 238, 0.2);
     }
     
-    .summary-header {
-        text-align: center;
-        margin-bottom: 15px;
-    }
-    
-    .summary-header h4 {
-        color: var(--text-color);
-        margin: 0;
-        font-size: 1.1rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-    }
-    
     .summary-stats {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
+        display: flex;
+        justify-content: space-around;
         gap: 15px;
-        margin-bottom: 15px;
     }
     
     .stat-item {
         text-align: center;
-        padding: 10px;
-        background: rgba(255, 255, 255, 0.5);
-        border-radius: 8px;
+        flex: 1;
     }
     
     .stat-label {
@@ -977,7 +1233,6 @@
         font-size: 0.75rem;
         color: var(--light-text);
         margin-bottom: 5px;
-        font-weight: 500;
     }
     
     .stat-value {
@@ -987,127 +1242,93 @@
         color: var(--primary-color);
     }
     
-    /* Q&A optimization status */
-    .qa-optimization-status {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
+    /* OCR stat styling */
+    .stat-item:has(#ocr-processed-files) .stat-value {
+        color: var(--ocr-color);
     }
     
-    .optimization-item {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 0.85rem;
-        color: var(--qa-color);
-        font-weight: 500;
-    }
-    
-    .optimization-item i {
-        font-size: 1rem;
-    }
-    
-    /* Enhanced supported files */
+    /* Supported files */
     .supported-files {
-        margin-top: 25px;
+        margin-top: 20px;
     }
     
     .supported-files-title {
         color: var(--light-text);
-        margin-bottom: 15px;
+        margin-bottom: 10px;
         font-size: 0.9rem;
         text-align: center;
-        font-weight: 600;
-    }
-    
-    .supported-files-categories {
-        display: flex;
-        flex-direction: column;
-        gap: 15px;
-    }
-    
-    .file-category {
-        background: rgba(67, 97, 238, 0.05);
-        border-radius: 10px;
-        padding: 15px;
-        border: 1px solid rgba(67, 97, 238, 0.1);
-    }
-    
-    .category-title {
-        font-size: 0.85rem;
-        font-weight: 600;
-        color: var(--text-color);
-        margin-bottom: 10px;
-        display: flex;
-        align-items: center;
-        gap: 6px;
     }
     
     .supported-files-badges {
         display: flex;
         flex-wrap: wrap;
-        gap: 6px;
+        gap: 8px;
+        justify-content: center;
     }
     
     .badge {
         background-color: rgba(67, 97, 238, 0.1);
         color: var(--primary-color);
-        padding: 6px 12px;
-        border-radius: 20px;
-        font-size: 0.8rem;
+        padding: 8px 15px;
+        border-radius: 30px;
+        font-size: 0.85rem;
         font-weight: 500;
         display: flex;
         align-items: center;
-        gap: 4px;
+        gap: 5px;
         transition: all 0.3s ease;
-        border: 1px solid rgba(67, 97, 238, 0.2);
     }
     
     .badge:hover {
         transform: translateY(-1px);
-        box-shadow: 0 3px 8px rgba(67, 97, 238, 0.2);
-        background-color: rgba(67, 97, 238, 0.15);
+        box-shadow: 0 4px 8px rgba(67, 97, 238, 0.2);
     }
     
-    /* Enhanced upload tips */
+    /* OCR Badge Styling */
+    .badge.ocr-badge {
+        background-color: rgba(16, 185, 129, 0.1);
+        color: var(--ocr-color);
+        border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+    
+    .badge.ocr-badge:hover {
+        box-shadow: 0 4px 8px rgba(16, 185, 129, 0.2);
+        background-color: rgba(16, 185, 129, 0.15);
+    }
+    
+    .badge i {
+        font-size: 1rem;
+    }
+    
+    /* Upload tips */
     .upload-tips {
         margin-top: 25px;
         display: flex;
         flex-direction: column;
-        gap: 12px;
+        gap: 10px;
     }
     
     .tip {
         display: flex;
-        align-items: flex-start;
-        gap: 12px;
+        align-items: center;
+        gap: 10px;
         font-size: 0.85rem;
         color: var(--light-text);
         transition: all 0.3s ease;
-        padding: 10px;
-        border-radius: 8px;
-        background: rgba(67, 97, 238, 0.03);
-        border: 1px solid rgba(67, 97, 238, 0.1);
     }
     
     .tip:hover {
         color: var(--text-color);
-        background: rgba(67, 97, 238, 0.05);
-        transform: translateX(5px);
     }
     
     .tip i {
         color: var(--primary-color);
         flex-shrink: 0;
-        margin-top: 2px;
-        font-size: 1rem;
     }
     
-    .tip:nth-child(1) i { color: var(--qa-color); }
-    .tip:nth-child(2) i { color: var(--primary-color); }
-    .tip:nth-child(3) i { color: var(--page-accuracy-color); }
-    .tip:nth-child(4) i { color: var(--ocr-color); }
-    .tip:nth-child(5) i { color: var(--warning-color); }
+    .tip.ocr-tip i {
+        color: var(--ocr-color);
+    }
     
     .error-message {
         color: var(--error-color);
@@ -1115,13 +1336,12 @@
         font-size: 0.9rem;
         display: none;
         text-align: center;
-        padding: 12px;
+        padding: 10px;
         background-color: rgba(249, 65, 68, 0.1);
-        border-radius: 8px;
-        border: 1px solid rgba(249, 65, 68, 0.2);
+        border-radius: 6px;
     }
     
-    /* Enhanced modal styles */
+    /* Modal styles */
     .modal {
         display: none;
         position: fixed;
@@ -1139,7 +1359,7 @@
         margin: 10% auto;
         padding: 30px;
         border-radius: 15px;
-        width: 520px;
+        width: 500px;
         max-width: 90%;
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
         position: relative;
@@ -1165,7 +1385,6 @@
         justify-content: center;
         gap: 12px;
         margin-top: 25px;
-        flex-wrap: wrap;
     }
     
     .btn {
@@ -1178,7 +1397,6 @@
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        font-size: 0.9rem;
     }
     
     .btn-primary {
@@ -1193,20 +1411,19 @@
     }
     
     .btn-trial {
-        background: linear-gradient(135deg, var(--qa-color), #059669);
+        background: linear-gradient(135deg, var(--success-color), #38b000);
         color: white;
-        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        box-shadow: 0 4px 15px rgba(76, 201, 240, 0.3);
     }
     
     .btn-trial:hover {
         transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+        box-shadow: 0 6px 20px rgba(76, 201, 240, 0.4);
     }
     
     .btn-secondary {
         background-color: rgba(141, 153, 174, 0.1);
         color: var(--text-color);
-        border: 1px solid rgba(141, 153, 174, 0.2);
     }
     
     .btn-secondary:hover {
@@ -1214,25 +1431,22 @@
     }
     
     .subscription-info {
-        background: linear-gradient(135deg, rgba(67, 97, 238, 0.05), rgba(16, 185, 129, 0.05));
-        border-radius: 12px;
+        background: rgba(67, 97, 238, 0.05);
+        border-radius: 10px;
         padding: 20px;
         margin: 20px 0;
         border-left: 4px solid var(--primary-color);
-        border: 1px solid rgba(67, 97, 238, 0.1);
     }
     
     .subscription-info h4 {
         color: var(--text-color);
         margin-bottom: 10px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
+        font-size: 1.1rem;
     }
     
     .subscription-info p {
-        margin: 5px 0;
         color: var(--light-text);
+        margin: 5px 0;
         font-size: 0.9rem;
     }
     
@@ -1248,7 +1462,7 @@
         margin-bottom: 1.5rem; 
     }
     
-    /* Enhanced responsive styles */
+    /* Responsive styles */
     @media (max-width: 1200px) {
         .main-container {
             flex-direction: column;
@@ -1258,14 +1472,9 @@
             position: static;
             flex: 1;
             width: 100%;
-            max-width: 600px;
-            margin: 0 auto;
         }
-        .qa-examples-section {
-            padding: 20px;
-        }
-        .example-queries {
-            gap: 15px;
+        .welcome-column {
+            width: 100%;
         }
     }
     
@@ -1277,21 +1486,15 @@
         .upload-card {
             padding: 25px;
         }
+        .upload-title {
+            font-size: 1.6rem;
+        }
         .feature-card {
             flex-direction: column;
             gap: 15px;
-            text-align: center;
         }
-        .performance-indicator {
-            flex-direction: column;
-            gap: 8px;
-        }
-        .summary-stats {
-            grid-template-columns: 1fr;
-            gap: 10px;
-        }
-        .supported-files-categories {
-            gap: 10px;
+        .supported-files-badges {
+            justify-content: flex-start;
         }
         .modal-actions {
             flex-direction: column;
@@ -1300,12 +1503,16 @@
             width: 100%;
             justify-content: center;
         }
-        .example-queries {
-            gap: 12px;
+        .analysis-stats {
+            flex-direction: column;
+            gap: 10px;
         }
-        .example-query {
-            font-size: 0.8rem;
-            padding: 5px 10px;
+        .summary-stats {
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .stat-item {
+            min-width: 120px;
         }
     }
     
@@ -1313,24 +1520,80 @@
         .welcome-card h1 {
             font-size: 2rem;
         }
-        .upload-title {
-            font-size: 1.5rem;
+        .upload-card {
+            padding: 20px;
         }
         .file-upload-area {
-            min-height: 200px;
+            min-height: 180px;
             padding: 20px;
         }
-        .upload-cloud {
-            font-size: 2rem;
+        .file-info {
+            margin-left: 8px;
+            margin-right: 8px;
         }
-        .modal-content {
-            width: 95%;
-            padding: 20px;
+        .file-name {
+            max-width: 180px;
+            font-size: 0.85rem;
         }
+        .file-size {
+            font-size: 0.75rem;
+        }
+        .file-status {
+            font-size: 1rem;
+        }
+        .ocr-progress-details {
+            padding: 8px;
+        }
+        .ocr-status-row {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 4px;
+        }
+        /* Responsive adjustments for progress info */
+        .progress-info {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 6px;
+        }
+        
+        .progress-right {
+            align-self: flex-end;
+            gap: 6px;
+        }
+        
+        .phase-indicator {
+            font-size: 0.7rem;
+            padding: 2px 6px;
+        }
+        
+        .progress-text {
+            font-size: 0.85rem;
+            width: 100%;
+        }
+    }
+
+    .progress-bar .progress {
+        transition: width 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+
+    .processing-pulse {
+        animation: processingPulse 1.5s infinite;
+    }
+
+    @keyframes processingPulse {
+        0% { background-position: 0% 0%; }
+        100% { background-position: 200% 0%; }
     }
 </style>
 
 <script>
+
+    const modal = document.getElementById('subscriptionModal');
+const closeModalBtn = document.getElementById('closeModalBtn');
+const startTrialBtn = document.getElementById('startTrialBtn');
+const goToPricingBtn = document.getElementById('goToPricingBtn');
+
+
 document.addEventListener('DOMContentLoaded', function() {
     const uploadArea = document.getElementById('dropZone');
     const browseBtn = document.querySelector('.browse-btn');
@@ -1343,19 +1606,36 @@ document.addEventListener('DOMContentLoaded', function() {
     const fileList = document.querySelector('.file-list');
     const errorMessage = document.querySelector('.error-message');
     const modal = document.getElementById('subscriptionModal');
-    const processingPhases = document.querySelector('.processing-phases');
+    
+    // OCR-specific elements
+    const ocrProgressDetails = document.getElementById('ocr-progress-details');
+    const ocrStatusText = document.getElementById('ocr-status-text');
+    const ocrMethod = document.getElementById('ocr-method');
+    const pageProgress = document.getElementById('page-progress');
+    const currentPage = document.getElementById('current-page');
+    const totalPages = document.getElementById('total-pages');
+    const pageProgressFill = document.getElementById('page-progress-fill');
+    const fileTypeAnalysis = document.getElementById('file-type-analysis');
+    const documentCount = document.getElementById('document-count');
+    const imageCount = document.getElementById('image-count');
     
     // File processing variables
     let uploadStartTime = 0;
+    let bytesUploaded = 0;
+    let totalBytes = 0;
     let filesCompleted = 0;
     let filesFailed = 0;
-    let pagesDetected = 0;
+    let ocrFilesProcessed = 0;
+    let lastProgressUpdate = 0;
+    const MIN_PROGRESS_UPDATE_INTERVAL = 300; // ms between progress updates
     
-    // Enhanced supported file types for Q&A
+    // Enhanced supported file types with OCR
     const ALLOWED_EXTENSIONS = [
         '.pdf', '.docx', '.txt', '.csv', '.zip', '.md', '.json', '.xml', '.html',
-        '.xlsx', '.xls', '.pptx', '.jpg', '.jpeg', '.png', '.tiff', '.bmp', '.webp'
+        '.jpg', '.jpeg', '.png', '.tiff', '.tif', '.bmp', '.gif', '.webp' // OCR-supported
     ];
+    
+    const OCR_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.tiff', '.tif', '.bmp', '.gif', '.webp'];
 
     // Create file input
     const fileInput = document.createElement('input');
@@ -1365,326 +1645,1120 @@ document.addEventListener('DOMContentLoaded', function() {
     fileInput.style.display = 'none';
     document.body.appendChild(fileInput);
 
-    // Enhanced file validation
-    function isValidFile(file) {
-        const fileName = file.name.toLowerCase();
-        const isValid = ALLOWED_EXTENSIONS.some(ext => fileName.endsWith(ext));
-        
-        // Additional checks for Q&A optimization
-        if (isValid) {
-            const fileSize = file.size;
-            const maxSize = 100 * 1024 * 1024; // 100MB limit
-            
-            if (fileSize > maxSize) {
-                showError(`File "${file.name}" is too large. Maximum size is 100MB.`);
-                return false;
+    // Initialize OCR status
+    checkOCRStatus();
+
+    // Check OCR availability
+    async function checkOCRStatus() {
+        try {
+            const response = await fetch('/api/ocr_status');
+            if (response.ok) {
+                const ocrStatus = await response.json();
+                updateOCRIndicators(ocrStatus);
             }
+        } catch (error) {
+            console.log('OCR status check failed:', error);
         }
-        
-        return isValid;
     }
 
-    // Enhanced subscription check with Q&A features
+    // Update OCR indicators based on system status
+    function updateOCRIndicators(ocrStatus) {
+        const gpuBadge = document.getElementById('gpu-status-badge');
+        const ocrIndicator = document.querySelector('.ocr-indicator-badge');
+        
+        if (ocrStatus.gpu_acceleration) {
+            gpuBadge.textContent = '🚀 GPU Accelerated';
+            gpuBadge.style.display = 'inline-flex';
+        } else {
+            gpuBadge.textContent = '💻 CPU Processing';
+            gpuBadge.style.background = 'linear-gradient(135deg, #6b7280, #4b5563)';
+        }
+        
+        if (ocrStatus.ocr_enabled) {
+            ocrIndicator.innerHTML = '<i class="bi bi-camera"></i> OCR Ready';
+        } else {
+            ocrIndicator.innerHTML = '<i class="bi bi-exclamation-triangle"></i> OCR Unavailable';
+            ocrIndicator.style.background = 'linear-gradient(135deg, #f59e0b, #d97706)';
+        }
+    }
+
+    // Subscription check
     async function checkSubscriptionStatus() {
-        try {
-            const response = await fetch('/api/check_subscription', {
-                method: 'GET',
-                credentials: 'include',
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            if (response.status === 401) {
-                return { is_logged_in: false, allow_uploads: false, redirect_to_login: true };
+    try {
+        console.log('Checking subscription status...');
+        const response = await fetch('/api/check_subscription', {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
             }
+        });
 
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}`);
-            }
+        console.log('Subscription check response status:', response.status);
 
+        if (response.status === 401) {
+            console.log('User not logged in');
+            return { is_logged_in: false, allow_uploads: false, redirect_to_login: true };
+        }
+
+        if (response.status === 403) {
+            console.log('User logged in but no subscription');
             const data = await response.json();
-            return data;
-        } catch (error) {
-            console.error('Subscription check failed:', error);
             return { 
-                is_logged_in: false, 
+                is_logged_in: true, 
                 allow_uploads: false, 
-                error: error.message,
-                subscription_required: true
+                ...data 
             };
         }
+
+        if (!response.ok) {
+            console.error('Subscription check failed with status:', response.status);
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        console.log('Subscription status:', data);
+        
+        // Ensure allow_uploads is explicitly checked
+        if (data.allow_uploads !== true) {
+            console.log('Uploads not allowed, showing subscription modal');
+            return {
+                ...data,
+                allow_uploads: false
+            };
+        }
+
+        return data;
+    } catch (error) {
+        console.error('Subscription check failed:', error);
+        // On error, deny uploads to be safe
+        return { 
+            is_logged_in: false, 
+            allow_uploads: false, 
+            error: error.message,
+            subscription_required: true
+        };
+    }
+}
+
+    // Enhanced file validation with OCR support
+    function isValidFile(file) {
+        const fileName = file.name.toLowerCase();
+        return ALLOWED_EXTENSIONS.some(ext => fileName.endsWith(ext));
     }
 
-    // Enhanced file handling for Q&A
-    async function handleFiles(files) {
-        const validFiles = Array.from(files).filter(isValidFile);
+    function isOCRFile(file) {
+        const fileName = file.name.toLowerCase();
+        return OCR_EXTENSIONS.some(ext => fileName.endsWith(ext));
+    }
 
-        if (validFiles.length === 0) {
-            showError('No valid files found. Supported types: Documents, Images (OCR), and Archives');
+    function getFileType(file) {
+        if (isOCRFile(file)) return 'ocr';
+        if (file.name.toLowerCase().endsWith('.pdf')) return 'pdf'; // May need OCR
+        return 'document';
+    }
+
+    // Handle selected files with OCR analysis
+    async function handleFiles(files) {
+    const validFiles = Array.from(files).filter(isValidFile);
+
+    if (validFiles.length === 0) {
+        showError('No valid files found. Supported types: ' + ALLOWED_EXTENSIONS.join(', '));
+        return;
+    }
+
+    // Show loading state during subscription check
+    const originalText = progressText.textContent;
+    progressText.textContent = '🔍 Verifying subscription...';
+    progressContainer.style.display = 'block';
+
+    try {
+        console.log('Starting subscription check for upload...');
+        const status = await checkSubscriptionStatus();
+        
+        // Hide loading state
+        progressContainer.style.display = 'none';
+        progressText.textContent = originalText;
+
+        // Handle login requirement
+        if (!status.is_logged_in || status.redirect_to_login) {
+            console.log('Redirecting to login');
+            window.location.href = `/login?next=${encodeURIComponent(window.location.pathname)}`;
             return;
         }
 
-        // Check for mixed file types and show appropriate message
-        const hasImages = validFiles.some(f => /\.(jpg|jpeg|png|tiff|bmp|webp)$/i.test(f.name));
-        const hasDocuments = validFiles.some(f => /\.(pdf|docx|txt|md)$/i.test(f.name));
+        // Strict subscription check - must explicitly allow uploads
+        if (status.allow_uploads !== true) {
+            console.log('Showing subscription modal - uploads not allowed');
+            showSubscriptionModal(status);
+            return;
+        }
+
+        // Additional safety check
+        if (status.subscription_required === true && !status.has_active_subscription) {
+            console.log('Subscription required but not active');
+            showSubscriptionModal(status);
+            return;
+        }
+
+        console.log('Subscription check passed, proceeding with upload');
         
-        if (hasImages && hasDocuments) {
-            showInfo('Processing mixed content: Documents and images with OCR extraction');
-        } else if (hasImages) {
-            showInfo('Processing images with OCR text extraction');
-        }
+        // Analyze file types
+        const ocrFiles = validFiles.filter(isOCRFile);
+        const documentFiles = validFiles.filter(f => !isOCRFile(f));
+        
+        console.log(`File analysis: ${documentFiles.length} documents, ${ocrFiles.length} images for OCR`);
 
-        // Check subscription
-        const originalText = progressText.textContent;
-        progressText.textContent = '🔍 Verifying Q&A system access...';
-        progressContainer.style.display = 'block';
+        // Proceed with upload
+        uploadFiles(validFiles);
 
-        try {
-            const status = await checkSubscriptionStatus();
-            
-            progressContainer.style.display = 'none';
-            progressText.textContent = originalText;
-
-            if (!status.is_logged_in || status.redirect_to_login) {
-                window.location.href = `/login?next=${encodeURIComponent(window.location.pathname)}`;
-                return;
-            }
-
-            if (status.allow_uploads !== true) {
-                showSubscriptionModal(status);
-                return;
-            }
-
-            // Proceed with Q&A optimized upload
-            uploadFiles(validFiles);
-
-        } catch (error) {
-            progressContainer.style.display = 'none';
-            progressText.textContent = originalText;
-            showError('Unable to verify Q&A system access. Please refresh and try again.');
-        }
+    } catch (error) {
+        console.error('Error during subscription check:', error);
+        progressContainer.style.display = 'none';
+        progressText.textContent = originalText;
+        
+        // Show error and prevent upload
+        showError('Unable to verify subscription status. Please refresh and try again.');
+        return;
     }
+}
 
-    // Enhanced subscription modal for Q&A features
+
+
+    // Show subscription modal
     function showSubscriptionModal(status) {
-        const modalMessage = document.getElementById('modalMessage');
-        const subscriptionInfo = document.getElementById('subscriptionInfo');
-        const startTrialBtn = document.getElementById('startTrialBtn');
+    console.log('Showing subscription modal with status:', status);
+    
+    const modalMessage = document.getElementById('modalMessage');
+    const subscriptionInfo = document.getElementById('subscriptionInfo');
+    const startTrialBtn = document.getElementById('startTrialBtn');
 
-        let message = 'Q&A system access requires an active subscription.';
-        let infoContent = '';
+    let message = 'A subscription is required to upload documents.';
+    let infoContent = '';
 
-        if (status.has_trial_available === true) {
-            message = 'Start your free trial for unlimited Q&A document processing!';
-            infoContent = `
-                <h4><i class="bi bi-chat-dots"></i> Q&A System Trial Benefits:</h4>
-                <p>• Ask natural language questions about your documents</p>
-                <p>• Keyword search with exact phrase matching</p>
-                <p>• Accurate page references for all answers</p>
-                <p>• OCR support for images and scanned documents</p>
-                <p>• GPU-accelerated processing for 14 days</p>
-                <p>• Gemini AI-powered comprehensive analysis</p>
-            `;
-            startTrialBtn.style.display = 'inline-flex';
-        } else {
-            infoContent = `
-                <h4><i class="bi bi-chat-dots"></i> Q&A System Features</h4>
-                <p>DocumentIQ's enhanced Q&A system requires a subscription:</p>
-                <p>• Natural language question answering</p>
-                <p>• Intelligent keyword search capabilities</p>
-                <p>• Perfect page number accuracy</p>
-                <p>• OCR text extraction from images</p>
-                <p>• Advanced AI-powered document analysis</p>
-            `;
-            startTrialBtn.style.display = 'none';
-        }
-
-        modalMessage.textContent = message;
-        subscriptionInfo.innerHTML = infoContent;
-        modal.style.display = 'block';
+    // Check if user has trial available
+    if (status.has_trial_available === true) {
+        message = 'Start your free 14-day trial to upload documents with advanced OCR support!';
+        infoContent = `
+            <h4><i class="bi bi-gift"></i> Free Trial Benefits:</h4>
+            <p>• Unlimited document uploads for 14 days</p>
+            <p>• Advanced OCR processing for images and scanned PDFs</p>
+            <p>• GPU-accelerated processing (when available)</p>
+            <p>• All Professional features included</p>
+            <p>• Comprehensive AI-powered search and analysis</p>
+            <p style="margin-top: 15px; font-size: 0.9em; color: var(--light-text);">
+                <i class="bi bi-info-circle"></i> No credit card required during trial
+            </p>
+        `;
+        startTrialBtn.style.display = 'inline-flex';
+    } else if (status.trial_expired === true) {
+        message = 'Your free trial has expired. Upgrade to continue uploading documents.';
+        infoContent = `
+            <h4><i class="bi bi-clock-history"></i> Trial Expired</h4>
+            <p>Your 14-day free trial has ended. Upgrade to a paid plan to continue using Document IQ.</p>
+            <p>• Resume unlimited document uploads</p>
+            <p>• Keep all your processed documents</p>
+            <p>• Continue with OCR and AI analysis</p>
+        `;
+        startTrialBtn.style.display = 'none';
+    } else {
+        message = 'A subscription is required to upload and process documents.';
+        infoContent = `
+            <h4><i class="bi bi-star"></i> Subscription Required</h4>
+            <p>Document IQ requires an active subscription to upload and process documents.</p>
+            <p>• Unlimited document uploads</p>
+            <p>• Advanced OCR for images and scanned documents</p>
+            <p>• AI-powered search and analysis</p>
+            <p>• Secure cloud processing</p>
+        `;
+        startTrialBtn.style.display = 'none';
     }
 
-    // Enhanced phase management
-    function updateProcessingPhase(phase, status = 'active') {
-        const phases = document.querySelectorAll('.phase-item');
-        const phaseMap = {
-            'validation': 0,
-            'processing': 1,
-            'indexing': 2
+    modalMessage.textContent = message;
+    subscriptionInfo.innerHTML = infoContent;
+    modal.style.display = 'block';
+    
+    // Focus trap for accessibility
+    modal.focus();
+}
+
+    // Phase indicator helper functions
+    function showPhaseIndicator(phase, label) {
+        const phaseIndicator = document.getElementById('phase-indicator');
+        if (!phaseIndicator) return;
+        
+        // Remove all phase classes
+        phaseIndicator.classList.remove('upload', 'processing', 'ocr', 'completed');
+        
+        // Add new phase class
+        phaseIndicator.classList.add(phase);
+        
+        // Update label and icon
+        const phaseIcons = {
+            'upload': '📤',
+            'processing': '⚙️',
+            'ocr': '🤖',
+            'completed': '✅'
         };
         
-        const phaseIndex = phaseMap[phase];
-        if (phaseIndex !== undefined && phases[phaseIndex]) {
-            const phaseItem = phases[phaseIndex];
-            const statusElement = phaseItem.querySelector('.phase-status');
-            
-            // Reset all phases
-            phases.forEach((item, index) => {
-                item.classList.remove('active', 'completed');
-                const status = item.querySelector('.phase-status');
-                if (index < phaseIndex) {
-                    item.classList.add('completed');
-                    status.textContent = '✅';
-                } else if (index > phaseIndex) {
-                    status.textContent = '⏳';
-                }
-            });
-            
-            // Set current phase
-            if (status === 'active') {
-                phaseItem.classList.add('active');
-                statusElement.textContent = '⚙️';
-            } else if (status === 'completed') {
-                phaseItem.classList.add('completed');
-                statusElement.textContent = '✅';
-            }
+        const phaseLabels = {
+            'upload': 'Upload',
+            'processing': 'Processing',
+            'ocr': 'OCR Processing',
+            'completed': 'Completed'
+        };
+        
+        phaseIndicator.innerHTML = `${phaseIcons[phase]} ${label || phaseLabels[phase]}`;
+        phaseIndicator.style.display = 'inline-flex';
+    }
+
+    function hidePhaseIndicator() {
+        const phaseIndicator = document.getElementById('phase-indicator');
+        if (phaseIndicator) {
+            phaseIndicator.style.display = 'none';
         }
     }
 
-    // Enhanced progress updates
+    // Enhanced progress update function with phase support
     function updateProgress(percent, message, phase = 'processing') {
+        const now = Date.now();
+        
+        // Throttle updates
+        if (now - lastProgressUpdate < MIN_PROGRESS_UPDATE_INTERVAL && percent < 100) {
+            return;
+        }
+        lastProgressUpdate = now;
+        
+        // Update progress bar with phase-specific styling
         progressBar.style.width = percent + '%';
         progressPercent.textContent = percent + '%';
         
+        // Update progress bar class based on phase
         const progressBarContainer = document.querySelector('.progress-bar');
         
         if (phase === 'upload') {
-            progressBarContainer.classList.remove('processing', 'completed');
+            progressBarContainer.classList.remove('processing', 'ocr-processing', 'completed');
             progressBarContainer.classList.add('uploading');
+            progressText.classList.remove('ocr-processing', 'processing');
+            progressText.classList.add('uploading');
             showPhaseIndicator('upload');
-            updateProcessingPhase('validation', 'active');
         } else if (phase === 'processing') {
             progressBarContainer.classList.remove('uploading', 'completed');
-            progressBarContainer.classList.add('processing');
-            showPhaseIndicator('processing');
-            updateProcessingPhase('processing', 'active');
+            progressText.classList.remove('uploading');
+            
+            if (message && message.includes('OCR')) {
+                progressBarContainer.classList.add('ocr-processing');
+                progressText.classList.add('ocr-processing');
+                showPhaseIndicator('ocr');
+            } else {
+                progressBarContainer.classList.remove('ocr-processing');
+                progressBarContainer.classList.add('processing');
+                progressText.classList.remove('ocr-processing');
+                progressText.classList.add('processing');
+                showPhaseIndicator('processing');
+            }
         } else if (phase === 'completed') {
-            progressBarContainer.classList.remove('uploading', 'processing');
+            progressBarContainer.classList.remove('uploading', 'processing', 'ocr-processing');
             progressBarContainer.classList.add('completed');
+            progressText.classList.remove('uploading', 'processing', 'ocr-processing');
             showPhaseIndicator('completed');
-            updateProcessingPhase('indexing', 'completed');
         }
         
+        // Update message
         if (message) {
             progressText.textContent = message;
         }
+    }
+
+    // Enhanced file upload function with separate 0-100% phases
+    async function uploadFiles(files) {
+        console.log('Starting OCR-enhanced streaming upload of', files.length, 'files');
+
+        // Reset statistics
+        uploadStartTime = Date.now();
+        bytesUploaded = 0;
+        totalBytes = files.reduce((sum, file) => sum + file.size, 0);
+        filesCompleted = 0;
+        filesFailed = 0;
+        ocrFilesProcessed = 0;
+        lastProgressUpdate = 0;
         
-        // Show processing phases during upload
-        if (phase !== 'completed' && processingPhases) {
-            processingPhases.style.display = 'block';
+        // Add phase tracking
+        let currentPhase = 'upload'; // 'upload' or 'processing'
+        let uploadCompleted = false;
+        
+        // Clear UI
+        fileList.innerHTML = '';
+        errorMessage.style.display = 'none';
+        hideOCRProgress();
+        hideFileTypeAnalysis();
+        
+        // Show progress UI
+        progressContainer.style.display = 'block';
+        progressBar.style.width = '0%';
+        progressPercent.textContent = '0%';
+        progressText.textContent = '📤 Starting upload...';
+        document.querySelector('.processing-summary').style.display = 'block';
+        updateProcessingSummary(files.length, 0, 0, 0);
+        
+        // Update progress bar styling for upload phase
+        const progressBarContainer = document.querySelector('.progress-bar');
+        progressBarContainer.classList.remove('processing', 'ocr-processing', 'completed');
+        progressBarContainer.classList.add('uploading');
+        
+        // Analyze file types
+        const ocrFiles = files.filter(isOCRFile);
+        const documentFiles = files.filter(f => !isOCRFile(f));
+        
+        if (ocrFiles.length > 0) {
+            showFileTypeAnalysis(documentFiles.length, ocrFiles.length);
+        }
+        
+        // Create file previews with type indicators
+        createEnhancedFilePreviewList(files);
+        
+        try {
+            // Create form data
+            const formData = new FormData();
+            files.forEach(file => formData.append('files', file));
+            
+            // Start upload
+            const xhr = new XMLHttpRequest();
+            
+            // Client-side upload tracking (0-100% for upload phase)
+            xhr.upload.addEventListener('progress', (event) => {
+                if (event.lengthComputable && !uploadCompleted) {
+                    const uploadedMB = event.loaded / (1024 * 1024);
+                    const totalMB = event.total / (1024 * 1024);
+                    const percent = Math.round((event.loaded / event.total) * 100);
+                    
+                    updateProgress(
+                        percent, 
+                        `📤 Uploading files... (${formatSize(uploadedMB)}/${formatSize(totalMB)})`,
+                        'upload'
+                    );
+                    
+                    // Update speed for upload
+                    const elapsed = (Date.now() - uploadStartTime) / 1000;
+                    if (elapsed > 0) {
+                        const speed = uploadedMB / elapsed;
+                        progressSpeed.textContent = `Upload Speed: ${speed.toFixed(1)} MB/s`;
+                        
+                        if (speed > 0) {
+                            const remaining = totalMB - uploadedMB;
+                            const eta = remaining / speed;
+                            progressETA.textContent = `ETA: ${formatTime(eta)}`;
+                        }
+                    }
+                }
+            });
+            
+            // Handle server-sent events (processing phase 0-100%)
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 3) { // Loading state (partial data received)
+                    try {
+                        const responseText = xhr.responseText;
+                        const events = responseText.split('\n').filter(line => line.startsWith('data: '));
+                        
+                        if (events.length > 0) {
+                            const lastEvent = events[events.length - 1].substring(6);
+                            const data = JSON.parse(lastEvent);
+                            
+                            // Mark upload as completed when we start receiving processing events
+                            if (!uploadCompleted && (data.status === 'extracting' || data.status === 'processing_file' || data.status === 'files_ready')) {
+                                uploadCompleted = true;
+                                currentPhase = 'processing';
+                                
+                                // Show upload completion
+                                updateProgress(100, '✅ Upload completed! Starting processing...', 'upload');
+                                
+                                // Brief pause then switch to processing phase
+                                setTimeout(() => {
+                                    const progressBarContainer = document.querySelector('.progress-bar');
+                                    progressBarContainer.classList.remove('uploading');
+                                    progressBarContainer.classList.add('processing');
+                                    
+                                    // Reset progress for processing phase
+                                    updateProgress(0, '🔄 Initializing processing...', 'processing');
+                                }, 500);
+                            }
+                            
+                            handleEnhancedStreamingProgress(data, currentPhase, uploadCompleted);
+                        }
+                    } catch (e) {
+                        console.log('Partial data parsing error', e);
+                    }
+                }
+            };
+            
+            // Handle completion
+            xhr.onload = function() {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    try {
+                        uploadCompleted = true;
+                        currentPhase = 'processing';
+                        
+                        // Process all events in final response
+                        const events = xhr.responseText.split('\n')
+                            .filter(line => line.startsWith('data: '))
+                            .map(line => JSON.parse(line.substring(6)));
+                        
+                        // Process all events
+                        events.forEach(event => handleEnhancedStreamingProgress(event, currentPhase, uploadCompleted));
+                        
+                        // Ensure completion is handled
+                        if (!events.some(e => e.status === 'completed')) {
+                            handleUploadCompleted({
+                                message: 'Processing completed',
+                                processed_count: filesCompleted,
+                                processing_summary: {
+                                    images_ocr_processed: ocrFilesProcessed
+                                }
+                            });
+                        }
+                    } catch (e) {
+                        handleUploadCompleted({
+                            message: 'Processing completed',
+                            processed_count: filesCompleted,
+                            processing_summary: {
+                                images_ocr_processed: ocrFilesProcessed
+                            }
+                        });
+                    }
+                } else {
+                    handleUploadError({message: `Server error: ${xhr.status}`});
+                }
+            };
+            
+            // Handle errors
+            xhr.onerror = function() {
+                handleUploadError({message: 'Network error - please check your connection'});
+            };
+            
+            // Start request
+            xhr.open('POST', '/upload');
+            xhr.setRequestHeader('Accept', 'text/event-stream');
+            xhr.send(formData);
+            
+        } catch (error) {
+            console.error('Upload error:', error);
+            handleUploadError({message: 'Upload failed: ' + error.message});
         }
     }
 
-    // Rest of the JavaScript functions remain the same but with enhanced Q&A messaging...
-    // [Previous JavaScript functions would continue here with Q&A enhancements]
-    
-    // Enhanced success message for Q&A
+    // Enhanced streaming progress handler with phase support
+    function handleEnhancedStreamingProgress(data, currentPhase = 'processing', uploadCompleted = true) {
+        // Only handle processing progress if upload is completed
+        if (!uploadCompleted && data.status !== 'error') {
+            return;
+        }
+        
+        // Calculate processing progress percentage (0-100%)
+        let processingPercent = 0;
+        
+        if (data.progress && data.progress.total > 0) {
+            processingPercent = Math.round((data.progress.current / data.progress.total) * 100);
+        } else if (data.percent !== undefined) {
+            // Use server-provided percentage directly for processing
+            processingPercent = data.percent;
+        }
+        
+        // Handle specific OCR and processing statuses
+        switch (data.status) {
+            case 'extracting':
+                // Extraction phase (0-20% of processing)
+                const extractPercent = data.progress ? Math.round((data.progress.current / data.progress.total) * 20) : 5;
+                updateProgress(extractPercent, data.message || '📦 Extracting files...', 'processing');
+                break;
+                
+            case 'files_ready':
+                handleFilesReady(data);
+                updateProgress(20, '✅ Files extracted! Preparing for processing...', 'processing');
+                break;
+                
+            case 'processing_file':
+                // File processing phase (20-95% of processing)
+                if (data.progress) {
+                    const fileProgressPercent = 20 + Math.round((data.progress.current / data.progress.total) * 75);
+                    updateProgress(fileProgressPercent, data.message, 'processing');
+                }
+                handleFileProcessing(data);
+                break;
+                
+            case 'file_analysis':
+                handleFileAnalysis(data);
+                break;
+                
+            case 'processing_file_start':
+                handleFileProcessingStart(data);
+                break;
+                
+            case 'processing_detail':
+                handleProcessingDetail(data);
+                break;
+                
+            case 'file_completed':
+                handleFileCompleted(data);
+                // Update progress based on completion
+                if (data.progress) {
+                    const completionPercent = 20 + Math.round((data.progress.current / data.progress.total) * 75);
+                    updateProgress(completionPercent, data.message, 'processing');
+                }
+                break;
+                
+            case 'file_error':
+                handleFileError(data);
+                break;
+                
+            case 'completed':
+                updateProgress(100, data.message || '✅ Processing completed!', 'processing');
+                handleUploadCompleted(data);
+                break;
+                
+            case 'error':
+                handleUploadError(data);
+                break;
+                
+            default:
+                // Handle legacy statuses or direct percentage updates
+                if (processingPercent > 0) {
+                    updateProgress(processingPercent, data.message, 'processing');
+                } else if (data.message) {
+                    progressText.textContent = data.message;
+                }
+                break;
+        }
+        
+        // Update speed/ETA for processing phase
+        if (currentPhase === 'processing') {
+            updateProcessingSpeedAndETA(data);
+        }
+    }
+
+    // Update speed and ETA for processing phase
+    function updateProcessingSpeedAndETA(data) {
+        if (!uploadStartTime) return;
+        
+        const elapsed = (Date.now() - uploadStartTime) / 1000;
+        
+        if (data.processed_files && data.total_files && elapsed > 0) {
+            const filesPerSecond = data.processed_files / elapsed;
+            const remainingFiles = data.total_files - data.processed_files;
+            
+            if (filesPerSecond > 0) {
+                progressSpeed.textContent = `Processing: ${filesPerSecond.toFixed(1)} files/s`;
+                
+                const eta = remainingFiles / filesPerSecond;
+                progressETA.textContent = `ETA: ${formatTime(eta)}`;
+            }
+        } else if (data.processed_size_mb && elapsed > 0) {
+            const speed = data.processed_size_mb / elapsed;
+            progressSpeed.textContent = `Processing: ${speed.toFixed(1)} MB/s`;
+            
+            if (data.total_extracted_size_mb && speed > 0) {
+                const remaining = data.total_extracted_size_mb - data.processed_size_mb;
+                const eta = remaining / speed;
+                progressETA.textContent = `ETA: ${formatTime(eta)}`;
+            }
+        }
+    }
+
+    // Handle file analysis results
+    function handleFileAnalysis(data) {
+        if (data.files_analysis) {
+            const analysis = data.files_analysis;
+            showFileTypeAnalysis(analysis.document_files, analysis.ocr_files);
+            
+            // Show OCR capabilities message
+            if (analysis.ocr_files > 0) {
+                const ocrMessage = `📊 Found ${analysis.ocr_files} images for OCR processing`;
+                progressText.textContent = ocrMessage;
+            }
+        }
+    }
+
+    // Handle file processing start with OCR detection
+    function handleFileProcessingStart(data) {
+        if (data.current_file) {
+            const isOCR = data.requires_ocr || false;
+            updateFileStatus(data.current_file, isOCR ? 'ocr-processing' : 'processing', isOCR ? '🤖' : '⚙️');
+            
+            if (isOCR) {
+                showOCRProgress();
+                ocrStatusText.textContent = 'Preparing OCR analysis...';
+                ocrMethod.textContent = 'AI OCR';
+                uploadArea.classList.add('ocr-processing');
+            } else {
+                hideOCRProgress();
+                uploadArea.classList.remove('ocr-processing');
+            }
+        }
+    }
+
+    // Handle detailed processing updates
+    function handleProcessingDetail(data) {
+        const isOCR = data.requires_ocr || false;
+        
+        if (isOCR && data.detail_status) {
+            updateOCRStatus(data.detail_status, data.detail_message);
+            
+            // Handle page progress for PDF OCR
+            if (data.ocr_page_progress) {
+                updatePageProgress(data.ocr_page_progress);
+            }
+        }
+        
+        if (data.detail_message) {
+            progressText.textContent = data.detail_message;
+        }
+    }
+
+    // Update OCR status display
+    function updateOCRStatus(status, message) {
+        if (!ocrProgressDetails || ocrProgressDetails.style.display === 'none') {
+            showOCRProgress();
+        }
+        
+        const statusMap = {
+            'ocr_preprocessing': '🔄 Preprocessing image...',
+            'ocr_processing': '🤖 AI OCR analysis...',
+            'ocr_completed': '✅ OCR completed',
+            'pdf_converting': '🖼️ Converting PDF pages...',
+            'pdf_page_processing': '🔍 OCR processing page...',
+            'pdf_page_completed': '✅ Page completed'
+        };
+        
+        const statusText = statusMap[status] || message || 'OCR Processing...';
+        ocrStatusText.textContent = statusText;
+        
+        // Update OCR method
+        if (status === 'ocr_processing') {
+            ocrMethod.textContent = 'EasyOCR + GPU';
+        } else if (status === 'pdf_page_processing') {
+            ocrMethod.textContent = 'PDF OCR';
+        }
+    }
+
+    // Update page progress for PDF OCR
+    function updatePageProgress(pageProgressData) {
+        if (!pageProgress) return;
+        
+        pageProgress.style.display = 'block';
+        currentPage.textContent = pageProgressData.current;
+        totalPages.textContent = pageProgressData.total;
+        
+        const progressPercent = (pageProgressData.current / pageProgressData.total) * 100;
+        pageProgressFill.style.width = progressPercent + '%';
+    }
+
+    // Show/hide OCR progress details
+    function showOCRProgress() {
+        if (ocrProgressDetails) {
+            ocrProgressDetails.style.display = 'block';
+        }
+    }
+
+    function hideOCRProgress() {
+        if (ocrProgressDetails) {
+            ocrProgressDetails.style.display = 'none';
+        }
+        if (pageProgress) {
+            pageProgress.style.display = 'none';
+        }
+        uploadArea.classList.remove('ocr-processing');
+    }
+
+    // Show/hide file type analysis
+    function showFileTypeAnalysis(docCount, ocrCount) {
+        if (fileTypeAnalysis) {
+            documentCount.textContent = docCount;
+            imageCount.textContent = ocrCount;
+            fileTypeAnalysis.style.display = 'block';
+        }
+    }
+
+    function hideFileTypeAnalysis() {
+        if (fileTypeAnalysis) {
+            fileTypeAnalysis.style.display = 'none';
+        }
+    }
+
+    // Handle files ready for processing
+    function handleFilesReady(data) {
+        if (data.files && Array.isArray(data.files)) {
+            fileList.innerHTML = '';
+            data.files.forEach((file, index) => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item waiting';
+                fileItem.dataset.filename = file.name;
+                fileItem.dataset.fileIndex = index;
+                
+                const isOCR = isOCRFile(file);
+                const fileTypeIndicator = isOCR ? 
+                    '<div class="file-type-indicator ocr">OCR</div>' : 
+                    '<div class="file-type-indicator document">DOC</div>';
+                
+                fileItem.innerHTML = `
+                    <span class="file-icon">${getFileIcon(file.name)}</span>
+                    <div class="file-info">
+                        <span class="file-name">${file.name}</span>
+                        <span class="file-size">${formatFileSize(file.size)}</span>
+                        ${fileTypeIndicator}
+                    </div>
+                    <span class="file-progress"></span>
+                    <span class="file-status">⏳</span>
+                `;
+                fileList.appendChild(fileItem);
+            });
+        }
+    }
+
+    // Handle file processing (legacy support)
+    function handleFileProcessing(data) {
+        if (data.current_file) {
+            const isOCR = isOCRFile({name: data.current_file});
+            updateFileStatus(data.current_file, isOCR ? 'ocr-processing' : 'processing', isOCR ? '🤖' : '⚙️');
+        }
+        
+        if (data.message) {
+            progressText.textContent = data.message;
+        }
+    }
+
+    // Handle completed file with OCR tracking
+    function handleFileCompleted(data) {
+        if (data.file) {
+            if (data.success) {
+                updateFileStatus(data.file, 'completed', '✅');
+                filesCompleted++;
+                
+                // Track OCR files separately
+                if (data.processing_method === 'OCR' || data.file_type === '🖼️ OCR Image') {
+                    ocrFilesProcessed++;
+                }
+            } else {
+                updateFileStatus(data.file, 'error', '❌');
+                filesFailed++;
+            }
+            updateProcessingSummary(data.progress?.total || 0, filesCompleted, filesFailed, ocrFilesProcessed);
+        }
+        
+        // Hide OCR progress when file completes
+        hideOCRProgress();
+    }
+
+    // Handle file error
+    function handleFileError(data) {
+        if (data.file) {
+            updateFileStatus(data.file, 'error', '❌');
+            filesFailed++;
+            updateProcessingSummary(data.progress?.total || 0, filesCompleted, filesFailed, ocrFilesProcessed);
+        }
+        hideOCRProgress();
+    }
+
+    // Handle upload completion with final progress
+    function handleUploadCompleted(data) {
+        // Ensure progress is at 100% with completed phase
+        updateProgress(100, data.message || '✅ Processing completed!', 'completed');
+        
+        // Use server-provided counts
+        const processedCount = data.processed_count || filesCompleted;
+        const ocrCount = data.processing_summary?.images_ocr_processed || ocrFilesProcessed;
+        
+        // Show enhanced success message
+        let successMsg = `Successfully processed ${processedCount} files`;
+        if (ocrCount > 0) {
+            successMsg += ` (${ocrCount} with OCR)`;
+        }
+        if (filesFailed > 0) {
+            successMsg += ` • ${filesFailed} failed`;
+        }
+        
+        showSuccess(successMsg);
+        hideOCRProgress();
+        hideFileTypeAnalysis();
+        uploadArea.classList.remove('ocr-processing');
+        
+        // Update final summary
+        updateProcessingSummary(processedCount + filesFailed, processedCount, filesFailed, ocrCount);
+        
+        // Hide phase indicator after a delay
+        setTimeout(() => {
+            hidePhaseIndicator();
+        }, 2000);
+        
+        // Redirect to chat after delay
+        setTimeout(() => {
+            window.location.href = '/new_chat';
+        }, 3000);
+    }
+
+    // Handle upload error
+    function handleUploadError(data) {
+        showError(data.message || 'Upload failed');
+        markAllFilesFailed();
+        progressBar.style.width = '0%';
+        progressPercent.textContent = '0%';
+        hideOCRProgress();
+        hideFileTypeAnalysis();
+        hidePhaseIndicator();
+        uploadArea.classList.remove('ocr-processing');
+    }
+
+    // Create enhanced file preview list with type indicators
+    function createEnhancedFilePreviewList(files) {
+        fileList.innerHTML = '';
+        files.forEach((file, index) => {
+            const fileItem = document.createElement('div');
+            fileItem.className = 'file-item waiting';
+            fileItem.dataset.filename = file.name;
+            fileItem.dataset.fileIndex = index;
+            
+            // Enhanced file type detection
+            const isOCR = isOCRFile(file);
+            const fileType = getFileType(file);
+            const icon = getFileIcon(file.name);
+            
+            // File type indicator
+            const typeIndicator = isOCR ? 
+                '<div class="file-type-indicator ocr">OCR</div>' : 
+                '<div class="file-type-indicator document">DOC</div>';
+            
+            fileItem.innerHTML = `
+                <span class="file-icon">${icon}</span>
+                <div class="file-info">
+                    <span class="file-name">${file.name}</span>
+                    <span class="file-size">${formatFileSize(file.size)}</span>
+                    ${typeIndicator}
+                </div>
+                <span class="file-progress"></span>
+                <span class="file-status">⏳</span>
+            `;
+            
+            // Animate appearance
+            fileItem.style.opacity = '0';
+            fileItem.style.transform = 'translateY(10px)';
+            fileList.appendChild(fileItem);
+            
+            setTimeout(() => {
+                fileItem.style.transition = 'all 0.3s ease';
+                fileItem.style.opacity = '1';
+                fileItem.style.transform = 'translateY(0)';
+            }, index * 50);
+        });
+    }
+
+    // Get appropriate file icon
+    function getFileIcon(filename) {
+        const extension = filename.split('.').pop().toLowerCase();
+        const iconMap = {
+            'pdf': '📕',
+            'docx': '📘', 'doc': '📘',
+            'txt': '📝', 'md': '📝',
+            'csv': '📊', 'xlsx': '📊', 'xls': '📊',
+            'zip': '📦',
+            'jpg': '🖼️', 'jpeg': '🖼️', 'png': '🖼️', 
+            'tiff': '🖼️', 'tif': '🖼️', 'bmp': '🖼️',
+            'gif': '🖼️', 'webp': '🖼️'
+        };
+        return iconMap[extension] || '📄';
+    }
+
+    // Update file status in UI
+    function updateFileStatus(filename, status, icon) {
+        const fileItem = document.querySelector(`[data-filename="${filename}"]`);
+        if (!fileItem) return;
+        
+        fileItem.className = `file-item ${status}`;
+        const statusElement = fileItem.querySelector('.file-status');
+        if (statusElement) statusElement.textContent = icon;
+    }
+
+    // Update processing summary with OCR count
+    function updateProcessingSummary(total, completed, failed, ocrProcessed) {
+        document.getElementById('total-files').textContent = total;
+        document.getElementById('processed-files').textContent = completed;
+        document.getElementById('failed-files').textContent = failed;
+        document.getElementById('ocr-processed-files').textContent = ocrProcessed || 0;
+    }
+
+    // Format file size
+    function formatFileSize(bytes) {
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+        return (bytes / 1048576).toFixed(1) + ' MB';
+    }
+
+    // Format size from MB
+    function formatSize(mb) {
+        if (mb < 0.1) return (mb * 1024).toFixed(0) + ' KB';
+        if (mb < 1024) return mb.toFixed(1) + ' MB';
+        return (mb / 1024).toFixed(1) + ' GB';
+    }
+
+    // Format time
+    function formatTime(seconds) {
+        if (seconds < 60) return Math.round(seconds) + 's';
+        if (seconds < 3600) return Math.floor(seconds / 60) + 'm';
+        return Math.floor(seconds / 3600) + 'h ' + Math.floor((seconds % 3600) / 60) + 'm';
+    }
+
+    // Mark all files as failed
+    function markAllFilesFailed() {
+        const fileItems = document.querySelectorAll('.file-item');
+        fileItems.forEach(item => {
+            if (!item.classList.contains('completed')) {
+                item.className = 'file-item error';
+                const statusElement = item.querySelector('.file-status');
+                if (statusElement) statusElement.textContent = '❌';
+            }
+        });
+    }
+
+    // Show error message
+    function showError(message) {
+        errorMessage.textContent = message;
+        errorMessage.style.display = 'block';
+        setTimeout(() => errorMessage.style.display = 'none', 5000);
+    }
+
+    // Show success message
     function showSuccess(message) {
         const successDiv = document.createElement('div');
         successDiv.className = 'success-message';
-        successDiv.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <i class="bi bi-check-circle-fill"></i>
-                <div>
-                    <strong>${message}</strong>
-                    <br><small>Ready for Q&A! Ask questions or search keywords.</small>
-                </div>
-            </div>
-        `;
-        successDiv.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: linear-gradient(135deg, var(--qa-color), #059669);
-            color: white;
-            padding: 15px 25px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            z-index: 1000;
-            font-weight: 500;
-            animation: fadeIn 0.3s ease-out;
-            max-width: 350px;
-        `;
+        successDiv.textContent = message;
         document.body.appendChild(successDiv);
-        setTimeout(() => successDiv.remove(), 5000);
+        setTimeout(() => successDiv.remove(), 4000);
     }
-    
-    function showInfo(message) {
-        const infoDiv = document.createElement('div');
-        infoDiv.className = 'info-message';
-        infoDiv.innerHTML = `
-            <i class="bi bi-info-circle-fill"></i>
-            <span>${message}</span>
-        `;
-        infoDiv.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
-            color: white;
-            padding: 12px 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            z-index: 1000;
-            font-weight: 500;
-            animation: fadeIn 0.3s ease-out;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        `;
-        document.body.appendChild(infoDiv);
-        setTimeout(() => infoDiv.remove(), 3000);
-    }
-    
-    // Enhanced event listeners and remaining functionality...
-    // [Rest of the JavaScript implementation would continue here]
-    
-    // Example query click handlers
-    document.querySelectorAll('.example-query').forEach(query => {
-        query.addEventListener('click', () => {
-            // Store the query for later use in chat
-            sessionStorage.setItem('pendingQuery', query.textContent);
-            showInfo(`Query "${query.textContent}" saved. Upload documents first, then ask in chat.`);
-        });
-    });
-    
-    // Initial setup and event binding
+
+    // Event listeners
     uploadArea.addEventListener('click', () => fileInput.click());
     browseBtn.addEventListener('click', () => fileInput.click());
     fileInput.addEventListener('change', (e) => {
         if (e.target.files.length > 0) handleFiles(e.target.files);
     });
 
-    // Enhanced drag and drop with file type detection
+    // Enhanced drag and drop with OCR detection
     uploadArea.addEventListener('dragover', (e) => {
         e.preventDefault();
         uploadArea.classList.add('active');
+        
+        // Check for image files in drag
+        const files = Array.from(e.dataTransfer.files || []);
+        const hasOCRFiles = files.some(isOCRFile);
+        if (hasOCRFiles) {
+            uploadArea.classList.add('ocr-processing');
+        }
     });
 
     uploadArea.addEventListener('dragleave', () => {
-        uploadArea.classList.remove('active');
+        uploadArea.classList.remove('active', 'ocr-processing');
     });
 
     uploadArea.addEventListener('drop', (e) => {
         e.preventDefault();
-        uploadArea.classList.remove('active');
+        uploadArea.classList.remove('active', 'ocr-processing');
         if (e.dataTransfer.files.length > 0) {
             handleFiles(e.dataTransfer.files);
         }
     });
-    
-    // Initial Q&A system status check
+
+    // Modal handlers
+    document.querySelector('.close-modal').addEventListener('click', closeSubscriptionModal);
+    window.addEventListener('click', (e) => {
+        if (e.target === modal) closeSubscriptionModal();
+    });
+
+    // Modal functions
+    function closeSubscriptionModal() {
+        modal.style.display = 'none';
+
+    }
+async function startFreeTrial() {
+    const originalContent = startTrialBtn.innerHTML;
+    startTrialBtn.disabled = true;
+    startTrialBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Starting Trial...';
+
+    try {
+        console.log('Starting free trial...');
+        const response = await fetch('/start_trial', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include'
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || `HTTP ${response.status}`);
+        }
+
+        const result = await response.json();
+        if (result.success) {
+            closeSubscriptionModal();
+            showSuccess('Free trial started! You can now upload documents.');
+            setTimeout(() => window.location.reload(), 1500);
+        } else {
+            throw new Error(result.error || 'Failed to start trial');
+        }
+    } catch (error) {
+        console.error('Failed to start trial:', error);
+        showError('Failed to start trial: ' + error.message);
+    } finally {
+        startTrialBtn.disabled = false;
+        startTrialBtn.innerHTML = originalContent;
+    }
+}
+
+function goToPricing() {
+    window.location.href = '/pricing';
+}
     checkSubscriptionStatus().then(status => {
-        console.log('Q&A system status:', status);
-        if (status.qa_system_enabled) {
-            console.log('✅ Q&A system ready');
+        console.log('Initial subscription status:', status);
+        
+        // You can update UI elements based on subscription status here
+        if (!status.allow_uploads) {
+            // Maybe show a notice or update UI to indicate subscription is required
+            const uploadCard = document.querySelector('.upload-card');
+            if (uploadCard && !status.is_logged_in) {
+                // Add a subtle indicator that login/subscription is required
+                uploadCard.style.opacity = '0.8';
+            }
         }
     }).catch(error => {
-        console.error('Q&A system check failed:', error);
+        console.error('Initial subscription check failed:', error);
     });
+
+    closeModalBtn.addEventListener('click', closeSubscriptionModal);
+startTrialBtn.addEventListener('click', startFreeTrial);
+goToPricingBtn.addEventListener('click', goToPricing);
+document.querySelector('.close-modal').addEventListener('click', closeSubscriptionModal);
+window.addEventListener('click', (e) => {
+    if (e.target === modal) closeSubscriptionModal();
+});
 });
 </script>
+
+<style>
+.success-message {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: linear-gradient(135deg, #4cc9f0, #38b000);
+    color: white;
+    padding: 15px 25px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    z-index: 1000;
+    font-weight: 600;
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+</style>
 
 {% endblock %}
