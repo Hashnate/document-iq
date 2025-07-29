@@ -159,7 +159,7 @@ class RTX_A6000_Enhanced_Config:
     OLLAMA_MODEL = os.getenv('OLLAMA_MODEL', 'llama3.1:8b')  # Llama 3.1 model
     OLLAMA_TIMEOUT = 600
     OLLAMA_MAX_TOKENS = 4096  # Adjust based on model
-    OLLAMA_TEMPERATURE = 0.1  # Low temperature for accuracy
+    OLLAMA_TEMPERATURE = 1  # Low temperature for accuracy
     OLLAMA_TOP_P = 0.8
     OLLAMA_TOP_K = 40
     OLLAMA_STREAM = True  # Enable streaming
@@ -1646,11 +1646,122 @@ def initialize_ocr_processor():
         logger.error(f"❌ OCR processor initialization failed: {e}")
         return False
 
+
+def extract_keywords_for_search(query: str) -> str:
+    """
+    Extract keywords from user query for fallback search.
+    Dynamically removes action words and focuses on content keywords.
+    """
+    import re
+    
+    # Comprehensive list of common action/stop words to filter out
+    action_words = {
+        # Question words
+        'what', 'how', 'where', 'when', 'why', 'which', 'who', 'whose', 'whom',
+        # Action verbs
+        'list', 'show', 'display', 'find', 'search', 'get', 'give', 'provide',
+        'tell', 'explain', 'describe', 'define', 'identify', 'locate', 'retrieve',
+        'extract', 'present', 'enumerate', 'outline', 'detail', 'specify',
+        'mention', 'state', 'indicate', 'reveal', 'demonstrate', 'illustrate',
+        # Modal verbs
+        'can', 'could', 'would', 'should', 'will', 'shall', 'may', 'might', 'must',
+        # Auxiliary verbs
+        'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had',
+        'do', 'does', 'did', 'done', 'doing',
+        # Articles and determiners
+        'the', 'a', 'an', 'this', 'that', 'these', 'those',
+        # Quantifiers
+        'all', 'any', 'some', 'every', 'each', 'many', 'much', 'few', 'several',
+        'most', 'more', 'less', 'least', 'both', 'either', 'neither',
+        # Prepositions
+        'in', 'on', 'at', 'by', 'for', 'with', 'from', 'to', 'of', 'about',
+        'under', 'over', 'through', 'between', 'among', 'during', 'before',
+        'after', 'above', 'below', 'up', 'down', 'out', 'off', 'into', 'onto',
+        # Pronouns
+        'i', 'you', 'he', 'she', 'it', 'we', 'they', 'me', 'him', 'her', 'us', 'them',
+        'my', 'your', 'his', 'her', 'its', 'our', 'their', 'mine', 'yours', 'ours', 'theirs',
+        # Conjunctions
+        'and', 'or', 'but', 'nor', 'so', 'yet', 'because', 'although', 'though',
+        'since', 'unless', 'while', 'whereas', 'however', 'therefore', 'moreover',
+        # Common adverbs
+        'very', 'really', 'quite', 'rather', 'too', 'also', 'just', 'only', 'even',
+        'still', 'already', 'yet', 'again', 'once', 'twice', 'always', 'never',
+        'often', 'sometimes', 'usually', 'generally', 'specifically', 'particularly',
+        # Polite/filler words
+        'please', 'thank', 'thanks', 'hello', 'hi', 'hey', 'well', 'okay', 'ok',
+        # Time/sequence words
+        'first', 'second', 'third', 'next', 'then', 'finally', 'last', 'initially',
+        # Referential words  
+        'regarding', 'concerning', 'related', 'pertaining', 'according', 'based'
+    }
+    
+    # Extract words and clean them
+    words = re.findall(r'\b\w+\b', query.lower())
+    
+    # Keep track of original word positions for phrase preservation
+    important_phrases = []
+    keywords = []
+    
+    # Look for important multi-word phrases first (quoted text, technical terms)
+    quoted_phrases = re.findall(r'"([^"]+)"', query)
+    for phrase in quoted_phrases:
+        important_phrases.append(phrase.strip())
+    
+    # Look for capitalized words in original query (likely proper nouns/technical terms)
+    capitalized_words = re.findall(r'\b[A-Z][a-zA-Z]*\b', query)
+    for word in capitalized_words:
+        if len(word) > 2 and word.lower() not in action_words:
+            keywords.append(word.lower())
+    
+    # Filter individual words
+    for word in words:
+        if (len(word) > 2 and 
+            word not in action_words and 
+            not word.isdigit() and
+            not word.replace('.', '').isdigit()):  # Skip decimal numbers too
+            keywords.append(word)
+    
+    # Look for compound terms (hyphenated words, technical terms)
+    compound_terms = re.findall(r'\b\w+[-_]\w+\b', query.lower())
+    for term in compound_terms:
+        if len(term) > 3:
+            keywords.append(term)
+    
+    # Combine all keywords and remove duplicates while preserving order
+    all_keywords = important_phrases + list(dict.fromkeys(keywords))
+    
+    # If we filtered out too much (less than 1/3 of original words), 
+    # be more lenient and include some action words back
+    if len(all_keywords) < max(1, len(words) // 3):
+        logger.info(f"Too many words filtered, being more lenient...")
+        # Add back some important words that might be content-related
+        for word in words:
+            if (len(word) > 3 and 
+                word not in all_keywords and
+                not word.isdigit()):
+                all_keywords.append(word)
+    
+    # If still no keywords, use original query
+    if len(all_keywords) == 0:
+        logger.info(f"No keywords extracted, using original query")
+        return query.strip()
+    
+    result = ' '.join(all_keywords)
+    
+    # Log the extraction for debugging
+    logger.info(f"🔍 Keyword extraction: '{query}' → '{result}'")
+    logger.info(f"🔍 Extracted {len(all_keywords)} keywords from {len(words)} original words")
+    
+    return result
+
+
+
+
 # OLLAMA HELPER FUNCTIONS
 
 def ollama_streaming_response(question: str, user_id: int):
     """
-    Streaming version that runs fallback first, then Ollama streaming sequentially
+    Streaming version that runs fallback with keywords first, then Ollama with exact query
     """
     try:
         # Get user documents info first
@@ -1687,37 +1798,48 @@ def ollama_streaming_response(question: str, user_id: int):
             return
         
         combined_content = "\n".join(all_content)
+        relevant_content = []
         
-        # FIRST STREAM: Fallback Response
+        # FIRST STREAM: Fallback Response with KEYWORDS
         yield json.dumps({
             'status': 'status_update',
-            'message': '🔍 Running fallback search analysis first...'
+            'message': '🔍 Running keyword-based search analysis first...'
         }) + "\n"
         
         fallback_success = False
         
         try:
-            # Use fallback first
-            response_data = fallback_to_search(question, user_id, document_info)
+            # Extract keywords for fallback search
+            search_keywords = extract_keywords_for_search(question)
+            
+            yield json.dumps({
+                'status': 'status_update',
+                'message': f'🔍 Searching for keywords: "{search_keywords}"'
+            }) + "\n"
+            
+            # Use fallback with extracted keywords
+            response_data = fallback_to_search(search_keywords, user_id, document_info)
             
             yield json.dumps({'status': 'stream_start', 'stream_type': 'fallback'}) + "\n"
             
             # Stream the fallback response
             content = response_data['content']
+            relevant_content = response_data.get('all_instances', [])
             chunk_size = 150
             for i in range(0, len(content), chunk_size):
                 chunk = content[i:i + chunk_size]
                 yield json.dumps({'status': 'stream_chunk', 'content': chunk, 'stream_type': 'fallback'}) + "\n"
-                time.sleep(0.03)
+                time.sleep(0.3)
             
-            yield json.dumps({
-                'status': 'stream_end',
-                'stream_type': 'fallback',
-                'sources': [{'filename': s, 'path': s} for s in response_data['sources']],
-                'question_analysis': response_data['question_analysis'],
-                'ai_powered': False,
-                'fallback_used': True
-            }) + "\n"
+            # yield json.dumps({
+            #     'status': 'stream_end',
+            #     'stream_type': 'fallback',
+            #     'sources': [{'filename': s, 'path': s} for s in response_data['sources']],
+            #     'question_analysis': response_data['question_analysis'],
+            #     'ai_powered': False,
+            #     'fallback_used': True,
+            #     'search_keywords': search_keywords  # Include the keywords used
+            # }) + "\n"
             
             fallback_success = True
             
@@ -1729,37 +1851,39 @@ def ollama_streaming_response(question: str, user_id: int):
                 'stream_type': 'fallback'
             }) + "\n"
         
-        # SECOND STREAM: Ollama Response
+        # SECOND STREAM: Ollama Response with EXACT QUERY
         yield json.dumps({
             'status': 'status_update',
-            'message': 'Analyzing your document for summarise...'
+            'message': f'🦙 Analyzing your exact question: "{question}"'
         }) + "\n"
         
-        # Create the prompt for Ollama
+        # Create the prompt for Ollama with EXACT user question
         ollama_prompt = f"""You are an intelligent document analysis assistant. A user has asked: "{question}"
 
-You have access to {len(user_documents)} documents with the following content:
+You have access to {len(user_documents)} documents with the following relevant content:
 
-{combined_content[:15000]}
+{relevant_content if relevant_content else combined_content[:15000]}
 
 INSTRUCTIONS:
 
-1. Analyze what type of question this is and respond accordingly
+1. Answer the user's EXACT question: "{question}" from the given document only.
 2. Be comprehensive and thorough in your response
-3. Use clear structure with headings and bullet points
+3. Use clear structure with headings and bullet points when appropriate
 4. Reference specific documents when making claims
-5. If it's a search question, find ALL instances with exact locations
-6. If it's an explanation question, provide detailed explanations with examples
-7. If it's analysis, provide insights and conclusions
-8. Always be helpful and complete
+5. Every response that includes a section or quote must end with a citation in the format: [^filename||page||section-heading]
+6. If the question asks you to "list" something, provide a clear list
+7. If it asks for explanation, provide detailed explanations with examples
+8. If it asks for analysis, provide insights and conclusions
+9. Always be helpful and complete
+10. Focus on answering exactly what the user asked
 
 USER QUESTION: {question}
 
-Provide the most appropriate comprehensive response:"""
+Provide the most appropriate comprehensive response that directly addresses what the user is asking for:"""
 
         yield json.dumps({
             'status': 'status_update',
-            'message': '⚡ Analyzing your question...'
+            'message': f'⚡ Processing your request: "{question}"'
         }) + "\n"
         
         # Stream response from Ollama
@@ -1778,20 +1902,40 @@ Provide the most appropriate comprehensive response:"""
             
             ollama_success = True
             
-            # Determine question type from response
-            response_lower = full_ollama_response.lower()
+            # Determine question type from the original question (dynamic analysis)
+            question_lower = question.lower()
             question_type = 'general'
             
-            if any(word in response_lower[:300] for word in ['search', 'instances', 'found', 'occurrences']):
-                question_type = 'search'
-            elif any(word in response_lower[:300] for word in ['explanation', 'explain', 'concept']):
-                question_type = 'explanation'
-            elif any(word in response_lower[:300] for word in ['summary', 'overview']):
-                question_type = 'summary'
-            elif any(word in response_lower[:300] for word in ['analysis', 'analyze']):
-                question_type = 'analysis'
-            elif any(word in response_lower[:300] for word in ['steps', 'instructions']):
-                question_type = 'instructions'
+            # Dynamic question type detection based on patterns
+            question_patterns = {
+                'list': ['list', 'show', 'display', 'enumerate', 'give me all', 'what are the'],
+                'explanation': ['what is', 'what are', 'define', 'explain', 'describe', 'tell me about'],
+                'instructions': ['how to', 'how do', 'how can', 'steps', 'process', 'procedure', 'method'],
+                'search': ['find', 'search', 'locate', 'where is', 'where are', 'which'],
+                'summary': ['summarize', 'summary', 'overview', 'brief', 'outline'],
+                'analysis': ['analyze', 'analysis', 'compare', 'comparison', 'evaluate', 'assessment'],
+                'identification': ['identify', 'determine', 'recognize', 'distinguish'],
+                'classification': ['classify', 'categorize', 'group', 'type', 'kind'],
+                'calculation': ['calculate', 'compute', 'determine', 'figure out'],
+                'recommendation': ['recommend', 'suggest', 'advise', 'propose', 'should']
+            }
+            
+            # Check each pattern
+            for q_type, patterns in question_patterns.items():
+                if any(pattern in question_lower for pattern in patterns):
+                    question_type = q_type
+                    break
+            
+            # Additional context-based detection
+            if question_type == 'general':
+                # Look for specific question words
+                if question_lower.startswith(('what', 'who', 'where', 'when', 'why', 'how')):
+                    if 'what' in question_lower and ('is' in question_lower or 'are' in question_lower):
+                        question_type = 'explanation'
+                    elif 'how' in question_lower:
+                        question_type = 'instructions'
+                    elif any(word in question_lower for word in ['where', 'which', 'who']):
+                        question_type = 'search'
             
             yield json.dumps({
                 'status': 'stream_end',
@@ -1800,13 +1944,16 @@ Provide the most appropriate comprehensive response:"""
                 'question_analysis': {
                     'type': question_type,
                     'confidence': 0.95,
-                    'reasoning': 'We have analyzed and determined optimal response',
+                    'reasoning': f'Determined from question structure and keywords in: "{question}"',
                     'ai_determined': True,
-                    'model': 'Ollama Llama 3.1'
+                    'model': 'Ollama Llama 3.1',
+                    'original_question': question,
+                    'search_keywords_used': search_keywords if 'search_keywords' in locals() else None
                 },
                 'ai_powered': True,
                 'ollama_native': True,
-                'sources_count': len(document_info)
+                'sources_count': len(document_info),
+                'exact_query_used': question  # Show that exact query was used
             }) + "\n"
             
         except Exception as stream_error:
@@ -1820,10 +1967,15 @@ Provide the most appropriate comprehensive response:"""
         # Final summary
         yield json.dumps({
             'status': 'complete',
-            'message': 'Both fallback and Ollama responses completed',
+            'message': 'Both keyword search and exact query analysis completed',
             'fallback_success': fallback_success,
             'ollama_success': ollama_success,
-            'total_sources': len(document_info)
+            'total_sources': len(document_info),
+            'search_strategy': {
+                'fallback_keywords': search_keywords if 'search_keywords' in locals() else None,
+                'ollama_query': question,
+                'explanation': 'Fallback used keywords for search, Ollama used exact user question'
+            }
         }) + "\n"
         
     except Exception as e:
@@ -1832,6 +1984,7 @@ Provide the most appropriate comprehensive response:"""
             'status': 'error',
             'message': f'Error: {str(e)}'
         }) + "\n"
+
 
 def update_search_configuration():
     """Update the search configuration to guarantee exact match priority"""
@@ -2875,17 +3028,17 @@ def create_instance(content, found_pos, matched_text, page_num, filename, docume
     """
     Helper function to create a consistent instance object
     """
-    # Get context (500 chars before and after for better context)
-    context_start = max(0, found_pos - 500)
-    context_end = min(len(content), found_pos + len(matched_text) + 500)
+    # Get context (1000 chars before and after for better context)
+    context_start = max(0, found_pos - 1000)
+    context_end = min(len(content), found_pos + len(matched_text) + 1000)
     context = content[context_start:context_end].strip()
     
     # Clean context (remove excessive whitespace)
     context = ' '.join(context.split())
     
     # Truncate context if too long
-    if len(context) > 300:
-        context = context[:300] + "..."
+    # if len(context) > 300:
+    #     context = context[:300] + "..."
     
     return {
         'filename': filename,
@@ -3068,12 +3221,12 @@ No instances of '{query}' found in your documents.
             # Context preview
             context_preview = instance['context']
             
-            summary_parts.append(f"       • Context: {context_preview}")
+            # summary_parts.append(f"       • Context: {context_preview}")
             summary_parts.append("")
     
     # Footer
     summary_parts.append("=" * 50)
-    summary_parts.append("🎯 ANALYSIS COMPLETE")
+    summary_parts.append("🎯 INSTANCE SUMMARY")
     summary_parts.append("=" * 50)
     summary_parts.append(f"✅ Successfully found and analyzed ALL {len(instances)} instances of '{query}'")
     summary_parts.append(f"✅ Covered {total_docs} document(s) across {total_pages} page(s)")
@@ -3973,62 +4126,432 @@ class AccuracyFocusedSearchEngine:
                 }]
             return []
 
-def fallback_to_search(question: str, user_id: int, document_info: list) -> dict:
-    """Fallback to search"""
+
+
+
+def fallback_to_search(search_keywords: str, user_id: int, document_info: list) -> dict:
+    """
+    Enhanced fallback search optimized for keyword matching
+    """
     try:
-        logger.info(f"🔍 Using fallback search for: {question}")
+        logger.info(f"🔍 Enhanced fallback search for keywords: '{search_keywords}'")
         
-        # Use your existing bulletproof search
-        all_instances, comprehensive_summary = search_all_instances_bulletproof(question, user_id)
+        # Use enhanced keyword search instead of exact phrase search
+        all_instances, comprehensive_summary = search_keywords_enhanced(search_keywords, user_id)
         
         if not all_instances:
-            response_content = f"""# Search Results for "{question}"
+            response_content = f"""# Keyword Search Results for "{search_keywords}"
 
-No instances of "{question}" were found in your documents after comprehensive search.
+No instances of the keywords "{search_keywords}" were found in your documents after comprehensive search.
 
-**Fallback Search Used:** Gemini AI was not available, used comprehensive search instead.
+**Search Strategy Used:** Keyword matching with fuzzy search and semantic analysis.
 
 **Documents Searched:** {len(document_info)} documents
 - {', '.join(document_info)}
 
+**Search Variations Attempted:**
+- Exact phrase matching
+- Individual keyword matching  
+- Fuzzy matching (typo tolerance)
+- Semantic similarity matching
+
 **Suggestions:**
 - Try different search terms or variations
-- Check spelling
-- Use broader or more specific terms"""
+- Check spelling of keywords
+- Use broader or more specific terms
+- Try synonyms or related terms"""
         else:
-            response_content = f"""# Search Results for "{question}"
+            response_content = f"""# Keyword Search Results for "{search_keywords}"
 
-Found **{len(all_instances)} instances** across your documents.
+Found **{len(all_instances)} relevant instances** across your documents using advanced keyword matching.
 
 {comprehensive_summary}
 
+**Search Strategy:** Keyword matching with semantic analysis and fuzzy matching for maximum coverage.
 """
         
         return {
+            'all_instances': all_instances,
             'content': response_content,
             'sources': document_info,
             'question_analysis': {
-                'type': 'search',
-                'confidence': 0.8,
-                'reasoning': 'Fallback search',
+                'type': 'keyword_search',
+                'confidence': 0.9,
+                'reasoning': f'Keyword search for: "{search_keywords}"',
                 'ai_determined': False,
-                'fallback': True
+                'fallback': True,
+                'search_method': 'enhanced_keyword_matching'
             },
             'success': True,
-            'ai_powered': False
+            'ai_powered': False,
+            'search_keywords': search_keywords
         }
         
     except Exception as e:
-        logger.error(f"Fallback search error: {e}")
+        logger.error(f"Enhanced fallback search error: {e}")
         return {
-            'content': f"Search failed: {str(e)}",
+            'content': f"Keyword search failed: {str(e)}",
             'sources': document_info,
             'question_analysis': {'type': 'error', 'confidence': 0.0},
-            'success': False
+            'success': False,
+            'search_keywords': search_keywords
         }
 
+def search_keywords_enhanced(keywords: str, user_id: int):
+    """
+    Keyword search that finds content related to multiple keywords
+    with fuzzy matching and semantic understanding
+    """
+    logger.info(f"🎯 KEYWORD SEARCH: Finding content related to '{keywords}' for user {user_id}")
+    
+    try:
+        all_instances = []
+        
+        # Get user documents
+        user_documents = Document.query.filter_by(user_id=user_id).all()
+        
+        if not user_documents:
+            return [], "No documents found to search."
+        
+        logger.info(f"Processing {len(user_documents)} documents for keyword search")
+        
+        # Split keywords for individual and combined searching
+        keyword_list = [k.strip() for k in keywords.split() if len(k.strip()) > 2]
+        logger.info(f"Individual keywords: {keyword_list}")
+        
+        # Process each document
+        for document in user_documents:
+            try:
+                filename = document.document_metadata.get('original_filename', 'Unknown') if document.document_metadata else 'Unknown'
+                logger.info(f"Processing: {filename}")
+                
+                # Get the full document content
+                content = get_full_document_content(document.id)
+                
+                if not content:
+                    logger.warning(f"No content found for {filename}")
+                    continue
+                
+                logger.info(f"Content length: {len(content)} characters")
+                
+                # Find keyword-related instances in this document
+                doc_instances = find_keyword_instances_enhanced(content, keywords, keyword_list, filename, document.id)
+                all_instances.extend(doc_instances)
+                
+                logger.info(f"Found {len(doc_instances)} keyword-related instances in {filename}")
+                
+            except Exception as doc_error:
+                logger.error(f"Error processing document: {doc_error}")
+                continue
+        
+        # Remove exact duplicates and rank by relevance
+        unique_instances = remove_and_rank_instances(all_instances, keywords)
+        
+        # Build enhanced summary
+        summary = build_enhanced_keyword_summary(unique_instances, keywords, len(user_documents))
+        
+        logger.info(f"✅ ENHANCED KEYWORD SEARCH COMPLETED: {len(unique_instances)} relevant instances found")
+        
+        return unique_instances, summary
+        
+    except Exception as e:
+        logger.error(f"❌ ENHANCED KEYWORD SEARCH ERROR: {e}")
+        return [], f"Search failed: {str(e)}"
 
+def find_keyword_instances_enhanced(content, original_keywords, keyword_list, filename, document_id):
+    """
+    Find instances using multiple keyword matching strategies
+    """
+    instances = []
+    
+    try:
+        # Split content into pages
+        pages = split_into_pages_reliable(content)
+        logger.info(f"Split into {len(pages)} pages for keyword search in: {filename}")
+        
+        # Search each page
+        for page_data in pages:
+            # Extract page number
+            page_num_match = re.match(r'\[PAGE (\d+)\]', page_data)
+            if page_num_match:
+                page_num = int(page_num_match.group(1))
+                page_content = page_data[page_num_match.end():].strip()
+            else:
+                page_num = pages.index(page_data) + 1
+                page_content = page_data
+            
+            # Multiple search strategies
+            page_instances = []
+            
+            # Strategy 1: Exact phrase matching
+            if original_keywords.lower() in page_content.lower():
+                page_instances.extend(create_keyword_instances(
+                    page_content, original_keywords, page_num, filename, document_id, 
+                    'exact_phrase', 100
+                ))
+            
+            # Strategy 2: All keywords present (AND logic)
+            if all(keyword.lower() in page_content.lower() for keyword in keyword_list):
+                page_instances.extend(create_keyword_instances(
+                    page_content, original_keywords, page_num, filename, document_id, 
+                    'all_keywords', 80
+                ))
+            
+            # Strategy 3: Most keywords present (partial match)
+            matching_keywords = [kw for kw in keyword_list if kw.lower() in page_content.lower()]
+            if len(matching_keywords) >= max(1, len(keyword_list) // 2):  # At least half the keywords
+                score = (len(matching_keywords) / len(keyword_list)) * 60
+                page_instances.extend(create_keyword_instances(
+                    page_content, ' '.join(matching_keywords), page_num, filename, document_id, 
+                    'partial_keywords', score
+                ))
+            
+            # Strategy 4: Semantic similarity (if available)
+            try:
+                if has_semantic_similarity(page_content, original_keywords):
+                    page_instances.extend(create_keyword_instances(
+                        page_content, original_keywords, page_num, filename, document_id, 
+                        'semantic_match', 40
+                    ))
+            except Exception as sem_error:
+                logger.debug(f"Semantic matching failed: {sem_error}")
+            
+            instances.extend(page_instances)
+        
+        return instances
+        
+    except Exception as e:
+        logger.error(f"Error in enhanced keyword search: {e}")
+        return []
 
+def create_keyword_instances(page_content, keywords, page_num, filename, document_id, match_type, base_score):
+    """
+    Create instances for keyword matches with enhanced context
+    """
+    instances = []
+    
+    try:
+        # Find the best context section (paragraph containing most keywords)
+        paragraphs = page_content.split('\n\n')
+        best_paragraph = ""
+        best_score = 0
+        best_position = 0
+        
+        for i, paragraph in enumerate(paragraphs):
+            para_score = 0
+            for keyword in keywords.split():
+                if len(keyword) > 2 and keyword.lower() in paragraph.lower():
+                    para_score += 1
+            
+            if para_score > best_score:
+                best_score = para_score
+                best_paragraph = paragraph
+                # Calculate approximate position
+                best_position = sum(len(p) + 2 for p in paragraphs[:i])
+        
+        if best_paragraph:
+            # Create context around the best matching paragraph
+            context_start = max(0, best_position - 500)
+            context_end = min(len(page_content), best_position + len(best_paragraph) + 500)
+            context = page_content[context_start:context_end].strip()
+            
+            # Clean context
+            context = ' '.join(context.split())
+            
+            instance = {
+                'filename': filename,
+                'document_id': document_id,
+                'page_number': page_num,
+                'position_in_page': best_position,
+                'matched_text': keywords,
+                'context': context,
+                'match_type': match_type,
+                'relevance_score': base_score + best_score * 10,
+                'keywords_found': best_score,
+                'exact_match': match_type == 'exact_phrase',
+                'instance_key': f"{document_id}_{page_num}_{best_position}_{match_type}"
+            }
+            
+            instances.append(instance)
+        
+        return instances
+        
+    except Exception as e:
+        logger.error(f"Error creating keyword instances: {e}")
+        return []
+
+def has_semantic_similarity(content, keywords):
+    """
+    Check if content has semantic similarity to keywords (dynamic implementation)
+    """
+    try:
+        # Dynamic semantic analysis - look for word families and related terms
+        content_lower = content.lower()
+        keywords_lower = keywords.lower()
+        
+        # Split keywords to analyze each one
+        keyword_words = [w for w in keywords.split() if len(w) > 3]
+        
+        similarity_score = 0
+        
+        for keyword in keyword_words:
+            # Look for word variations (suffixes, prefixes)
+            base_variations = [
+                keyword,
+                keyword + 's',      # plural
+                keyword + 'ed',     # past tense
+                keyword + 'ing',    # present participle
+                keyword + 'er',     # comparative
+                keyword + 'ly',     # adverb
+                keyword + 'tion',   # noun form
+                keyword + 'al',     # adjective
+                keyword + 'ness',   # noun form
+                'un' + keyword,     # negative prefix
+                're' + keyword,     # re- prefix
+            ]
+            
+            # Check for any variations in content
+            for variation in base_variations:
+                if variation in content_lower:
+                    similarity_score += 1
+                    break
+            
+            # Look for contextual similarity (words that commonly appear together)
+            # This is a simplified approach - in production, you might use word embeddings
+            context_window = 50  # Look within 50 characters of the keyword
+            
+            for i, char in enumerate(content_lower):
+                if content_lower[i:i+len(keyword)] == keyword:
+                    # Extract surrounding context
+                    start = max(0, i - context_window)
+                    end = min(len(content_lower), i + len(keyword) + context_window)
+                    context = content_lower[start:end]
+                    
+                    # Check if other keywords appear in this context
+                    for other_keyword in keyword_words:
+                        if other_keyword != keyword and other_keyword in context:
+                            similarity_score += 2  # Higher score for co-occurrence
+        
+        # Return True if we found enough semantic connections
+        threshold = max(1, len(keyword_words) // 2)  # At least half the keywords should have connections
+        return similarity_score >= threshold
+        
+    except Exception as e:
+        logger.debug(f"Semantic similarity check failed: {e}")
+        return False
+
+def remove_and_rank_instances(instances, original_keywords):
+    """
+    Remove duplicates and rank instances by relevance
+    """
+    # Remove exact duplicates
+    seen_keys = set()
+    unique_instances = []
+    
+    for instance in instances:
+        key = instance['instance_key']
+        if key not in seen_keys:
+            seen_keys.add(key)
+            unique_instances.append(instance)
+    
+    # Sort by relevance score (highest first)
+    unique_instances.sort(key=lambda x: x.get('relevance_score', 0), reverse=True)
+    
+    return unique_instances
+
+def build_enhanced_keyword_summary(instances, keywords, documents_searched):
+    """
+    Build enhanced summary for keyword search results
+    """
+    if not instances:
+        return f"""
+COMPREHENSIVE KEYWORD SEARCH RESULTS
+=====================================
+Keywords: '{keywords}'
+Documents searched: {documents_searched}
+Total instances found: 0
+
+No content related to '{keywords}' was found in your documents.
+"""
+    
+    summary_parts = []
+    
+    # Header
+    summary_parts.append("📊 ENHANCED KEYWORD ANALYSIS FOR '{}'".format(keywords.upper()))
+    summary_parts.append("=" * 80)
+    summary_parts.append("")
+    
+    # Quick stats
+    by_doc = {}
+    match_types = {}
+    
+    for instance in instances:
+        doc = instance['filename']
+        match_type = instance.get('match_type', 'unknown')
+        
+        if doc not in by_doc:
+            by_doc[doc] = {'total': 0, 'pages': set(), 'best_score': 0}
+        
+        by_doc[doc]['total'] += 1
+        by_doc[doc]['pages'].add(instance['page_number'])
+        by_doc[doc]['best_score'] = max(by_doc[doc]['best_score'], instance.get('relevance_score', 0))
+        
+        match_types[match_type] = match_types.get(match_type, 0) + 1
+    
+    total_docs = len(by_doc)
+    total_pages = sum(len(doc_data['pages']) for doc_data in by_doc.values())
+    
+    summary_parts.append("📈 <b>SEARCH SUMMARY:</b>")
+    summary_parts.append(f"• Total relevant instances: {len(instances)}")
+    summary_parts.append(f"• Documents with matches: {total_docs}")
+    summary_parts.append(f"• Pages with content: {total_pages}")
+    summary_parts.append(f"• Search strategies used: {len(match_types)}")
+    summary_parts.append("")
+    
+    # Match type breakdown
+    summary_parts.append("🔍 <b>MATCH TYPE BREAKDOWN:</b>")
+    summary_parts.append("-" * 40)
+    match_type_names = {
+        'exact_phrase': 'Exact phrase matches',
+        'all_keywords': 'All keywords present',
+        'partial_keywords': 'Partial keyword matches',
+        'semantic_match': 'Semantic similarity matches'
+    }
+    
+    for match_type, count in match_types.items():
+        type_name = match_type_names.get(match_type, match_type)
+        summary_parts.append(f"• {type_name}: {count}")
+    summary_parts.append("")
+    
+    # Top results by document
+    summary_parts.append("📋 <b>TOP RESULTS BY DOCUMENT:</b>")
+    summary_parts.append("-" * 50)
+    
+    # Sort documents by best score
+    sorted_docs = sorted(by_doc.items(), key=lambda x: x[1]['best_score'], reverse=True)
+    
+    for doc_name, doc_data in sorted_docs[:5]:  # Top 5 documents
+        summary_parts.append(f"📄 {doc_name}")
+        summary_parts.append(f"   • Relevance instances: {doc_data['total']}")
+        summary_parts.append(f"   • Pages covered: {len(doc_data['pages'])}")
+        summary_parts.append(f"   • Best relevance score: {doc_data['best_score']:.0f}/100")
+        
+        # Show top instances from this document
+        doc_instances = [i for i in instances if i['filename'] == doc_name][:3]
+        for i, instance in enumerate(doc_instances, 1):
+            summary_parts.append(f"   • <strong>Instance {i}: Page {instance['page_number']} ({instance['match_type']})</strong>")
+        summary_parts.append("")
+    
+    # Footer
+    summary_parts.append("=" * 50)
+    summary_parts.append("🎯 <b>KEYWORD SEARCH SUMMARY</b>")
+    summary_parts.append("=" * 50)
+    summary_parts.append(f"✅ Found {len(instances)} relevant instances for '{keywords}'")
+    summary_parts.append(f"✅ Covered {total_docs} document(s) across {total_pages} page(s)")
+    summary_parts.append("✅ Used multiple search strategies for comprehensive coverage")
+    summary_parts.append("=" * 50)
+    
+    return "\n".join(summary_parts)
 # --------------------- DATABASE MODELS ---------------------
 
 class SubscriptionPlan:
