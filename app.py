@@ -894,6 +894,741 @@ search_engine = None
 
 ocr_reader = None
 
+
+
+@app.route('/')
+def index():
+    """Main index page"""
+    return render_template('index.html')
+
+
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    """Enhanced user registration with personal details"""
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+    
+    if request.method == 'POST':
+        # Get form data
+        first_name = request.form.get('first_name', '').strip()
+        last_name = request.form.get('last_name', '').strip()
+        company_name = request.form.get('company_name', '').strip()
+        username = request.form.get('username', '').strip()
+        email = request.form.get('email', '').strip()
+        password = request.form.get('password', '')
+        confirm_password = request.form.get('confirm_password', '')
+        
+        # Validation
+        errors = []
+        
+        # Check required fields
+        if not first_name:
+            errors.append('First name is required')
+        elif len(first_name) < 2:
+            errors.append('First name must be at least 2 characters long')
+        elif not re.match(r"^[a-zA-Z\s'-]+$", first_name):
+            errors.append('First name contains invalid characters')
+            
+        if not last_name:
+            errors.append('Last name is required')
+        elif len(last_name) < 2:
+            errors.append('Last name must be at least 2 characters long')
+        elif not re.match(r"^[a-zA-Z\s'-]+$", last_name):
+            errors.append('Last name contains invalid characters')
+            
+        if not username:
+            errors.append('Username is required')
+        elif len(username) < 3:
+            errors.append('Username must be at least 3 characters long')
+        elif not re.match(r"^[a-zA-Z0-9_.-]+$", username):
+            errors.append('Username can only contain letters, numbers, dots, hyphens, and underscores')
+            
+        if not email:
+            errors.append('Email is required')
+        elif not re.match(r'^[^\s@]+@[^\s@]+\.[^\s@]+$', email):
+            errors.append('Please enter a valid email address')
+            
+        if not password:
+            errors.append('Password is required')
+        elif len(password) < 8:
+            errors.append('Password must be at least 8 characters long')
+            
+        if password != confirm_password:
+            errors.append('Passwords do not match')
+        
+        # Check if username or email already exists
+        if User.query.filter_by(username=username).first():
+            errors.append('Username already taken')
+            
+        if User.query.filter_by(email=email).first():
+            errors.append('Email address already registered')
+        
+        if not company_name:
+            errors.append('Company name is required')
+        elif len(company_name) < 2:
+            errors.append('Company name must be at least 2 characters long')
+        elif len(company_name) > 100:
+            errors.append('Company name is too long (maximum 100 characters)')
+        
+        # If there are errors, show them
+        if errors:
+            for error in errors:
+                flash(error, 'error')
+            return render_template('register.html')
+        
+        try:
+            # Create new user
+            user = User(
+                first_name=first_name,
+                last_name=last_name,
+                company_name=company_name if company_name else None,
+                username=username,
+                email=email
+            )
+            user.set_password(password)
+            
+            db.session.add(user)
+            db.session.commit()
+            
+            logger.info(f"New user registered: {username} ({first_name} {last_name})")
+            
+            flash('Registration successful! Please log in.', 'success')
+            return redirect(url_for('login'))
+            
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Registration error: {e}")
+            flash('Registration failed. Please try again.', 'error')
+            return render_template('register.html')
+    
+    return render_template('register.html')
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    """User login"""
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        remember = request.form.get('remember') == 'on'
+
+        user = User.query.filter_by(username=username).first()
+
+        if user and user.check_password(password):
+            login_user(user, remember=remember)
+            next_page = request.args.get('next')
+            return redirect(next_page or url_for('index'))
+        else:
+            flash('Invalid username or password', 'error')
+
+    return render_template('login.html')
+
+
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
+
+
+@app.route('/new_chat')
+@login_required
+def new_chat():
+    """Create new chat"""
+    try:
+        chat_id = str(uuid.uuid4())
+        
+        conversation = Conversation(
+            id=chat_id,
+            user_id=current_user.id,
+            title='New Query'
+        )
+        db.session.add(conversation)
+        
+        # Check for documents
+        doc_count = Document.query.filter_by(user_id=current_user.id).count()
+        initial_message = f"Ready to search through {doc_count} documents. What would you like to know?"
+        
+        initial_msg = Message(
+            conversation_id=chat_id,
+            role='assistant',
+            content=initial_message,
+            timestamp=datetime.now(timezone.utc)
+        )
+        db.session.add(initial_msg)
+        db.session.commit()
+        
+        return redirect(url_for('chat', chat_id=chat_id))
+        
+    except Exception as e:
+        logger.error(f'Error creating chat: {e}')
+        flash('Error creating new chat', 'error')
+        return redirect(url_for('index'))
+
+@app.route('/logout', methods=['GET', 'POST'])
+@login_required
+def logout():
+    """User logout"""
+    logout_user()
+    session.clear()
+    flash('You have been logged out successfully.', 'success')
+    return redirect(url_for('login'))
+
+
+
+@app.route('/api/check_subscription', methods=['GET'])
+@login_required
+def check_subscription_api():
+    """Check subscription status with enhanced features - FIXED VERSION"""
+    try:
+        now = datetime.now(timezone.utc)
+        trial_days_remaining = 0
+        
+        if current_user.trial_end_date:
+            trial_end = current_user._make_aware(current_user.trial_end_date)
+            trial_days_remaining = max(0, (trial_end - now).days)
+        
+        has_active_trial = (current_user.subscription_plan == 'trial' and 
+                           current_user.trial_end_date and 
+                           current_user._make_aware(current_user.trial_end_date) > now)
+        
+        has_active_subscription = (current_user.subscription_status == 'active' and 
+                                 current_user.subscription_plan in ['basic', 'pro'] and
+                                 (current_user.current_period_end is None or 
+                                  current_user._make_aware(current_user.current_period_end) > now))
+        
+        # STRICT UPLOAD CHECK - Only allow if they have active subscription or trial
+        allow_uploads = has_active_trial or has_active_subscription or current_user.is_admin
+        
+        # Check if trial is available (not used before OR expired)
+        has_trial_available = (current_user.subscription_plan != 'trial' or 
+                             (current_user.trial_end_date and 
+                              current_user._make_aware(current_user.trial_end_date) <= now))
+        
+        # Determine subscription required flag
+        subscription_required = not allow_uploads
+        
+        logger.info(f"Subscription check for user {current_user.id}:")
+        logger.info(f"  - Subscription plan: {current_user.subscription_plan}")
+        logger.info(f"  - Subscription status: {current_user.subscription_status}")
+        logger.info(f"  - Has active trial: {has_active_trial}")
+        logger.info(f"  - Has active subscription: {has_active_subscription}")
+        logger.info(f"  - Allow uploads: {allow_uploads}")
+        logger.info(f"  - Trial available: {has_trial_available}")
+        
+        return jsonify({
+            'is_logged_in': True,
+            'has_subscription': has_active_subscription,
+            'has_active_subscription': has_active_subscription,
+            'has_active_trial': has_active_trial,
+            'has_trial_available': has_trial_available,
+            'trial_days_remaining': trial_days_remaining,
+            'trial_expired': (current_user.subscription_plan == 'trial' and 
+                            current_user.trial_end_date and 
+                            current_user._make_aware(current_user.trial_end_date) <= now),
+            'allow_uploads': allow_uploads,  # This is the key field - must be True to upload
+            'subscription_required': subscription_required,
+            'plan_name': current_user.plan_details.get('name', 'Free') if allow_uploads else 'No Active Plan',
+            'current_plan': current_user.subscription_plan,
+            'gpu_enabled': torch.cuda.is_available(),
+            'enhanced_processing': True,
+            'perfect_formatting': True,
+            'comprehensive_search': True,
+            'accuracy_focused': True,
+            'rtx_a6000_optimized': torch.cuda.is_available(),
+            'max_file_size_gb': app.config['MAX_FILE_SIZE'] / 1e9,
+            'max_upload_size_gb': app.config['MAX_CONTENT_LENGTH'] / 1e9,
+            'max_extracted_size_gb': app.config['MAX_ZIP_EXTRACTED_SIZE'] / 1e9
+        })
+    except Exception as e:
+        logger.error(f"Subscription check failed: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+
+
+# Add route to replace the existing upload handler
+@app.route('/upload', methods=['POST'])
+@login_required
+def upload_files_optimized():
+    """OPTIMIZED upload endpoint"""
+    if request.headers.get('Accept') == 'text/event-stream':
+        return handle_streaming_upload_optimized()
+    else:
+        return jsonify({'error': 'Invalid request format'}), 400
+
+
+
+
+# Optimized content extraction dispatch
+def extract_content_optimized_dispatch(file_path: str) -> str:
+    """Optimized content extraction with faster dispatch"""
+    file_ext = os.path.splitext(file_path)[1].lower()
+    
+    try:
+        # Quick file size check
+        file_size = os.path.getsize(file_path)
+        if file_size == 0:
+            return ""
+        
+        # Dispatch to optimized extractors
+        if file_ext == '.pdf':
+            return extract_pdf_optimized(file_path)
+        elif file_ext == '.docx':
+            return extract_docx_optimized(file_path)
+        elif file_ext in ['.txt', '.md']:
+            return extract_text_optimized(file_path)
+        elif file_ext in ['.jpg', '.jpeg', '.png', '.tiff', '.bmp']:
+            return extract_image_optimized(file_path)
+        else:
+            return extract_fallback_optimized(file_path)
+            
+    except Exception as e:
+        logger.error(f"Content extraction failed for {file_path}: {e}")
+        return ""
+
+
+
+
+# Optimized content extraction dispatch
+def extract_content_optimized_dispatch(file_path: str) -> str:
+    """Optimized content extraction with faster dispatch"""
+    file_ext = os.path.splitext(file_path)[1].lower()
+    
+    try:
+        # Quick file size check
+        file_size = os.path.getsize(file_path)
+        if file_size == 0:
+            return ""
+        
+        # Dispatch to optimized extractors
+        if file_ext == '.pdf':
+            return extract_pdf_optimized(file_path)
+        elif file_ext == '.docx':
+            return extract_docx_optimized(file_path)
+        elif file_ext in ['.txt', '.md']:
+            return extract_text_optimized(file_path)
+        elif file_ext in ['.jpg', '.jpeg', '.png', '.tiff', '.bmp']:
+            return extract_image_optimized(file_path)
+        else:
+            return extract_fallback_optimized(file_path)
+            
+    except Exception as e:
+        logger.error(f"Content extraction failed for {file_path}: {e}")
+        return ""
+
+
+def extract_pdf_optimized(file_path: str) -> str:
+    """Optimized PDF extraction for speed"""
+    try:
+        doc = fitz.open(file_path)
+        content_parts = []
+        
+        # Add header with accurate page count
+        content_parts.append(f"PDF DOCUMENT: {os.path.basename(file_path)}")
+        content_parts.append(f"TOTAL PAGES: {len(doc)}")
+        content_parts.append("=" * 80)
+        
+        for page_num, page in enumerate(doc, 1):
+            # Clear page marker
+            content_parts.append(f"\nPAGE {page_num}")
+            content_parts.append("-" * 40)
+            
+            try:
+                # Fast text extraction
+                page_text = page.get_text()
+                if page_text.strip():
+                    content_parts.append(page_text.strip())
+                else:
+                    content_parts.append(f"[Page {page_num} - No text content]")
+                
+                # Page end marker
+                content_parts.append(f"[END PAGE {page_num}]")
+                
+            except Exception as page_error:
+                logger.warning(f"Error on page {page_num}: {page_error}")
+                content_parts.append(f"[Page {page_num} - Extraction error]")
+                content_parts.append(f"[END PAGE {page_num}]")
+        
+        doc.close()
+        return "\n".join(content_parts)
+        
+    except Exception as e:
+        logger.error(f"PDF extraction failed: {e}")
+        return ""
+
+
+def extract_docx_optimized(file_path: str) -> str:
+    """Optimized DOCX extraction for speed"""
+    try:
+        import docx
+        doc = docx.Document(file_path)
+        
+        content_parts = []
+        content_parts.append(f"DOCX DOCUMENT: {os.path.basename(file_path)}")
+        content_parts.append("=" * 60)
+        
+        for paragraph in doc.paragraphs:
+            text = paragraph.text.strip()
+            if text:
+                content_parts.append(text)
+        
+        return "\n".join(content_parts)
+        
+    except Exception as e:
+        logger.error(f"DOCX extraction failed: {e}")
+        return ""
+
+
+def extract_text_optimized(file_path: str) -> str:
+    """Optimized text extraction for speed"""
+    try:
+        # Try different encodings quickly
+        encodings = ['utf-8', 'latin1', 'cp1252']
+        
+        for encoding in encodings:
+            try:
+                with open(file_path, 'r', encoding=encoding) as f:
+                    content = f.read()
+                
+                # Add header
+                header = f"TEXT DOCUMENT: {os.path.basename(file_path)}\n" + "=" * 60 + "\n"
+                return header + content
+                
+            except UnicodeDecodeError:
+                continue
+        
+        return ""
+        
+    except Exception as e:
+        logger.error(f"Text extraction failed: {e}")
+        return ""
+
+
+def extract_image_optimized(file_path: str) -> str:
+    """Optimized image extraction with OCR"""
+    global ocr_reader
+    
+    try:
+        if not ocr_reader:
+            return f"IMAGE FILE: {os.path.basename(file_path)} (OCR not available)"
+        
+        ocr_text = ocr_reader.extract_text_from_image(file_path)
+        
+        if ocr_text.strip():
+            header = f"IMAGE DOCUMENT: {os.path.basename(file_path)}\n" + "=" * 60 + "\n"
+            return header + "[OCR CONTENT]\n" + ocr_text + "\n[END OCR CONTENT]"
+        else:
+            return f"IMAGE FILE: {os.path.basename(file_path)} (No text detected)"
+            
+    except Exception as e:
+        logger.error(f"Image extraction failed: {e}")
+        return f"IMAGE FILE: {os.path.basename(file_path)} (Extraction failed)"
+
+
+def extract_fallback_optimized(file_path: str) -> str:
+    """Optimized fallback extraction"""
+    try:
+        # Try as text file
+        with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+            content = f.read(10000)  # Read first 10KB only
+        
+        header = f"UNKNOWN FORMAT: {os.path.basename(file_path)}\n" + "=" * 60 + "\n"
+        return header + content
+        
+    except Exception as e:
+        return f"FILE: {os.path.basename(file_path)} (Cannot extract content)"
+
+
+
+# Update the main upload handler to use optimizations
+def handle_streaming_upload_optimized():
+    """ULTRA-OPTIMIZED streaming upload"""
+    def generate_progress():
+        try:
+            # Quick subscription check
+            is_valid, reason = validate_user_subscription_strict(current_user)
+            if not is_valid:
+                yield f"data: {json.dumps({'status': 'error', 'message': f'Upload not allowed: {reason}'})}\n\n"
+                return
+            
+            user_id = current_user.id
+            user_upload_dir = os.path.join(app.config['UPLOAD_FOLDER'], str(user_id))
+            user_extract_dir = os.path.join(app.config['EXTRACT_FOLDER'], str(user_id))
+            
+            # Fast directory setup
+            os.makedirs(user_upload_dir, exist_ok=True)
+            os.makedirs(user_extract_dir, exist_ok=True)
+            clean_directory(user_upload_dir)
+            clean_directory(user_extract_dir)
+            
+            files = request.files.getlist('files')
+            if not files or all(f.filename == '' for f in files):
+                yield f"data: {json.dumps({'status': 'error', 'message': 'No files uploaded'})}\n\n"
+                return
+            
+            # ULTRA-FAST extraction
+            yield f"data: {json.dumps({'status': 'extracting', 'message': '⚡  Extraction...', 'percent': 5})}\n\n"
+            
+            extracted_files = []
+            
+            # Process files with minimal overhead
+            for file_idx, file in enumerate(files):
+                if file.filename == '':
+                    continue
+                    
+                filename = secure_filename(file.filename)
+                
+                # Quick progress
+                if file_idx % 5 == 0:  # Update every 5 files
+                    progress = 5 + (file_idx / len(files)) * 10
+                    yield f"data: {json.dumps({'status': 'extracting', 'percent': int(progress)})}\n\n"
+                
+                try:
+                    if filename.lower().endswith('.zip'):
+                        zip_path = os.path.join(user_upload_dir, filename)
+                        file.save(zip_path)
+                        
+                        if extract_zip_optimized(zip_path, user_extract_dir):
+                            for root, _, zip_files in os.walk(user_extract_dir):
+                                for f in zip_files:
+                                    if allowed_file(f):
+                                        extracted_files.append(os.path.join(root, f))
+                        
+                        os.remove(zip_path)
+                    else:
+                        if allowed_file(filename):
+                            file_path = os.path.join(user_extract_dir, filename)
+                            file.save(file_path)
+                            extracted_files.append(file_path)
+                            
+                except Exception as e:
+                    logger.error(f"Error processing {filename}: {e}")
+                    continue
+            
+            if not extracted_files:
+                yield f"data: {json.dumps({'status': 'error', 'message': 'No valid files found'})}\n\n"
+                return
+            
+            # Files ready
+            yield f"data: {json.dumps({'status': 'files_ready', 'total': len(extracted_files), 'percent': 15})}\n\n"
+            
+            # ULTRA-FAST processing with batch operations
+            processed_count = 0
+            failed_files = []
+            batch_data = []
+            
+            # Process in larger batches
+            batch_size = 10
+            
+            for i, file_path in enumerate(extracted_files):
+                filename = os.path.basename(file_path)
+                
+                # Progress every 10%
+                if i % max(1, len(extracted_files) // 10) == 0:
+                    progress = 15 + (i / len(extracted_files)) * 85
+                    yield f"data: {json.dumps({'status': 'processing', 'current_file': filename, 'percent': int(progress)})}\n\n"
+                
+                try:
+                    # Fast content extraction
+                    content = extract_content_optimized_dispatch(file_path)
+                    
+                    if content and len(content.strip()) > 10:
+                        # Prepare for batch processing
+                        file_hash = get_file_hash_optimized(file_path)
+                        
+                        # Quick duplicate check
+                        existing = Document.query.filter_by(file_hash=file_hash, user_id=user_id).first()
+                        if not existing:
+                            # Fast chunking
+                            chunks = create_chunks_optimized(content)
+                            embeddings = generate_embeddings_fast(chunks)
+                            
+                            batch_data.append((file_path, content, chunks, embeddings, file_hash, user_id))
+                            processed_count += 1
+                        else:
+                            processed_count += 1  # Already exists
+                    else:
+                        failed_files.append(filename)
+                        
+                except Exception as e:
+                    failed_files.append(filename)
+                    logger.error(f"Error processing {file_path}: {e}")
+                
+                # Process batch when full
+                if len(batch_data) >= batch_size:
+                    try:
+                        save_document_bulk_optimized(batch_data)
+                        batch_data = []
+                    except Exception as batch_error:
+                        logger.error(f"Batch processing error: {batch_error}")
+                        failed_files.extend([os.path.basename(data[0]) for data in batch_data])
+                        batch_data = []
+            
+            # Process remaining batch
+            if batch_data:
+                try:
+                    save_document_bulk_optimized(batch_data)
+                except Exception as final_batch_error:
+                    logger.error(f"Final batch error: {final_batch_error}")
+                    failed_files.extend([os.path.basename(data[0]) for data in batch_data])
+            
+            # Completion
+            success_rate = round((processed_count / len(extracted_files)) * 100, 1)
+            
+            yield f"data: {json.dumps({'status': 'completed', 'processed_count': processed_count, 'total_files': len(extracted_files), 'failed_files': failed_files, 'percent': 100, 'success_rate': success_rate, 'message': f'⚡ Processing completed: {processed_count}/{len(extracted_files)} files'})}\n\n"
+            
+        except Exception as e:
+            logger.error(f"Ultra-optimized upload error: {e}")
+            yield f"data: {json.dumps({'status': 'error', 'message': f'Upload failed: {str(e)}'})}\n\n"
+    
+    return Response(
+        stream_with_context(generate_progress()),
+        mimetype='text/event-stream',
+        headers={'Cache-Control': 'no-cache', 'Connection': 'keep-alive'}
+    )
+
+
+
+
+# Optimized ZIP extraction
+def extract_zip_optimized(zip_path, extract_to):
+    """Optimized ZIP extraction with better performance"""
+    try:
+        os.makedirs(extract_to, exist_ok=True)
+        
+        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+            # Quick validation without loading everything
+            total_size = 0
+            valid_files = []
+            
+            for info in zip_ref.infolist():
+                # Security check
+                if '..' in info.filename or info.filename.startswith('/'):
+                    continue
+                
+                total_size += info.file_size
+                if total_size > app.config['MAX_ZIP_EXTRACTED_SIZE']:
+                    logger.error(f"ZIP too large: {total_size / 1e9:.2f}GB")
+                    return False
+                
+                # Only track files we can process
+                if allowed_file(info.filename):
+                    valid_files.append(info)
+            
+            # Extract only valid files
+            for info in valid_files:
+                try:
+                    zip_ref.extract(info, extract_to)
+                except Exception as e:
+                    logger.warning(f"Failed to extract {info.filename}: {e}")
+                    continue
+            
+            logger.info(f"Extracted {len(valid_files)} valid files")
+            return True
+            
+    except Exception as e:
+        logger.error(f"ZIP extraction failed: {e}")
+        return False
+
+
+
+def clean_directory(directory):
+    """Clean directory with better error handling"""
+    if not os.path.exists(directory):
+        return
+        
+    for filename in os.listdir(directory):
+        file_path = os.path.join(directory, filename)
+        try:
+            if os.path.isfile(file_path) or os.path.islink(file_path):
+                os.unlink(file_path)
+            elif os.path.isdir(file_path):
+                shutil.rmtree(file_path)
+        except Exception as e:
+            logger.error(f'Failed to delete {file_path}: {e}')
+
+
+
+# Add this optimized database bulk save function
+def save_document_bulk_optimized(documents_data):
+    """Bulk save multiple documents for maximum performance"""
+    try:
+        # Prepare all documents
+        docs_to_add = []
+        content_to_add = []
+        
+        for doc_data in documents_data:
+            file_path, content, chunks, embeddings, file_hash, user_id = doc_data
+            
+            filename = os.path.basename(file_path)
+            file_size = os.path.getsize(file_path)
+            file_type = os.path.splitext(file_path)[1].lower()
+            rel_path = os.path.relpath(file_path, app.config['EXTRACT_FOLDER'])
+            
+            # Minimal metadata for speed
+            doc_metadata = {
+                'original_filename': filename,
+                'file_size': file_size,
+                'content_length': len(content),
+                'relative_path': rel_path,
+                'chunk_count': len(chunks),
+                'bulk_processed': True
+            }
+            
+            doc = Document(
+                user_id=user_id,
+                file_path=rel_path,
+                file_hash=file_hash,
+                file_type=file_type,
+                document_metadata=doc_metadata
+            )
+            
+            docs_to_add.append(doc)
+        
+        # Bulk insert documents
+        db.session.bulk_save_objects(docs_to_add, return_defaults=True)
+        db.session.flush()
+        
+        # Prepare content records
+        for i, (doc, doc_data) in enumerate(zip(docs_to_add, documents_data)):
+            file_path, content, chunks, embeddings, file_hash, user_id = doc_data
+            
+            # Full content
+            content_to_add.append(DocumentContent(
+                document_id=doc.id,
+                content=content,
+                content_type='bulk_full_text',
+                content_metadata={'bulk_processed': True}
+            ))
+            
+            # Chunks
+            for j, chunk_data in enumerate(chunks):
+                embedding = embeddings[j] if j < len(embeddings) else None
+                
+                content_to_add.append(DocumentContent(
+                    document_id=doc.id,
+                    content=chunk_data['content'],
+                    content_type='bulk_chunk',
+                    chunk_index=chunk_data['chunk_index'],
+                    embedding=embedding.tolist() if isinstance(embedding, np.ndarray) else embedding,
+                    content_metadata={'bulk_processed': True}
+                ))
+        
+        # Bulk insert content
+        db.session.bulk_save_objects(content_to_add)
+        db.session.commit()
+        
+        return True
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Bulk save error: {e}")
+        return False
+
+
+
 # Initialize global OCR processor
 def initialize_ocr_processor():
     """Initialize the global OCR processor"""
@@ -913,62 +1648,9 @@ def initialize_ocr_processor():
 
 # OLLAMA HELPER FUNCTIONS
 
-def fallback_to_search(question: str, user_id: int, document_info: list) -> dict:
-    """Fallback to search when Ollama fails"""
-    try:
-        logger.info(f"🔍 Using fallback search for: {question}")
-        
-        # Use your existing bulletproof search
-        all_instances, comprehensive_summary = search_all_instances_bulletproof(question, user_id)
-        
-        if not all_instances:
-            response_content = f"""<br><br><hr><br><br># Search Results for "{question}"
-
-No instances of "{question}" were found in your documents after comprehensive search.
-
-**Fallback Search Used:** Ollama was not available, used comprehensive search instead.
-
-**Documents Searched:** {len(document_info)} documents
-- {', '.join(document_info)}
-
-**Suggestions:**
-- Try different search terms or variations
-- Check spelling
-- Use broader or more specific terms"""
-        else:
-            response_content = f"""<br><br><hr><br><br># Search Results for "<strong>{question}</strong>"
-
-Found **{len(all_instances)} instances** across your documents.
-
-{comprehensive_summary}
-"""
-        
-        return {
-            'content': response_content,
-            'sources': document_info,
-            'question_analysis': {
-                'type': 'search',
-                'confidence': 0.8,
-                'reasoning': 'Fallback search used when Ollama unavailable',
-                'ai_determined': False,
-                'fallback': True
-            },
-            'success': True,
-            'ai_powered': False
-        }
-        
-    except Exception as e:
-        logger.error(f"Fallback search error: {e}")
-        return {
-            'content': f"Search failed: {str(e)}",
-            'sources': document_info,
-            'question_analysis': {'type': 'error', 'confidence': 0.0},
-            'success': False
-        }
-
 def ollama_streaming_response(question: str, user_id: int):
     """
-    Streaming version that runs both Ollama and fallback streaming sequentially
+    Streaming version that runs fallback first, then Ollama streaming sequentially
     """
     try:
         # Get user documents info first
@@ -1006,10 +1688,51 @@ def ollama_streaming_response(question: str, user_id: int):
         
         combined_content = "\n".join(all_content)
         
-        # FIRST STREAM: Ollama Response
+        # FIRST STREAM: Fallback Response
         yield json.dumps({
             'status': 'status_update',
-            'message': '🦙 Ollama Llama 3.1 analyzing question and determining best response...'
+            'message': '🔍 Running fallback search analysis first...'
+        }) + "\n"
+        
+        fallback_success = False
+        
+        try:
+            # Use fallback first
+            response_data = fallback_to_search(question, user_id, document_info)
+            
+            yield json.dumps({'status': 'stream_start', 'stream_type': 'fallback'}) + "\n"
+            
+            # Stream the fallback response
+            content = response_data['content']
+            chunk_size = 150
+            for i in range(0, len(content), chunk_size):
+                chunk = content[i:i + chunk_size]
+                yield json.dumps({'status': 'stream_chunk', 'content': chunk, 'stream_type': 'fallback'}) + "\n"
+                time.sleep(0.03)
+            
+            yield json.dumps({
+                'status': 'stream_end',
+                'stream_type': 'fallback',
+                'sources': [{'filename': s, 'path': s} for s in response_data['sources']],
+                'question_analysis': response_data['question_analysis'],
+                'ai_powered': False,
+                'fallback_used': True
+            }) + "\n"
+            
+            fallback_success = True
+            
+        except Exception as fallback_error:
+            logger.error(f"Fallback streaming error: {fallback_error}")
+            yield json.dumps({
+                'status': 'error',
+                'message': f'Fallback streaming failed: {str(fallback_error)}',
+                'stream_type': 'fallback'
+            }) + "\n"
+        
+        # SECOND STREAM: Ollama Response
+        yield json.dumps({
+            'status': 'status_update',
+            'message': 'Analyzing your document for summarise...'
         }) + "\n"
         
         # Create the prompt for Ollama
@@ -1020,6 +1743,7 @@ You have access to {len(user_documents)} documents with the following content:
 {combined_content[:15000]}
 
 INSTRUCTIONS:
+
 1. Analyze what type of question this is and respond accordingly
 2. Be comprehensive and thorough in your response
 3. Use clear structure with headings and bullet points
@@ -1035,7 +1759,7 @@ Provide the most appropriate comprehensive response:"""
 
         yield json.dumps({
             'status': 'status_update',
-            'message': '⚡ We are processing your question...'
+            'message': '⚡ Analyzing your question...'
         }) + "\n"
         
         # Stream response from Ollama
@@ -1093,47 +1817,11 @@ Provide the most appropriate comprehensive response:"""
                 'stream_type': 'ollama'
             }) + "\n"
         
-        # SECOND STREAM: Fallback Response
-        yield json.dumps({
-            'status': 'status_update',
-            'message': '🔄 Now running fallback search for comparison...'
-        }) + "\n"
-        
-        try:
-            # Use fallback
-            response_data = fallback_to_search(question, user_id, document_info)
-            
-            yield json.dumps({'status': 'stream_start', 'stream_type': 'fallback'}) + "\n"
-            
-            # Stream the fallback response
-            content = response_data['content']
-            chunk_size = 150
-            for i in range(0, len(content), chunk_size):
-                chunk = content[i:i + chunk_size]
-                yield json.dumps({'status': 'stream_chunk', 'content': chunk, 'stream_type': 'fallback'}) + "\n"
-                time.sleep(0.03)
-            
-            yield json.dumps({
-                'status': 'stream_end',
-                'stream_type': 'fallback',
-                'sources': [{'filename': s, 'path': s} for s in response_data['sources']],
-                'question_analysis': response_data['question_analysis'],
-                'ai_powered': False,
-                'fallback_used': True
-            }) + "\n"
-            
-        except Exception as fallback_error:
-            logger.error(f"Fallback streaming error: {fallback_error}")
-            yield json.dumps({
-                'status': 'error',
-                'message': f'Fallback streaming failed: {str(fallback_error)}',
-                'stream_type': 'fallback'
-            }) + "\n"
-        
         # Final summary
         yield json.dumps({
             'status': 'complete',
-            'message': 'Both Ollama and fallback responses completed',
+            'message': 'Both fallback and Ollama responses completed',
+            'fallback_success': fallback_success,
             'ollama_success': ollama_success,
             'total_sources': len(document_info)
         }) + "\n"
@@ -1144,7 +1832,6 @@ Provide the most appropriate comprehensive response:"""
             'status': 'error',
             'message': f'Error: {str(e)}'
         }) + "\n"
-
 
 def update_search_configuration():
     """Update the search configuration to guarantee exact match priority"""
@@ -1218,10 +1905,211 @@ class EnhancedOCRProcessor:
             self.logger.error(f"❌ OCR initialization failed: {e}")
             self.easyocr_reader = None
             self.tesseract_available = False
-    
-    # ... (rest of OCR methods remain the same)
-
+  
 # Continue with remaining classes and functions...
+
+
+
+
+@app.route('/delete_chat/<chat_id>', methods=['POST'])
+@login_required
+def delete_chat(chat_id):
+    """Delete chat"""
+    try:
+        conversation = Conversation.query.filter_by(id=chat_id, user_id=current_user.id).first()
+        if not conversation:
+            return jsonify({'success': False, 'error': 'Chat not found'}), 404
+            
+        db.session.delete(conversation)
+        db.session.commit()
+        return jsonify({'success': True})
+        
+    except Exception as e:
+        logger.error(f'Error deleting chat: {e}')
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/update_chat_title/<chat_id>', methods=['POST'])
+@login_required  
+def update_chat_title(chat_id):
+    """Update chat title"""
+    try:
+        data = request.get_json()
+        new_title = data.get('title', '').strip()
+        
+        if not new_title:
+            return jsonify({'error': 'Title cannot be empty'}), 400
+            
+        conversation = Conversation.query.filter_by(
+            id=chat_id, 
+            user_id=current_user.id
+        ).first()
+        
+        if not conversation:
+            return jsonify({'error': 'Chat not found'}), 404
+            
+        conversation.title = new_title
+        conversation.updated_at = datetime.now(timezone.utc)
+        db.session.commit()
+        
+        return jsonify({'success': True, 'title': new_title})
+        
+    except Exception as e:
+        logger.error(f'Error updating chat title: {e}')
+        return jsonify({'error': str(e)}), 500
+@app.route('/get_file_content')
+@login_required
+def get_file_content():
+    """Get file content with enhanced formatting - FIXED VERSION"""
+    rel_path = request.args.get('path')
+    if not rel_path:
+        return jsonify({'error': 'File path required'}), 400
+    
+    try:
+        # Security checks
+        if '..' in rel_path or rel_path.startswith('/'):
+            return jsonify({'error': 'Invalid file path'}), 400
+        
+        # Clean the path
+        rel_path = rel_path.strip().replace('\\', '/')
+        
+        # Try multiple strategies to find the document
+        doc = None
+        search_paths = [
+            rel_path,  # Original path
+            rel_path.split('/')[-1],  # Just filename
+            f"{current_user.id}/{rel_path}",  # User ID + path
+            f"{current_user.id}/{rel_path.split('/')[-1]}"  # User ID + filename
+        ]
+        
+        logger.info(f"Searching for document with paths: {search_paths}")
+        
+        # Try each search path
+        for search_path in search_paths:
+            # Try exact match first
+            doc = Document.query.filter_by(
+                file_path=search_path,
+                user_id=current_user.id
+            ).first()
+            
+            if doc:
+                logger.info(f"Found document with exact path: {search_path}")
+                break
+            
+            # Try partial match (contains)
+            doc = Document.query.filter(
+                Document.file_path.contains(search_path.split('/')[-1]),
+                Document.user_id == current_user.id
+            ).first()
+            
+            if doc:
+                logger.info(f"Found document with partial match: {search_path}")
+                break
+        
+        # Also try matching by original filename in metadata
+        if not doc:
+            filename = rel_path.split('/')[-1]
+            docs_with_metadata = Document.query.filter(
+                Document.user_id == current_user.id,
+                Document.document_metadata.isnot(None)
+            ).all()
+            
+            for potential_doc in docs_with_metadata:
+                try:
+                    if (potential_doc.document_metadata and 
+                        potential_doc.document_metadata.get('original_filename') == filename):
+                        doc = potential_doc
+                        logger.info(f"Found document by metadata filename: {filename}")
+                        break
+                except Exception:
+                    continue
+        
+        if not doc:
+            logger.warning(f"Document not found for any of these paths: {search_paths}")
+            return jsonify({'error': 'Document not found'}), 404
+        
+        # Get accuracy-focused content from DocumentContent table
+        content_record = DocumentContent.query.filter_by(
+            document_id=doc.id,
+            content_type='accuracy_focused_full_text'
+        ).first()
+        
+        # Fallback to enhanced content if accuracy-focused not available
+        if not content_record:
+            content_record = DocumentContent.query.filter_by(
+                document_id=doc.id,
+                content_type='enhanced_full_text'
+            ).first()
+        
+        # Further fallback to any text content
+        if not content_record:
+            content_record = DocumentContent.query.filter_by(
+                document_id=doc.id
+            ).filter(
+                DocumentContent.content_type.like('%text%')
+            ).first()
+        
+        # Last resort - any content
+        if not content_record:
+            content_record = DocumentContent.query.filter_by(
+                document_id=doc.id
+            ).first()
+        
+        if not content_record or not content_record.content:
+            logger.warning(f"No content found for document {doc.id}")
+            return jsonify({'error': 'Document content not found'}), 404
+        
+        filename = doc.document_metadata.get('original_filename', 'Unknown') if doc.document_metadata else 'Unknown'
+        
+        logger.info(f"Successfully retrieved content for {filename} (type: {content_record.content_type})")
+        
+        return jsonify({
+            'file': filename,
+            'content': content_record.content,
+            'path': doc.file_path,
+            'structure_preserved': content_record.content_type in ['accuracy_focused_full_text', 'enhanced_full_text', 'structured_text'],
+            'perfect_formatting': content_record.content_type in ['accuracy_focused_full_text', 'enhanced_full_text'],
+            'extraction_method': doc.document_metadata.get('processing_method', 'unknown') if doc.document_metadata else 'unknown',
+            'accuracy_focused_processing': 'accuracy_focused' in content_record.content_type,
+            'gpu_processed': doc.document_metadata.get('gpu_processed', False) if doc.document_metadata else False,
+            'content_type': content_record.content_type,
+            'content_length': len(content_record.content),
+            'document_id': doc.id
+        })
+    
+    except Exception as e:
+        logger.error(f"Error serving file content: {e}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        return jsonify({'error': str(e)}), 500
+
+
+# Subscription and Billing Routes
+@app.route('/start_trial', methods=['POST'])
+@login_required
+def start_trial():
+    """Start trial subscription"""
+    now = datetime.now(timezone.utc)
+    
+    # Check if user already has an active trial
+    if (current_user.subscription_plan == 'trial' and 
+        current_user.trial_end_date and 
+        current_user._make_aware(current_user.trial_end_date) > now):
+        return jsonify({'error': 'You already have an active trial'}), 400
+        
+    current_user.subscription_plan = 'trial'
+    current_user.subscription_status = 'active'
+    current_user.trial_start_date = now
+    current_user.trial_end_date = now + timedelta(days=14)
+    db.session.commit()
+    
+    return jsonify({
+        'success': True,
+        'message': 'Your 14-day free trial has started!',
+        'trial_end_date': current_user.trial_end_date.isoformat(),
+        'enhanced_features': True,
+        'accuracy_focused': True
+    })
+
+
 
 def validate_user_subscription_strict(user):
     """Strict subscription validation before upload"""
@@ -1503,7 +2391,7 @@ def search_all_instances_bulletproof(query, user_id):
                 debug_search_content(content, query)
                 
                 # Find all instances in this document
-                doc_instances = find_instances_with_accurate_pages(content, query, filename, document.id)
+                doc_instances = find_instances_simple(content, query, filename, document.id)
                 all_instances.extend(doc_instances)
                 
                 logger.info(f"Found {len(doc_instances)} instances in {filename}")
@@ -1525,6 +2413,112 @@ def search_all_instances_bulletproof(query, user_id):
     except Exception as e:
         logger.error(f"❌ BULLETPROOF SEARCH ERROR: {e}")
         return [], f"Search failed: {str(e)}"
+
+
+
+def split_into_pages_reliable(content):
+    """
+    Split content into pages using the most reliable method possible.
+    FIXED VERSION - handles your PDF format correctly
+    """
+    try:
+        # Look for the specific page markers in your PDF format
+        # Pattern: "PAGE X" followed by dashes, then "[END PAGE X]" 
+        
+        # Method 1: Use your specific page pattern
+        page_pattern = r'PAGE (\d+)\s*\n-{40}\s*(.*?)\s*\[END PAGE \1\]'
+        page_matches = list(re.finditer(page_pattern, content, re.DOTALL))
+        
+        if page_matches:
+            pages = []
+            for match in page_matches:
+                page_num = int(match.group(1))
+                page_content = match.group(2).strip()
+                
+                if page_content:  # Only add non-empty pages
+                    # Add page marker for identification
+                    formatted_page = f"[PAGE {page_num}]\n{page_content}"
+                    pages.append(formatted_page)
+            
+            if pages:
+                logger.info(f"Successfully split into {len(pages)} pages using PAGE markers")
+                return pages
+        
+        # Method 2: Alternative pattern - split by "PAGE X" headers
+        page_splits = re.split(r'\nPAGE (\d+)\n-{40}', content)
+        
+        if len(page_splits) > 2:  # We have actual page splits
+            pages = []
+            
+            # Skip the first empty split
+            for i in range(1, len(page_splits), 2):
+                if i + 1 < len(page_splits):
+                    page_num = int(page_splits[i])
+                    page_content = page_splits[i + 1]
+                    
+                    # Clean up the page content
+                    # Remove the [END PAGE X] marker
+                    page_content = re.sub(r'\[END PAGE \d+\].*$', '', page_content, flags=re.DOTALL)
+                    page_content = page_content.strip()
+                    
+                    if page_content:
+                        formatted_page = f"[PAGE {page_num}]\n{page_content}"
+                        pages.append(formatted_page)
+            
+            if pages:
+                logger.info(f"Successfully split into {len(pages)} pages using split method")
+                return pages
+        
+        # Method 3: Manual extraction based on your exact format
+        pages = []
+        lines = content.split('\n')
+        current_page = None
+        current_content = []
+        
+        for line in lines:
+            # Look for page start
+            page_start_match = re.match(r'^PAGE (\d+)$', line.strip())
+            if page_start_match:
+                # Save previous page if it exists
+                if current_page is not None and current_content:
+                    page_text = '\n'.join(current_content).strip()
+                    if page_text:
+                        pages.append(f"[PAGE {current_page}]\n{page_text}")
+                
+                # Start new page
+                current_page = int(page_start_match.group(1))
+                current_content = []
+                continue
+            
+            # Look for page end
+            if re.match(r'^\[END PAGE \d+\]$', line.strip()):
+                continue  # Skip end markers
+            
+            # Skip the dashes separator
+            if re.match(r'^-{40}$', line.strip()):
+                continue
+            
+            # Add content to current page
+            if current_page is not None:
+                current_content.append(line)
+        
+        # Don't forget the last page
+        if current_page is not None and current_content:
+            page_text = '\n'.join(current_content).strip()
+            if page_text:
+                pages.append(f"[PAGE {current_page}]\n{page_text}")
+        
+        if pages:
+            logger.info(f"Successfully split into {len(pages)} pages using manual extraction")
+            return pages
+        
+        # Fallback: treat as single page
+        logger.warning("Could not split pages properly, treating as single page")
+        return [f"[PAGE 1]\n{content}"]
+        
+    except Exception as e:
+        logger.error(f"Error splitting pages: {e}")
+        return [f"[PAGE 1]\n{content}"]
 
 
 
@@ -1746,6 +2740,46 @@ def split_into_pages_accurate(content):
         logger.error(f"Page splitting error: {e}")
         return [f"[PAGE 1]\n{content}"]
 
+
+def find_instances_with_accurate_pages(content, query, filename, document_id):
+    """
+    Find instances with ACCURATE page numbers
+    """
+    instances = []
+    
+    try:
+        # Split into pages using accurate method
+        pages = split_into_pages_accurate(content)
+        
+        if not pages:
+            logger.warning(f"No pages found for {filename}")
+            return []
+        
+        logger.info(f"Processing {len(pages)} pages for {filename}")
+        
+        # Search each page
+        for page_data in pages:
+            # Extract page number from content
+            page_num_match = re.match(r'\[PAGE (\d+)\]', page_data)
+            if page_num_match:
+                page_num = int(page_num_match.group(1))
+                page_content = page_data[page_num_match.end():].strip()
+            else:
+                # Fallback page numbering
+                page_num = pages.index(page_data) + 1
+                page_content = page_data
+            
+            # Search for query in this page
+            page_instances = search_page_for_query(page_content, query, page_num, filename, document_id)
+            instances.extend(page_instances)
+        
+        logger.info(f"Found {len(instances)} instances across {len(pages)} pages in {filename}")
+        return instances
+        
+    except Exception as e:
+        logger.error(f"Error finding instances with accurate pages: {e}")
+        return []
+
 def search_page_for_query(page_content, query, page_num, filename, document_id):
     """
     Search a single page for query instances - FIXED VERSION with better substring matching
@@ -1836,6 +2870,7 @@ def search_page_for_query(page_content, query, page_num, filename, document_id):
         logger.error(f"Traceback: {traceback.format_exc()}")
         return []
 
+
 def create_instance(content, found_pos, matched_text, page_num, filename, document_id, original_query):
     """
     Helper function to create a consistent instance object
@@ -1863,6 +2898,50 @@ def create_instance(content, found_pos, matched_text, page_num, filename, docume
         'case_sensitive_match': matched_text == original_query,
         'instance_key': f"{document_id}_{page_num}_{found_pos}_{matched_text}"
     }
+
+
+def find_instances_simple(content, query, filename, document_id):
+    """
+    Find all instances using improved method - FIXED VERSION
+    """
+    instances = []
+    
+    try:
+        # Split content into pages using the reliable method
+        pages = split_into_pages_reliable(content)
+        logger.info(f"Split into {len(pages)} pages for file: {filename}")
+        
+        # Search each page individually
+        for page_data in pages:
+            # Search for query in this page
+            page_instances = search_page_for_query(page_data, query, 1, filename, document_id)
+            instances.extend(page_instances)
+        
+        # Remove exact duplicates (same position, same text)
+        unique_instances = []
+        seen_keys = set()
+        
+        for instance in instances:
+            key = instance['instance_key']
+            if key not in seen_keys:
+                unique_instances.append(instance)
+                seen_keys.add(key)
+        
+        logger.info(f"Found {len(unique_instances)} unique instances across {len(pages)} pages in {filename}")
+        
+        # Log each instance for debugging
+        for i, instance in enumerate(unique_instances, 1):
+            logger.info(f"Instance {i}: Page {instance['page_number']}, '{instance['matched_text']}' at pos {instance['position_in_page']}")
+        
+        return unique_instances
+        
+    except Exception as e:
+        logger.error(f"Error finding instances: {e}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        return []
+
+
+
 
 def remove_duplicate_instances(instances):
     """
@@ -1982,6 +3061,7 @@ No instances of '{query}' found in your documents.
             instance_counter += 1
             summary_parts.append(f"   <br><b> Instance #{instance_counter}: </b>")
             summary_parts.append(f"       • Page: {instance['page_number']}")
+            # summary_parts.append(f"      • Position in page: Character {instance['position_in_page']}")
             summary_parts.append(f"       • Matched text: '{instance['matched_text']}'")
             summary_parts.append(f"       • Case match: {'Exact' if instance['exact_match'] else 'Variation'}")
             
@@ -1997,9 +3077,12 @@ No instances of '{query}' found in your documents.
     summary_parts.append("=" * 50)
     summary_parts.append(f"✅ Successfully found and analyzed ALL {len(instances)} instances of '{query}'")
     summary_parts.append(f"✅ Covered {total_docs} document(s) across {total_pages} page(s)")
-    # summary_parts.append("=" * 50)
+    # summary_parts.append("✅ No instances missed - comprehensive search completed")
+    summary_parts.append("=" * 50)
     
     return "\n".join(summary_parts)
+
+    
 
 def debug_search_content(content, query):
     """
@@ -2281,7 +3364,6 @@ def enhanced_context_builder_with_exact_priority(search_results, question, max_c
     return final_context
 
 # --------------------- SEARCH ENGINE CLASS ---------------------
-
 class AccuracyFocusedSearchEngine:
     """Fixed GPU-accelerated search engine with GUARANTEED exact match priority"""
     
@@ -2518,31 +3600,434 @@ class AccuracyFocusedSearchEngine:
         
         return unique_results
     
-    # Additional search methods (multi_keyword, semantic, context_aware, fuzzy, emergency_fallback)
-    # These would be the same as in your original code
+    # Keep all other methods unchanged...
     def _multi_keyword_search(self, keywords: List[str], top_k: int) -> List[Dict[str, Any]]:
-        # Implementation from your original code
-        pass
-    
+        """Search for multiple keywords with AND/OR logic - handles missing TF-IDF"""
+        results = []
+        
+        # Check if TF-IDF is available
+        if not self.processor.tfidf_fitted or self.processor.tfidf_matrix is None:
+            self.logger.warning("TF-IDF not available, using simple text matching for keyword search")
+            
+            # Fallback to simple text matching
+            for idx, chunk in enumerate(self.processor.chunk_metadata):
+                content_lower = chunk['content'].lower()
+                
+                # Count keyword matches
+                keyword_matches = []
+                total_score = 0
+                
+                for keyword in keywords:
+                    count = content_lower.count(keyword.lower())
+                    if count > 0:
+                        keyword_matches.append((keyword, count))
+                        # Score based on keyword importance and frequency
+                        keyword_score = count * (50 + len(keyword) * 5)
+                        total_score += keyword_score
+                
+                if keyword_matches:
+                    # Bonus for matching multiple keywords
+                    coverage_bonus = (len(keyword_matches) / len(keywords)) * 200
+                    total_score += coverage_bonus
+                    
+                    # Bonus for keyword density
+                    content_words = len(content_lower.split())
+                    if content_words > 0:
+                        density = sum(count for _, count in keyword_matches) / content_words
+                        density_bonus = min(density * 1000, 100)  # Cap at 100
+                        total_score += density_bonus
+                    
+                    results.append({
+                        'chunk': chunk,
+                        'score': total_score,
+                        'search_type': 'multi_keyword_fallback',
+                        'chunk_index': idx,
+                        'matched_keywords': keyword_matches,
+                        'keyword_coverage': len(keyword_matches) / len(keywords)
+                    })
+            
+            return sorted(results, key=lambda x: x['score'], reverse=True)[:top_k]
+        
+        # Original TF-IDF based search (when available)
+        try:
+            # Transform keywords using existing TF-IDF vectorizer
+            keyword_text = ' '.join(keywords)
+            keyword_vector = self.processor.tfidf_vectorizer.transform([keyword_text])
+            
+            # Calculate similarity with all documents
+            similarities = cosine_similarity(keyword_vector, self.processor.tfidf_matrix).flatten()
+            
+            # Get top results
+            top_indices = similarities.argsort()[-top_k:][::-1]
+            
+            for idx in top_indices:
+                if similarities[idx] > 0:  # Only include positive similarities
+                    chunk = self.processor.chunk_metadata[idx]
+                    
+                    # Also calculate simple keyword matches for metadata
+                    content_lower = chunk['content'].lower()
+                    keyword_matches = []
+                    for keyword in keywords:
+                        count = content_lower.count(keyword.lower())
+                        if count > 0:
+                            keyword_matches.append((keyword, count))
+                    
+                    results.append({
+                        'chunk': chunk,
+                        'score': float(similarities[idx]) * 1000,  # Scale score
+                        'search_type': 'multi_keyword_tfidf',
+                        'chunk_index': idx,
+                        'matched_keywords': keyword_matches,
+                        'keyword_coverage': len(keyword_matches) / len(keywords),
+                        'tfidf_similarity': float(similarities[idx])
+                    })
+            
+            return results
+            
+        except Exception as e:
+            self.logger.warning(f"TF-IDF keyword search failed: {e}, falling back to simple matching")
+            
+            # Fallback to simple text matching if TF-IDF fails
+            for idx, chunk in enumerate(self.processor.chunk_metadata):
+                content_lower = chunk['content'].lower()
+                
+                keyword_matches = []
+                total_score = 0
+                
+                for keyword in keywords:
+                    count = content_lower.count(keyword.lower())
+                    if count > 0:
+                        keyword_matches.append((keyword, count))
+                        keyword_score = count * (50 + len(keyword) * 5)
+                        total_score += keyword_score
+                
+                if keyword_matches:
+                    coverage_bonus = (len(keyword_matches) / len(keywords)) * 200
+                    total_score += coverage_bonus
+                    
+                    results.append({
+                        'chunk': chunk,
+                        'score': total_score,
+                        'search_type': 'multi_keyword_fallback',
+                        'chunk_index': idx,
+                        'matched_keywords': keyword_matches,
+                        'keyword_coverage': len(keyword_matches) / len(keywords)
+                    })
+            
+            return sorted(results, key=lambda x: x['score'], reverse=True)[:top_k]
+
     def _extract_key_terms(self, query: str) -> List[str]:
-        # Implementation from your original code
-        pass
-    
+        """Extract key terms with better filtering"""
+        # Remove common words but keep important ones
+        stop_words = {'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'is', 'are', 'was', 'were', 'be', 'been', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should'}
+        
+        # Extract words and phrases
+        words = re.findall(r'\b\w+\b', query.lower())
+        
+        # Keep important terms
+        key_terms = []
+        
+        # Single important words (not in stop words, length > 2)
+        for word in words:
+            if len(word) > 2 and word not in stop_words:
+                key_terms.append(word)
+        
+        # Important phrases (2-4 words)
+        for i in range(len(words) - 1):
+            if len(words[i]) > 2 and len(words[i+1]) > 2:
+                phrase = f"{words[i]} {words[i+1]}"
+                if not any(w in stop_words for w in [words[i], words[i+1]]):
+                    key_terms.append(phrase)
+        
+        # Longer phrases for specific queries
+        if len(words) >= 3:
+            for i in range(len(words) - 2):
+                if all(len(w) > 2 for w in words[i:i+3]):
+                    phrase = " ".join(words[i:i+3])
+                    key_terms.append(phrase)
+        
+        # Add original query
+        key_terms.append(query.strip())
+        
+        return key_terms
+
     def _semantic_search_with_reranking(self, query: str, top_k: int) -> List[Dict[str, Any]]:
-        # Implementation from your original code
-        pass
-    
+        """GPU-accelerated semantic search using FAISS with reranking"""
+        try:
+            if not self.processor.faiss_index or self.processor.faiss_index.ntotal == 0:
+                return []
+            
+            # Generate query embedding
+            if self.processor.gpu_enabled and app.config['MIXED_PRECISION']:
+                try:
+                    with torch.amp.autocast('cuda'):
+                        query_embedding = self.processor.embedding_model.encode(
+                            [query],
+                            convert_to_tensor=True,
+                            device=self.processor.device,
+                            normalize_embeddings=app.config['EMBEDDING_NORMALIZE']
+                        )
+                except (AttributeError, TypeError):
+                    with torch.cuda.amp.autocast():
+                        query_embedding = self.processor.embedding_model.encode(
+                            [query],
+                            convert_to_tensor=True,
+                            device=self.processor.device,
+                            normalize_embeddings=app.config['EMBEDDING_NORMALIZE']
+                        )
+                query_embedding = query_embedding.cpu().float().numpy()
+            else:
+                query_embedding = self.processor.embedding_model.encode(
+                    [query],
+                    convert_to_tensor=False,
+                    normalize_embeddings=app.config['EMBEDDING_NORMALIZE']
+                )
+            
+            # Normalize for cosine similarity
+            if app.config['EMBEDDING_NORMALIZE']:
+                faiss.normalize_L2(query_embedding.astype('float32'))
+            
+            # Search FAISS index
+            similarities, indices = self.processor.faiss_index.search(
+                query_embedding.astype('float32'), 
+                min(top_k * 3, self.processor.faiss_index.ntotal)  # Get more candidates for reranking
+            )
+            
+            results = []
+            for idx, score in zip(indices[0], similarities[0]):
+                if idx != -1 and idx < len(self.processor.chunk_metadata):
+                    chunk = self.processor.chunk_metadata[idx]
+                    results.append({
+                        'chunk': chunk,
+                        'score': float(score) * 100,  # Scale score
+                        'search_type': 'semantic_gpu',
+                        'chunk_index': idx
+                    })
+            
+            return results
+            
+        except Exception as e:
+            self.logger.error(f"Semantic search failed: {e}")
+            return []
+
     def _context_aware_search(self, query: str, top_k: int) -> List[Dict[str, Any]]:
-        # Implementation from your original code
-        pass
-    
+        """Search considering chunk context and relationships"""
+        results = []
+        query_lower = query.lower()
+        
+        for idx, chunk in enumerate(self.processor.chunk_metadata):
+            chunk_score = 0
+            
+            # Score current chunk
+            if query_lower in chunk['content'].lower():
+                chunk_score += 100
+            
+            # Check previous chunk context
+            if chunk['metadata'].get('previous_chunk') is not None:
+                prev_idx = chunk['metadata']['previous_chunk']
+                if prev_idx < len(self.processor.chunk_metadata):
+                    prev_chunk = self.processor.chunk_metadata[prev_idx]
+                    if query_lower in prev_chunk['content'].lower():
+                        chunk_score += 50  # Context bonus
+            
+            # Check next chunk context
+            if chunk['metadata'].get('next_chunk') is not None:
+                next_idx = chunk['metadata']['next_chunk']
+                if next_idx < len(self.processor.chunk_metadata):
+                    next_chunk = self.processor.chunk_metadata[next_idx]
+                    if query_lower in next_chunk['content'].lower():
+                        chunk_score += 50  # Context bonus
+            
+            if chunk_score > 0:
+                results.append({
+                    'chunk': chunk,
+                    'score': chunk_score,
+                    'search_type': 'context_aware',
+                    'chunk_index': idx
+                })
+        
+        return sorted(results, key=lambda x: x['score'], reverse=True)[:top_k]
+
     def _fuzzy_search(self, query: str, top_k: int) -> List[Dict[str, Any]]:
-        # Implementation from your original code
-        pass
-    
+        """Fuzzy matching search for typos and variations"""
+        try:
+            query_words = [w.lower() for w in query.split() if len(w) > 3]
+            if not query_words:
+                return []
+            
+            results = []
+            
+            for idx, chunk in enumerate(self.processor.chunk_metadata):
+                content_words = re.findall(r'\b\w{4,}\b', chunk['content'].lower())
+                
+                total_score = 0
+                matches_found = 0
+                
+                for query_word in query_words:
+                    best_match_score = 0
+                    
+                    for content_word in content_words:
+                        similarity = SequenceMatcher(None, query_word, content_word).ratio()
+                        if similarity > 0.8:  # 80% similarity threshold
+                            best_match_score = max(best_match_score, similarity * 30)
+                    
+                    if best_match_score > 0:
+                        total_score += best_match_score
+                        matches_found += 1
+                
+                if total_score > 0:
+                    # Bonus for finding multiple words
+                    if matches_found > 1:
+                        total_score += matches_found * 20
+                    
+                    results.append({
+                        'chunk': chunk,
+                        'score': total_score,
+                        'search_type': 'fuzzy_match',
+                        'chunk_index': idx
+                    })
+            
+            return sorted(results, key=lambda x: x['score'], reverse=True)[:top_k]
+            
+        except Exception as e:
+            self.logger.error(f"Fuzzy search failed: {e}")
+            return []
+
     def _emergency_fallback_search(self, query: str) -> List[Dict[str, Any]]:
-        # Implementation from your original code
-        pass
+        """Emergency fallback that always finds something relevant"""
+        try:
+            if not self.processor.chunk_metadata:
+                return []
+            
+            # Extract key terms from query
+            query_words = re.findall(r'\b\w{3,}\b', query.lower())
+            
+            results = []
+            
+            # If no meaningful words, return first few chunks
+            if not query_words:
+                for idx in range(min(5, len(self.processor.chunk_metadata))):
+                    chunk = self.processor.chunk_metadata[idx]
+                    results.append({
+                        'chunk': chunk,
+                        'score': 10,
+                        'search_type': 'emergency_first_chunks',
+                        'chunk_index': idx
+                    })
+                return results
+            
+            # Look for any single word matches
+            for idx, chunk in enumerate(self.processor.chunk_metadata):
+                content_lower = chunk['content'].lower()
+                score = 0
+                
+                for word in query_words:
+                    if word in content_lower:
+                        score += 5
+                
+                # Even if no words match, give a small score to structured chunks
+                if score == 0:
+                    if chunk['metadata'].get('has_headings') or chunk['metadata'].get('has_tables'):
+                        score = 1
+                
+                if score > 0:
+                    results.append({
+                        'chunk': chunk,
+                        'score': score,
+                        'search_type': 'emergency_fallback',
+                        'chunk_index': idx
+                    })
+            
+            # If still no results, return random chunks with structure
+            if not results:
+                import random
+                structured_chunks = [
+                    (idx, chunk) for idx, chunk in enumerate(self.processor.chunk_metadata)
+                    if chunk['metadata'].get('has_headings') or chunk['metadata'].get('has_tables')
+                ]
+                
+                if structured_chunks:
+                    selected = random.sample(structured_chunks, min(3, len(structured_chunks)))
+                else:
+                    selected = [(idx, chunk) for idx, chunk in enumerate(self.processor.chunk_metadata[:3])]
+                
+                for idx, chunk in selected:
+                    results.append({
+                        'chunk': chunk,
+                        'score': 0.1,
+                        'search_type': 'emergency_random',
+                        'chunk_index': idx
+                    })
+            
+            return sorted(results, key=lambda x: x['score'], reverse=True)
+            
+        except Exception as e:
+            self.logger.error(f"Emergency fallback search failed: {e}")
+            # Absolute last resort
+            if self.processor.chunk_metadata:
+                return [{
+                    'chunk': self.processor.chunk_metadata[0],
+                    'score': 0.01,
+                    'search_type': 'absolute_fallback',
+                    'chunk_index': 0
+                }]
+            return []
+
+def fallback_to_search(question: str, user_id: int, document_info: list) -> dict:
+    """Fallback to search"""
+    try:
+        logger.info(f"🔍 Using fallback search for: {question}")
+        
+        # Use your existing bulletproof search
+        all_instances, comprehensive_summary = search_all_instances_bulletproof(question, user_id)
+        
+        if not all_instances:
+            response_content = f"""# Search Results for "{question}"
+
+No instances of "{question}" were found in your documents after comprehensive search.
+
+**Fallback Search Used:** Gemini AI was not available, used comprehensive search instead.
+
+**Documents Searched:** {len(document_info)} documents
+- {', '.join(document_info)}
+
+**Suggestions:**
+- Try different search terms or variations
+- Check spelling
+- Use broader or more specific terms"""
+        else:
+            response_content = f"""# Search Results for "{question}"
+
+Found **{len(all_instances)} instances** across your documents.
+
+{comprehensive_summary}
+
+"""
+        
+        return {
+            'content': response_content,
+            'sources': document_info,
+            'question_analysis': {
+                'type': 'search',
+                'confidence': 0.8,
+                'reasoning': 'Fallback search',
+                'ai_determined': False,
+                'fallback': True
+            },
+            'success': True,
+            'ai_powered': False
+        }
+        
+    except Exception as e:
+        logger.error(f"Fallback search error: {e}")
+        return {
+            'content': f"Search failed: {str(e)}",
+            'sources': document_info,
+            'question_analysis': {'type': 'error', 'confidence': 0.0},
+            'success': False
+        }
+
+
 
 # --------------------- DATABASE MODELS ---------------------
 
@@ -2924,6 +4409,32 @@ def startup_exact_match_priority_system():
         logger.error(f"❌ EXACT MATCH PRIORITY system startup error: {e}")
         return False
 
+
+
+def initialize_enhanced_processor():
+    """Initialize the enhanced document processor with GPU optimization"""
+    global global_processor, search_engine
+    
+    try:
+        logger.info("🚀 Initializing Document Processor with RTX A6000 optimization...")
+        
+        # Add debug information
+        logger.debug(f"Torch CUDA available: {torch.cuda.is_available()}")
+        if torch.cuda.is_available():
+            logger.debug(f"CUDA device count: {torch.cuda.device_count()}")
+            logger.debug(f"Device name: {torch.cuda.get_device_name(0)}")
+        
+        global_processor = AccuracyFocusedDocumentProcessor(gpu_enabled=True)
+        search_engine = AccuracyFocusedSearchEngine(global_processor)
+        
+        logger.info("✅ Accuracy-focused processor initialized successfully")
+        return True
+        
+    except Exception as e:
+        logger.error(f"❌ Enhanced processor initialization failed: {e}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        return False
+
 # Update context processor to include Ollama info
 @app.context_processor
 def inject_now():
@@ -2944,6 +4455,140 @@ def inject_now():
         'model_name': app.config['OLLAMA_MODEL'],
         'ollama_powered': True  # Changed from gemini_powered
     }
+
+
+
+def get_file_hash_optimized(file_path):
+    """FASTER file hash generation using larger chunks"""
+    hasher = hashlib.md5()
+    with open(file_path, 'rb') as f:
+        # Use larger chunks for faster hashing
+        for chunk in iter(lambda: f.read(65536), b""):  # 64KB chunks instead of 4KB
+            hasher.update(chunk)
+    return hasher.hexdigest()
+
+
+
+def generate_embeddings_fast(chunks):
+    """Fast embedding generation"""
+    if not ensure_processor_initialized():
+        return [np.zeros(768) for _ in chunks]
+    
+    try:
+        texts = [chunk['content'] for chunk in chunks]
+        embeddings = global_processor.embedding_model.encode(
+            texts,
+            convert_to_tensor=False,
+            show_progress_bar=False,
+            batch_size=32  # Larger batch for speed
+        )
+        return embeddings
+    except Exception as e:
+        logger.error(f"Fast embedding generation failed: {e}")
+        return [np.zeros(768) for _ in chunks]
+
+
+def ensure_processor_initialized():
+    """Ensure the processor is initialized"""
+    global global_processor, search_engine
+    
+    if global_processor is None:
+        logger.warning("Processor not initialized, attempting on-demand initialization")
+        if not initialize_enhanced_processor():
+            logger.error("Failed to initialize processor on demand")
+            return False
+    return True
+
+
+def create_chunks_optimized(content):
+    """Fast chunking for performance"""
+    chunk_size = 1200
+    overlap = 200
+    
+    if len(content) <= chunk_size:
+        return [{'content': content, 'chunk_index': 0, 'metadata': {}}]
+    
+    chunks = []
+    start = 0
+    chunk_index = 0
+    
+    while start < len(content):
+        end = start + chunk_size
+        chunk_content = content[start:end]
+        
+        chunks.append({
+            'content': chunk_content,
+            'chunk_index': chunk_index,
+            'metadata': {'optimized_chunk': True}
+        })
+        
+        start += chunk_size - overlap
+        chunk_index += 1
+    
+    return chunks
+
+
+def get_gpu_stats():
+    """Get GPU performance statistics"""
+    if not torch.cuda.is_available():
+        return {"gpu_available": False}
+    
+    try:
+        stats = {
+            "gpu_available": True,
+            "gpu_name": torch.cuda.get_device_name(),
+            "memory_allocated_gb": torch.cuda.memory_allocated() / 1e9,
+            "memory_reserved_gb": torch.cuda.memory_reserved() / 1e9,
+            "memory_total_gb": torch.cuda.get_device_properties(0).total_memory / 1e9,
+            "cuda_version": torch.version.cuda,
+            "pytorch_version": torch.__version__
+        }
+        
+        # Add NVIDIA-ML stats if available
+        if NVML_AVAILABLE:
+            try:
+                nvml.nvmlInit()
+                handle = nvml.nvmlDeviceGetHandleByIndex(0)
+                memory_info = nvml.nvmlDeviceGetMemoryInfo(handle)
+                utilization = nvml.nvmlDeviceGetUtilizationRates(handle)
+                temperature = nvml.nvmlDeviceGetTemperature(handle, nvml.NVML_TEMPERATURE_GPU)
+                
+                stats.update({
+                    "memory_usage_percent": (memory_info.used / memory_info.total) * 100,
+                    "gpu_utilization_percent": utilization.gpu,
+                    "memory_utilization_percent": utilization.memory,
+                    "temperature_celsius": temperature,
+                    "is_optimal": temperature < 80 and utilization.gpu > 0
+                })
+            except Exception as e:
+                stats["nvml_error"] = str(e)
+        
+        return stats
+    except Exception as e:
+        return {"gpu_available": False, "error": str(e)}
+
+
+
+# Database initialization
+def create_app_with_postgres():
+    """Initialize app with PostgreSQL"""
+    with app.app_context():
+        try:
+            with db.engine.connect() as connection:
+                connection.execute(text('SELECT 1'))
+            logger.info('PostgreSQL connection successful')
+            
+            # Create all tables
+            db.create_all()
+            logger.info('Database tables created/verified')
+            
+            # Log GPU status
+            gpu_stats = get_gpu_stats()
+            logger.info(f'Accuracy-Focused GPU Status: {gpu_stats}')
+            
+        except Exception as e:
+            logger.error(f"Database initialization failed: {e}")
+            raise
 
 # Main application startup
 if __name__ == '__main__':
