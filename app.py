@@ -159,7 +159,7 @@ class RTX_A6000_Enhanced_Config:
     OLLAMA_MODEL = os.getenv('OLLAMA_MODEL', 'llama3.1:8b')  # Llama 3.1 model
     OLLAMA_TIMEOUT = 600
     OLLAMA_MAX_TOKENS = 4096  # Adjust based on model
-    OLLAMA_TEMPERATURE = 1  # Low temperature for accuracy
+    OLLAMA_TEMPERATURE = 0.1  # Low temperature for accuracy
     OLLAMA_TOP_P = 0.8
     OLLAMA_TOP_K = 40
     OLLAMA_STREAM = True  # Enable streaming
@@ -1646,15 +1646,13 @@ def initialize_ocr_processor():
         logger.error(f"❌ OCR processor initialization failed: {e}")
         return False
 
-
-def extract_keywords_for_search(query: str) -> str:
+def extract_keywords_for_exact_match_search(query: str) -> str:
     """
-    Extract keywords from user query for fallback search.
-    Dynamically removes action words and focuses on content keywords.
+    Extract keywords for EXACT MATCH search - focuses on the main content words
     """
     import re
     
-    # Comprehensive list of common action/stop words to filter out
+    # Comprehensive list of action/stop words to filter out
     action_words = {
         # Question words
         'what', 'how', 'where', 'when', 'why', 'which', 'who', 'whose', 'whom',
@@ -1670,98 +1668,479 @@ def extract_keywords_for_search(query: str) -> str:
         'do', 'does', 'did', 'done', 'doing',
         # Articles and determiners
         'the', 'a', 'an', 'this', 'that', 'these', 'those',
-        # Quantifiers
-        'all', 'any', 'some', 'every', 'each', 'many', 'much', 'few', 'several',
-        'most', 'more', 'less', 'least', 'both', 'either', 'neither',
-        # Prepositions
-        'in', 'on', 'at', 'by', 'for', 'with', 'from', 'to', 'of', 'about',
-        'under', 'over', 'through', 'between', 'among', 'during', 'before',
-        'after', 'above', 'below', 'up', 'down', 'out', 'off', 'into', 'onto',
-        # Pronouns
-        'i', 'you', 'he', 'she', 'it', 'we', 'they', 'me', 'him', 'her', 'us', 'them',
-        'my', 'your', 'his', 'her', 'its', 'our', 'their', 'mine', 'yours', 'ours', 'theirs',
-        # Conjunctions
-        'and', 'or', 'but', 'nor', 'so', 'yet', 'because', 'although', 'though',
-        'since', 'unless', 'while', 'whereas', 'however', 'therefore', 'moreover',
-        # Common adverbs
-        'very', 'really', 'quite', 'rather', 'too', 'also', 'just', 'only', 'even',
-        'still', 'already', 'yet', 'again', 'once', 'twice', 'always', 'never',
-        'often', 'sometimes', 'usually', 'generally', 'specifically', 'particularly',
-        # Polite/filler words
-        'please', 'thank', 'thanks', 'hello', 'hi', 'hey', 'well', 'okay', 'ok',
-        # Time/sequence words
-        'first', 'second', 'third', 'next', 'then', 'finally', 'last', 'initially',
-        # Referential words  
-        'regarding', 'concerning', 'related', 'pertaining', 'according', 'based'
+        # Common prepositions
+        'in', 'on', 'at', 'by', 'for', 'with', 'from', 'to', 'of', 'about'
     }
     
     # Extract words and clean them
     words = re.findall(r'\b\w+\b', query.lower())
     
-    # Keep track of original word positions for phrase preservation
-    important_phrases = []
-    keywords = []
+    # Find the MAIN CONTENT WORDS (usually nouns, important adjectives)
+    content_keywords = []
     
-    # Look for important multi-word phrases first (quoted text, technical terms)
-    quoted_phrases = re.findall(r'"([^"]+)"', query)
-    for phrase in quoted_phrases:
-        important_phrases.append(phrase.strip())
-    
-    # Look for capitalized words in original query (likely proper nouns/technical terms)
+    # Look for capitalized words in original query (likely proper nouns/important terms)
     capitalized_words = re.findall(r'\b[A-Z][a-zA-Z]*\b', query)
     for word in capitalized_words:
         if len(word) > 2 and word.lower() not in action_words:
-            keywords.append(word.lower())
+            content_keywords.append(word.lower())
     
-    # Filter individual words
+    # Filter individual words - keep meaningful content words
     for word in words:
         if (len(word) > 2 and 
             word not in action_words and 
-            not word.isdigit() and
-            not word.replace('.', '').isdigit()):  # Skip decimal numbers too
-            keywords.append(word)
+            not word.isdigit()):
+            content_keywords.append(word)
     
-    # Look for compound terms (hyphenated words, technical terms)
-    compound_terms = re.findall(r'\b\w+[-_]\w+\b', query.lower())
-    for term in compound_terms:
-        if len(term) > 3:
-            keywords.append(term)
+    # Remove duplicates while preserving order
+    unique_keywords = []
+    seen = set()
+    for keyword in content_keywords:
+        if keyword not in seen:
+            unique_keywords.append(keyword)
+            seen.add(keyword)
     
-    # Combine all keywords and remove duplicates while preserving order
-    all_keywords = important_phrases + list(dict.fromkeys(keywords))
+    # If we have multiple keywords, try to identify the MAIN one
+    if len(unique_keywords) > 1:
+        # Prioritize longer words (often more specific)
+        unique_keywords.sort(key=len, reverse=True)
+        
+        # For questions like "what is a university", "university" is the key term
+        # Take the most important 1-2 keywords
+        main_keywords = unique_keywords[:2] if len(unique_keywords) > 1 else unique_keywords
+    else:
+        main_keywords = unique_keywords
     
-    # If we filtered out too much (less than 1/3 of original words), 
-    # be more lenient and include some action words back
-    if len(all_keywords) < max(1, len(words) // 3):
-        logger.info(f"Too many words filtered, being more lenient...")
-        # Add back some important words that might be content-related
-        for word in words:
-            if (len(word) > 3 and 
-                word not in all_keywords and
-                not word.isdigit()):
-                all_keywords.append(word)
+    # Join keywords for search
+    result = ' '.join(main_keywords) if main_keywords else query.strip()
     
-    # If still no keywords, use original query
-    if len(all_keywords) == 0:
-        logger.info(f"No keywords extracted, using original query")
-        return query.strip()
-    
-    result = ' '.join(all_keywords)
-    
-    # Log the extraction for debugging
-    logger.info(f"🔍 Keyword extraction: '{query}' → '{result}'")
-    logger.info(f"🔍 Extracted {len(all_keywords)} keywords from {len(words)} original words")
+    logger.info(f"🎯 EXACT MATCH keyword extraction: '{query}' → '{result}'")
+    logger.info(f"🎯 Main content keywords: {main_keywords}")
     
     return result
 
 
+def search_exact_keyword_matches(keyword: str, user_id: int):
+    """
+    Search for EXACT matches and variations of a specific keyword
+    """
+    logger.info(f"🎯 EXACT KEYWORD SEARCH: Finding all instances of '{keyword}' for user {user_id}")
+    
+    try:
+        all_instances = []
+        
+        # Get user documents
+        user_documents = Document.query.filter_by(user_id=user_id).all()
+        
+        if not user_documents:
+            return [], "No documents found to search."
+        
+        logger.info(f"Processing {len(user_documents)} documents for exact keyword search")
+        
+        # Generate keyword variations for comprehensive matching
+        keyword_variations = generate_keyword_variations(keyword)
+        logger.info(f"Searching for variations: {keyword_variations}")
+        
+        # Process each document
+        for document in user_documents:
+            try:
+                filename = document.document_metadata.get('original_filename', 'Unknown') if document.document_metadata else 'Unknown'
+                logger.info(f"Processing: {filename}")
+                
+                # Get the full document content
+                content = get_full_document_content(document.id)
+                
+                if not content:
+                    logger.warning(f"No content found for {filename}")
+                    continue
+                
+                # Find exact keyword instances in this document
+                doc_instances = find_exact_keyword_instances(content, keyword, keyword_variations, filename, document.id)
+                all_instances.extend(doc_instances)
+                
+                logger.info(f"Found {len(doc_instances)} exact keyword instances in {filename}")
+                
+            except Exception as doc_error:
+                logger.error(f"Error processing document: {doc_error}")
+                continue
+        
+        # Remove duplicates and rank by exactness
+        unique_instances = remove_duplicate_instances_ranked(all_instances)
+        
+        # Build summary focused on exact matches
+        summary = build_exact_keyword_summary(unique_instances, keyword, len(user_documents))
+        
+        logger.info(f"✅ EXACT KEYWORD SEARCH COMPLETED: {len(unique_instances)} instances found")
+        
+        return unique_instances, summary
+        
+    except Exception as e:
+        logger.error(f"❌ EXACT KEYWORD SEARCH ERROR: {e}")
+        return [], f"Search failed: {str(e)}"
+
+
+def generate_keyword_variations(keyword: str) -> list:
+    """
+    Generate variations of a keyword for exact matching
+    """
+    keyword = keyword.strip().lower()
+    variations = [keyword]  # Start with original
+    
+    # Add common morphological variations
+    if len(keyword) > 3:
+        # Plural forms
+        if keyword.endswith('y'):
+            variations.append(keyword[:-1] + 'ies')  # university -> universities
+        elif keyword.endswith(('s', 'x', 'z', 'ch', 'sh')):
+            variations.append(keyword + 'es')
+        else:
+            variations.append(keyword + 's')
+        
+        # Past tense / -ed forms
+        if keyword.endswith('e'):
+            variations.append(keyword + 'd')
+        else:
+            variations.append(keyword + 'ed')
+        
+        # -ing forms
+        if keyword.endswith('e'):
+            variations.append(keyword[:-1] + 'ing')
+        else:
+            variations.append(keyword + 'ing')
+        
+        # -er forms
+        variations.append(keyword + 'er')
+        
+        # -ly forms
+        variations.append(keyword + 'ly')
+        
+        # -tion forms
+        if keyword.endswith('e'):
+            variations.append(keyword[:-1] + 'tion')
+        else:
+            variations.append(keyword + 'tion')
+    
+    # Add case variations
+    case_variations = []
+    for var in variations:
+        case_variations.extend([
+            var,                    # lowercase
+            var.capitalize(),       # Capitalized
+            var.upper(),           # UPPERCASE
+        ])
+    
+    # Remove duplicates while preserving order
+    unique_variations = []
+    seen = set()
+    for var in case_variations:
+        if var and var not in seen:
+            unique_variations.append(var)
+            seen.add(var)
+    
+    return unique_variations
+
+
+def find_exact_keyword_instances(content, main_keyword, keyword_variations, filename, document_id):
+    """
+    Find exact instances of keyword and its variations
+    """
+    instances = []
+    
+    try:
+        # Split content into pages
+        pages = split_into_pages_reliable(content)
+        logger.info(f"Split into {len(pages)} pages for exact keyword search in: {filename}")
+        
+        # Search each page
+        for page_data in pages:
+            # Extract page number
+            page_num_match = re.match(r'\[PAGE (\d+)\]', page_data)
+            if page_num_match:
+                page_num = int(page_num_match.group(1))
+                page_content = page_data[page_num_match.end():].strip()
+            else:
+                page_num = pages.index(page_data) + 1
+                page_content = page_data
+            
+            # Search for each keyword variation
+            found_variations = set()  # Track which variations we found
+            
+            for variation in keyword_variations:
+                # Find all occurrences of this variation
+                page_instances = find_keyword_variation_in_page(
+                    page_content, variation, main_keyword, page_num, filename, document_id
+                )
+                
+                for instance in page_instances:
+                    # Avoid adding duplicate instances from the same position
+                    instance_key = f"{instance['page_number']}_{instance['position_in_page']}"
+                    if instance_key not in found_variations:
+                        instances.append(instance)
+                        found_variations.add(instance_key)
+        
+        # Sort instances by page and position
+        instances.sort(key=lambda x: (x['page_number'], x['position_in_page']))
+        
+        return instances
+        
+    except Exception as e:
+        logger.error(f"Error finding exact keyword instances: {e}")
+        return []
+
+
+def find_keyword_variation_in_page(page_content, variation, main_keyword, page_num, filename, document_id):
+    """
+    Find specific keyword variation in a page with exact matching
+    """
+    instances = []
+    
+    try:
+        # Search for exact word matches (with word boundaries)
+        import re
+        
+        # Pattern for exact word matching
+        pattern = r'\b' + re.escape(variation) + r'\b'
+        
+        for match in re.finditer(pattern, page_content, re.IGNORECASE):
+            start_pos = match.start()
+            matched_text = match.group()
+            
+            # Get context around the match
+            context_start = max(0, start_pos - 500)
+            context_end = min(len(page_content), start_pos + len(matched_text) + 500)
+            context = page_content[context_start:context_end].strip()
+            
+            # Clean context
+            context = ' '.join(context.split())
+            
+            # Determine match quality
+            exact_match_score = 100
+            if matched_text.lower() == main_keyword.lower():
+                exact_match_score = 200  # Perfect match
+            elif matched_text.lower() == variation.lower():
+                exact_match_score = 150  # Exact variation match
+            
+            instance = {
+                'filename': filename,
+                'document_id': document_id,
+                'page_number': page_num,
+                'position_in_page': start_pos,
+                'matched_text': matched_text,
+                'original_keyword': main_keyword,
+                'variation_matched': variation,
+                'context': context,
+                'exact_match': matched_text.lower() == main_keyword.lower(),
+                'variation_match': True,
+                'match_score': exact_match_score,
+                'instance_key': f"{document_id}_{page_num}_{start_pos}_{matched_text}"
+            }
+            
+            instances.append(instance)
+            
+            logger.debug(f"Found '{matched_text}' (variation of '{main_keyword}') at page {page_num}, pos {start_pos}")
+    
+    except Exception as e:
+        logger.error(f"Error finding keyword variation in page: {e}")
+    
+    return instances
+
+
+def remove_duplicate_instances_ranked(instances):
+    """
+    Remove duplicates and rank by match quality
+    """
+    # Remove exact duplicates based on instance_key
+    seen_keys = set()
+    unique_instances = []
+    
+    for instance in instances:
+        key = instance['instance_key']
+        if key not in seen_keys:
+            seen_keys.add(key)
+            unique_instances.append(instance)
+    
+    # Sort by match score (highest first), then by page number
+    unique_instances.sort(key=lambda x: (x['match_score'], -x['page_number']), reverse=True)
+    
+    return unique_instances
+
+
+def build_exact_keyword_summary(instances, keyword, documents_searched):
+    """
+    Build summary focused on exact keyword matches
+    """
+    if not instances:
+        return f"""
+EXACT KEYWORD SEARCH RESULTS
+=============================
+Keyword: '{keyword}'
+Documents searched: {documents_searched}
+Total instances found: 0
+
+No instances of '{keyword}' or its variations were found in your documents.
+"""
+    
+    summary_parts = []
+    
+    # Header
+    summary_parts.append(f"🎯 EXACT MATCHES FOR KEYWORD: '{keyword.upper()}'")
+    summary_parts.append("=" * 80)
+    summary_parts.append("")
+    
+    # Statistics
+    by_doc = {}
+    variations_found = set()
+    exact_matches = 0
+    
+    for instance in instances:
+        doc = instance['filename']
+        if doc not in by_doc:
+            by_doc[doc] = {'total': 0, 'pages': set(), 'variations': set()}
+        
+        by_doc[doc]['total'] += 1
+        by_doc[doc]['pages'].add(instance['page_number'])
+        by_doc[doc]['variations'].add(instance['matched_text'])
+        variations_found.add(instance['matched_text'])
+        
+        if instance['exact_match']:
+            exact_matches += 1
+    
+    total_docs = len(by_doc)
+    total_pages = sum(len(doc_data['pages']) for doc_data in by_doc.values())
+    
+    summary_parts.append("📊 <b>SEARCH SUMMARY:</b>")
+    summary_parts.append(f"• Total instances found: {len(instances)}")
+    summary_parts.append(f"• Exact matches: {exact_matches}")
+    summary_parts.append(f"• Variations found: {len(variations_found)}")
+    summary_parts.append(f"• Documents with matches: {total_docs}")
+    summary_parts.append(f"• Pages with matches: {total_pages}")
+    summary_parts.append("")
+    
+    # Variations found
+    summary_parts.append("<b>KEYWORD VARIATIONS FOUND:</b>")
+    summary_parts.append("-" * 30)
+    for variation in sorted(variations_found):
+        count = len([i for i in instances if i['matched_text'] == variation])
+        match_type = "EXACT" if variation.lower() == keyword.lower() else "VARIATION"
+        summary_parts.append(f"• '{variation}' - {count} instances ({match_type})")
+    summary_parts.append("")
+    
+    # Distribution by document
+    summary_parts.append("📄 <b>DISTRIBUTION BY DOCUMENT:</b>")
+    summary_parts.append("-" * 40)
+    
+    for doc_name, doc_data in by_doc.items():
+        summary_parts.append(f"📄 {doc_name}")
+        summary_parts.append(f"   • Total instances: {doc_data['total']}")
+        summary_parts.append(f"   • Pages: {', '.join(map(str, sorted(doc_data['pages'])))}")
+        summary_parts.append(f"   • Variations: {', '.join(sorted(doc_data['variations']))}")
+        summary_parts.append("")
+    
+    # Sample instances
+    summary_parts.append("📍 <b>SAMPLE INSTANCES:</b>")
+    summary_parts.append("-" * 25)
+    
+    # Show top 10 instances
+    top_instances = instances[:10]
+    for i, instance in enumerate(top_instances, 1):
+        summary_parts.append(f"{i}. '{instance['matched_text']}' in {instance['filename']}")
+        summary_parts.append(f"   Page {instance['page_number']} - {'EXACT' if instance['exact_match'] else 'VARIATION'}")
+        
+        # Show context preview (first 100 chars)
+        context_preview = instance['context'][:100] + "..." if len(instance['context']) > 100 else instance['context']
+        # summary_parts.append(f"   Context: {context_preview}")
+        summary_parts.append("")
+    
+    # Footer
+    summary_parts.append("=" * 50)
+    summary_parts.append("🎯 <b>EXACT KEYWORD SEARCH COMPLETE</b>")
+    summary_parts.append("=" * 50)
+    summary_parts.append(f"✅ Found {len(instances)} total instances of '{keyword}' and variations")
+    summary_parts.append(f"✅ Covered {total_docs} document(s) across {total_pages} page(s)")
+    summary_parts.append("✅ Exact word boundary matching used for precision")
+    summary_parts.append("=" * 50)
+    
+    return "\n".join(summary_parts)
+
+
+# Update the fallback function to use exact keyword search
+def fallback_to_exact_keyword_search(query: str, user_id: int, document_info: list) -> dict:
+    """
+    Enhanced fallback search optimized for EXACT keyword matching
+    """
+    try:
+        logger.info(f"🎯 Exact keyword fallback search for query: '{query}'")
+        
+        # Extract the main keyword for exact matching
+        main_keyword = extract_keywords_for_exact_match_search(query)
+        
+        # Use exact keyword search
+        all_instances, comprehensive_summary = search_exact_keyword_matches(main_keyword, user_id)
+        
+        if not all_instances:
+            response_content = f"""# Exact Keyword Search Results for "{main_keyword}"
+
+No exact matches for the keyword "{main_keyword}" were found in your documents.
+
+**Documents Searched:** {len(document_info)} documents
+- {', '.join(document_info)}
+
+
+**Keyword Variations Searched:**
+- {main_keyword} (original)
+- {main_keyword}s (plural)
+- {main_keyword.capitalize()} (capitalized)
+- And other common variations
+
+**Suggestions:**
+- Check spelling of the keyword
+- Try a different form of the word
+- Use synonyms or related terms
+- Ensure the keyword exists in your documents"""
+        else:
+            response_content = f"""# Exact Keyword Search Results for "{main_keyword}"
+
+Found **{len(all_instances)} exact instances** of '{main_keyword}' and its variations across your documents.
+
+{comprehensive_summary}
+
+**Search Method:** Exact word boundary matching with morphological variations for maximum precision.
+"""
+        
+        return {
+            'all_instances': all_instances,
+            'content': response_content,
+            'sources': document_info,
+            'question_analysis': {
+                'type': 'exact_keyword_search',
+                'confidence': 0.95,
+                'reasoning': f'Exact keyword search for: "{main_keyword}"',
+                'ai_determined': False,
+                'fallback': True,
+                'search_method': 'exact_word_boundary_matching',
+                'main_keyword': main_keyword
+            },
+            'success': True,
+            'ai_powered': False,
+            'search_keywords': main_keyword,
+            'exact_keyword_search': True
+        }
+        
+    except Exception as e:
+        logger.error(f"Exact keyword fallback search error: {e}")
+        return {
+            'content': f"Exact keyword search failed: {str(e)}",
+            'sources': document_info,
+            'question_analysis': {'type': 'error', 'confidence': 0.0},
+            'success': False,
+            'search_keywords': query,
+            'exact_keyword_search': False
+        }
 
 
 # OLLAMA HELPER FUNCTIONS
-
 def ollama_streaming_response(question: str, user_id: int):
     """
-    Streaming version that runs fallback with keywords first, then Ollama with exact query
+    Streaming version that runs exact keyword search first, then Ollama with exact query
     """
     try:
         # Get user documents info first
@@ -1800,55 +2179,48 @@ def ollama_streaming_response(question: str, user_id: int):
         combined_content = "\n".join(all_content)
         relevant_content = []
         
-        # FIRST STREAM: Fallback Response with KEYWORDS
+        # FIRST STREAM: Exact Keyword Search
         yield json.dumps({
             'status': 'status_update',
-            'message': '🔍 Running keyword-based search analysis first...'
+            'message': '🎯 Running exact keyword search analysis first...'
         }) + "\n"
         
         fallback_success = False
         
         try:
-            # Extract keywords for fallback search
-            search_keywords = extract_keywords_for_search(question)
+            # Extract main keyword for exact search
+            main_keyword = extract_keywords_for_exact_match_search(question)
             
             yield json.dumps({
                 'status': 'status_update',
-                'message': f'🔍 Searching for keywords: "{search_keywords}"'
+                'message': f'🔍 Searching for exact matches of: "{main_keyword}"'
             }) + "\n"
             
-            # Use fallback with extracted keywords
-            response_data = fallback_to_search(search_keywords, user_id, document_info)
+            # Use exact keyword search
+            response_data = fallback_to_exact_keyword_search(question, user_id, document_info)
             
-            yield json.dumps({'status': 'stream_start', 'stream_type': 'fallback'}) + "\n"
+            yield json.dumps({'status': 'stream_start', 'stream_type': 'exact_keyword'}) + "\n"
             
-            # Stream the fallback response
+            # Stream the keyword search response
             content = response_data['content']
             relevant_content = response_data.get('all_instances', [])
+            
+            logger.info(f"🎯 Exact Keyword Context: Found {len(relevant_content)} instances")
+
             chunk_size = 150
             for i in range(0, len(content), chunk_size):
                 chunk = content[i:i + chunk_size]
-                yield json.dumps({'status': 'stream_chunk', 'content': chunk, 'stream_type': 'fallback'}) + "\n"
+                yield json.dumps({'status': 'stream_chunk', 'content': chunk, 'stream_type': 'exact_keyword'}) + "\n"
                 time.sleep(0.3)
-            
-            # yield json.dumps({
-            #     'status': 'stream_end',
-            #     'stream_type': 'fallback',
-            #     'sources': [{'filename': s, 'path': s} for s in response_data['sources']],
-            #     'question_analysis': response_data['question_analysis'],
-            #     'ai_powered': False,
-            #     'fallback_used': True,
-            #     'search_keywords': search_keywords  # Include the keywords used
-            # }) + "\n"
             
             fallback_success = True
             
         except Exception as fallback_error:
-            logger.error(f"Fallback streaming error: {fallback_error}")
+            logger.error(f"Exact keyword search streaming error: {fallback_error}")
             yield json.dumps({
                 'status': 'error',
-                'message': f'Fallback streaming failed: {str(fallback_error)}',
-                'stream_type': 'fallback'
+                'message': f'Exact keyword search failed: {str(fallback_error)}',
+                'stream_type': 'exact_keyword'
             }) + "\n"
         
         # SECOND STREAM: Ollama Response with EXACT QUERY
@@ -1857,25 +2229,40 @@ def ollama_streaming_response(question: str, user_id: int):
             'message': f'🦙 Analyzing your exact question: "{question}"'
         }) + "\n"
         
-        # Create the prompt for Ollama with EXACT user question
+        # Create context from exact keyword matches
+        keyword_context = ""
+        if relevant_content:
+            keyword_context = "\n\nRELEVANT KEYWORD MATCHES FOUND:\n"
+            for i, instance in enumerate(relevant_content[:5], 1):  # Top 5 instances
+                keyword_context += f"\n{i}. From {instance['filename']} (Page {instance['page_number']}):\n"
+                keyword_context += f"   Matched: '{instance['matched_text']}'\n"
+                keyword_context += f"   Context: {instance['context'][:200]}...\n"
+        
+        # Create the prompt for Ollama with EXACT user question and keyword context
         ollama_prompt = f"""You are an intelligent document analysis assistant. A user has asked: "{question}"
 
-You have access to {len(user_documents)} documents with the following relevant content:
+You have access to {len(user_documents)} documents and found specific keyword matches for the main terms in the question.
 
-{relevant_content if relevant_content else combined_content[:15000]}
+EXACT KEYWORD MATCHES FOUND:
+{keyword_context if keyword_context else "No specific keyword matches found in initial search."}
+
+FULL DOCUMENT CONTENT:
+{combined_content[:15000] if not keyword_context else combined_content[:10000]}
 
 INSTRUCTIONS:
 
-1. Answer the user's EXACT question: "{question}" from the given document only.
-2. Be comprehensive and thorough in your response
-3. Use clear structure with headings and bullet points when appropriate
-4. Reference specific documents when making claims
-5. Every response that includes a section or quote must end with a citation in the format: [^filename||page||section-heading]
-6. If the question asks you to "list" something, provide a clear list
-7. If it asks for explanation, provide detailed explanations with examples
-8. If it asks for analysis, provide insights and conclusions
-9. Always be helpful and complete
-10. Focus on answering exactly what the user asked
+1. Answer the user's EXACT question: "{question}" based on the provided content
+2. Give priority to the EXACT KEYWORD MATCHES shown above
+3. Be comprehensive and thorough in your response
+4. Use clear structure with headings and bullet points when appropriate
+5. Reference specific documents when making claims
+6. Every response that includes a section or quote must end with a citation in the format: [^filename||page||section-heading]
+7. If the question asks you to "list" something, provide a clear list
+8. If it asks for explanation, provide detailed explanations with examples
+9. If it asks for analysis, provide insights and conclusions
+10. Always be helpful and complete
+11. Focus on answering exactly what the user asked
+12. *You Must* not provide anything from outside the context
 
 USER QUESTION: {question}
 
@@ -1883,7 +2270,7 @@ Provide the most appropriate comprehensive response that directly addresses what
 
         yield json.dumps({
             'status': 'status_update',
-            'message': f'⚡ Processing your request: "{question}"'
+            'message': f'⚡ Processing with keyword context: "{main_keyword if "main_keyword" in locals() else "keywords"}"'
         }) + "\n"
         
         # Stream response from Ollama
@@ -1902,40 +2289,14 @@ Provide the most appropriate comprehensive response that directly addresses what
             
             ollama_success = True
             
-            # Determine question type from the original question (dynamic analysis)
+            # Determine question type from the original question
             question_lower = question.lower()
-            question_type = 'general'
+            question_type = 'exact_keyword_search'
             
-            # Dynamic question type detection based on patterns
-            question_patterns = {
-                'list': ['list', 'show', 'display', 'enumerate', 'give me all', 'what are the'],
-                'explanation': ['what is', 'what are', 'define', 'explain', 'describe', 'tell me about'],
-                'instructions': ['how to', 'how do', 'how can', 'steps', 'process', 'procedure', 'method'],
-                'search': ['find', 'search', 'locate', 'where is', 'where are', 'which'],
-                'summary': ['summarize', 'summary', 'overview', 'brief', 'outline'],
-                'analysis': ['analyze', 'analysis', 'compare', 'comparison', 'evaluate', 'assessment'],
-                'identification': ['identify', 'determine', 'recognize', 'distinguish'],
-                'classification': ['classify', 'categorize', 'group', 'type', 'kind'],
-                'calculation': ['calculate', 'compute', 'determine', 'figure out'],
-                'recommendation': ['recommend', 'suggest', 'advise', 'propose', 'should']
-            }
-            
-            # Check each pattern
-            for q_type, patterns in question_patterns.items():
-                if any(pattern in question_lower for pattern in patterns):
-                    question_type = q_type
-                    break
-            
-            # Additional context-based detection
-            if question_type == 'general':
-                # Look for specific question words
-                if question_lower.startswith(('what', 'who', 'where', 'when', 'why', 'how')):
-                    if 'what' in question_lower and ('is' in question_lower or 'are' in question_lower):
-                        question_type = 'explanation'
-                    elif 'how' in question_lower:
-                        question_type = 'instructions'
-                    elif any(word in question_lower for word in ['where', 'which', 'who']):
-                        question_type = 'search'
+            if 'what is' in question_lower or 'what are' in question_lower:
+                question_type = 'definition_with_keyword_search'
+            elif 'list' in question_lower or 'show' in question_lower:
+                question_type = 'listing_with_keyword_search'
             
             yield json.dumps({
                 'status': 'stream_end',
@@ -1944,16 +2305,18 @@ Provide the most appropriate comprehensive response that directly addresses what
                 'question_analysis': {
                     'type': question_type,
                     'confidence': 0.95,
-                    'reasoning': f'Determined from question structure and keywords in: "{question}"',
+                    'reasoning': f'Exact keyword search combined with AI analysis for: "{question}"',
                     'ai_determined': True,
                     'model': 'Ollama Llama 3.1',
                     'original_question': question,
-                    'search_keywords_used': search_keywords if 'search_keywords' in locals() else None
+                    'main_keyword_searched': main_keyword if 'main_keyword' in locals() else None,
+                    'keyword_matches_found': len(relevant_content)
                 },
                 'ai_powered': True,
                 'ollama_native': True,
+                'exact_keyword_enhanced': True,
                 'sources_count': len(document_info),
-                'exact_query_used': question  # Show that exact query was used
+                'exact_query_used': question
             }) + "\n"
             
         except Exception as stream_error:
@@ -1967,23 +2330,82 @@ Provide the most appropriate comprehensive response that directly addresses what
         # Final summary
         yield json.dumps({
             'status': 'complete',
-            'message': 'Both keyword search and exact query analysis completed',
+            'message': 'Exact keyword search and AI analysis completed',
             'fallback_success': fallback_success,
             'ollama_success': ollama_success,
             'total_sources': len(document_info),
+            'exact_keyword_matches': len(relevant_content),
             'search_strategy': {
-                'fallback_keywords': search_keywords if 'search_keywords' in locals() else None,
+                'exact_keyword_used': main_keyword if 'main_keyword' in locals() else None,
                 'ollama_query': question,
-                'explanation': 'Fallback used keywords for search, Ollama used exact user question'
+                'explanation': 'Exact keyword search for precise matches, then AI analysis of full context'
             }
         }) + "\n"
         
     except Exception as e:
-        logger.error(f"Ollama streaming response error: {e}")
+        logger.error(f"Enhanced exact keyword streaming response error: {e}")
         yield json.dumps({
             'status': 'error',
             'message': f'Error: {str(e)}'
         }) + "\n"
+
+def update_search_configuration_for_exact_keywords():
+    """Update the search configuration to guarantee exact keyword match priority"""
+    
+    # Override the search weights to massively prioritize exact keyword matches
+    app.config['SEARCH_WEIGHTS'] = {
+        'exact_keyword_GUARANTEED': 10000000.0,    # MASSIVE priority for exact keyword matches
+        'exact_phrase_GUARANTEED': 1000000.0,     # Very high priority for exact phrases
+        'exact_phrase_enhanced': 100000.0,        # High priority for enhanced exact matches
+        'multi_keyword': 1000.0,                  # Medium priority for keyword matches
+        'context_aware': 500.0,                   # Medium priority for context
+        'semantic_gpu': 100.0,                    # Lower priority for semantic
+        'fuzzy_match': 10.0,                      # Low priority for fuzzy
+        'emergency_fallback': 0.1                 # Emergency only
+    }
+    
+    logger.info("🎯 Updated search configuration for EXACT KEYWORD priority")
+
+
+# 3. ADD to your startup function
+def startup_exact_keyword_priority_system():
+    """Initialize the exact keyword priority system"""
+    try:
+        logger.info("🎯 Starting EXACT KEYWORD PRIORITY DocumentIQ System...")
+        
+        # Initialize processor
+        success = initialize_enhanced_processor()
+        
+        # Initialize Ollama
+        ollama_success = initialize_ollama()
+        
+        # Update search configuration for exact keywords
+        update_search_configuration_for_exact_keywords()
+        
+        if success and ollama_success:
+            logger.info("✅ EXACT KEYWORD PRIORITY system with Ollama initialized successfully")
+            logger.info("🎯 EXACT KEYWORD PRIORITY features enabled:")
+            logger.info("   - GUARANTEED exact keyword matching with morphological variations")
+            logger.info("   - Word boundary detection for precise matching")
+            logger.info("   - Automatic keyword extraction from questions")
+            logger.info("   - Exact match ranking with massive score boost")
+            logger.info("   - Context prioritization for exact keyword matches")
+            logger.info("   - Emergency fallbacks ensure 100% search success")
+            logger.info("   - Enhanced prompts prioritize exact keyword answers")
+            logger.info("   - Powered by Ollama Llama 3.1 for superior language understanding")
+        else:
+            logger.error("❌ EXACT KEYWORD PRIORITY system initialization failed")
+            if not success:
+                logger.error("   - Document processor initialization failed")
+            if not ollama_success:
+                logger.error("   - Ollama initialization failed")
+            
+        return success and ollama_success
+        
+    except Exception as e:
+        logger.error(f"❌ EXACT KEYWORD PRIORITY system startup error: {e}")
+        return False
+
 
 
 def update_search_configuration():
@@ -3356,9 +3778,9 @@ def enhanced_context_builder_with_exact_priority(search_results, question, max_c
     
     # Add EXACT MATCHES FIRST with maximum context
     if exact_matches:
-        context_parts.append(f"\n{'='*80}")
+        context_parts.append(f"\n{'<hr>'}")
         context_parts.append(f"🎯 EXACT MATCHES FOUND FOR: '{question}'")
-        context_parts.append(f"{'='*80}\n")
+        context_parts.append(f"{'<hr>'}\n")
         
         used_exact_space = 0
         for i, result in enumerate(exact_matches):
@@ -3495,9 +3917,9 @@ def enhanced_context_builder_with_exact_priority(search_results, question, max_c
     # Add comprehensive search summary
     summary = f"""
 
-{'='*80}
+{'<hr>'}
 🎯 SEARCH ANALYSIS SUMMARY
-{'='*80}
+{'<hr>'}
 - Question: {question}
 - EXACT MATCHES: {len(exact_matches)} (guaranteed priority)
 - Additional results: {len(other_results)}
@@ -3505,7 +3927,7 @@ def enhanced_context_builder_with_exact_priority(search_results, question, max_c
 - Search strategy: Multi-strategy with exact match guarantee
 - Exact matches are prioritized and shown first
 - All content preserves original document formatting
-{'='*80}
+{'<hr>'}
 
 """
     
@@ -4144,8 +4566,6 @@ def fallback_to_search(search_keywords: str, user_id: int, document_info: list) 
 
 No instances of the keywords "{search_keywords}" were found in your documents after comprehensive search.
 
-**Search Strategy Used:** Keyword matching with fuzzy search and semantic analysis.
-
 **Documents Searched:** {len(document_info)} documents
 - {', '.join(document_info)}
 
@@ -4167,7 +4587,6 @@ Found **{len(all_instances)} relevant instances** across your documents using ad
 
 {comprehensive_summary}
 
-**Search Strategy:** Keyword matching with semantic analysis and fuzzy matching for maximum coverage.
 """
         
         return {
@@ -4477,8 +4896,8 @@ No content related to '{keywords}' was found in your documents.
     summary_parts = []
     
     # Header
-    summary_parts.append("📊 ENHANCED KEYWORD ANALYSIS FOR '{}'".format(keywords.upper()))
-    summary_parts.append("=" * 80)
+    summary_parts.append("📊 KEYWORD ANALYSIS FOR '{}'".format(keywords.upper()))
+    summary_parts.append("<hr>")
     summary_parts.append("")
     
     # Quick stats
@@ -4534,12 +4953,12 @@ No content related to '{keywords}' was found in your documents.
         summary_parts.append(f"📄 {doc_name}")
         summary_parts.append(f"   • Relevance instances: {doc_data['total']}")
         summary_parts.append(f"   • Pages covered: {len(doc_data['pages'])}")
-        summary_parts.append(f"   • Best relevance score: {doc_data['best_score']:.0f}/100")
+        # summary_parts.append(f"   • Best relevance score: {doc_data['best_score']:.0f}/100")
         
         # Show top instances from this document
         doc_instances = [i for i in instances if i['filename'] == doc_name][:3]
         for i, instance in enumerate(doc_instances, 1):
-            summary_parts.append(f"   • <strong>Instance {i}: Page {instance['page_number']} ({instance['match_type']})</strong>")
+            summary_parts.append(f"   • <strong>Instance {i}: Page {instance['page_number']} ({instance['match_type']})</strong> ({instance['matched_text']})")
         summary_parts.append("")
     
     # Footer
@@ -5132,16 +5551,16 @@ if __name__ == '__main__':
         except Exception as ocr_error:
             logger.error(f"OCR initialization error at startup: {ocr_error}")
         
-        # Initialize accuracy-focused system with Ollama
-        accuracy_success = startup_exact_match_priority_system()
+        # Initialize EXACT KEYWORD priority system with Ollama (UPDATED)
+        keyword_success = startup_exact_keyword_priority_system()
         
-        # Check Ollama specifically (instead of Gemini)
+        # Check Ollama specifically
         ollama_ready = startup_ollama_check()
         
         # Enhanced GPU initialization logging
         if torch.cuda.is_available():
             gpu_props = torch.cuda.get_device_properties(0)
-            logger.info('🎯 DocumentIQ - Accuracy-Focused RTX A6000 GPU System with Ollama Llama 3.1')
+            logger.info('🎯 DocumentIQ - EXACT KEYWORD PRIORITY System with Ollama Llama 3.1')
             logger.info(f'GPU: {torch.cuda.get_device_name()}')
             logger.info(f'GPU Memory: {gpu_props.total_memory / 1e9:.1f}GB')
             logger.info(f'CUDA Cores: ~{gpu_props.multi_processor_count * 64}')
@@ -5149,11 +5568,11 @@ if __name__ == '__main__':
             logger.info(f'Max Single File: {app.config["MAX_FILE_SIZE"] / 1e9:.1f}GB')
             logger.info(f'Max Extracted ZIP: {app.config["MAX_ZIP_EXTRACTED_SIZE"] / 1e9:.1f}GB')
         else:
-            logger.warning('⚠️  GPU not available - running accuracy-focused CPU mode')
+            logger.warning('⚠️  GPU not available - running exact keyword CPU mode')
         
         # Show startup summary
         logger.info("=" * 80)
-        logger.info("STARTUP SUMMARY - OLLAMA LLAMA 3.1 POWERED")
+        logger.info("STARTUP SUMMARY - EXACT KEYWORD PRIORITY WITH OLLAMA LLAMA 3.1")
         logger.info("=" * 80)
         logger.info(f"🔹 GPU Available: {'Yes' if torch.cuda.is_available() else 'No'}")
         logger.info(f"🔹 OCR Initialized: {'Yes' if 'ocr_init_success' in locals() and ocr_init_success else 'No'}")
@@ -5162,6 +5581,14 @@ if __name__ == '__main__':
         logger.info(f"🔹 Processing Mode: {'GPU-Accelerated' if torch.cuda.is_available() else 'CPU'}")
         logger.info(f"🔹 AI Model: {app.config['OLLAMA_MODEL']} (Ollama)")
         logger.info(f"🔹 Base URL: {app.config['OLLAMA_BASE_URL']}")
+        logger.info(f"🔹 Exact Keyword Search: {'Enabled' if keyword_success else 'Disabled'}")
+        logger.info("=" * 80)
+        
+        logger.info("🎯 EXACT KEYWORD SEARCH EXAMPLES:")
+        logger.info("   Query: 'What is a university?' → Searches for: 'university' + variations")
+        logger.info("   Query: 'Tell me about companies' → Searches for: 'companies' + variations")
+        logger.info("   Query: 'How do I find research?' → Searches for: 'research' + variations")
+        logger.info("   Query: 'List all students' → Searches for: 'students' + variations")
         logger.info("=" * 80)
         
         if system_issues:
@@ -5178,15 +5605,15 @@ if __name__ == '__main__':
             logger.error("   🔧 Without Ollama, AI responses will fail!")
             logger.error("=" * 80)
         
-        if accuracy_success and all_systems_ready and ollama_ready:
-            logger.info('🌟 ALL SYSTEMS READY - DocumentIQ server starting with Ollama Llama 3.1...')
-        elif accuracy_success:
+        if keyword_success and all_systems_ready and ollama_ready:
+            logger.info('🌟 ALL SYSTEMS READY - DocumentIQ EXACT KEYWORD server starting with Ollama Llama 3.1...')
+        elif keyword_success:
             logger.warning('⚠️ PARTIAL SYSTEM READY - Some features may not work correctly')
         else:
             logger.warning('⚠️ MINIMAL SYSTEM READY - Running with fallback systems')
         
         # Start development server
-        logger.info('🌟 DocumentIQ server with Ollama Llama 3.1 starting...')
+        logger.info('🌟 DocumentIQ EXACT KEYWORD server with Ollama Llama 3.1 starting...')
         app.run(host='0.0.0.0', port=8000, threaded=True, debug=False)
         
     except Exception as e:
