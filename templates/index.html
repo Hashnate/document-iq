@@ -68,11 +68,7 @@
                 <h2 class="upload-title">Upload Your Documents</h2>
                 <p class="upload-subtitle">Get started in seconds with your first document upload</p>
                 <!-- OCR Status Indicator -->
-                <div class="ocr-status-indicator" id="ocr-status-indicator">
-                    <span class="ocr-indicator-badge">
-                        <i class="bi bi-camera"></i> OCR Ready
-                    </span>
-                </div>
+                
             </div>
 
             <div class="file-upload-area" id="dropZone">
@@ -91,10 +87,10 @@
                 <div class="progress-info">
                     <span class="progress-text">Ready to upload</span>
                     <div class="progress-right">
-                        <span class="phase-indicator upload" id="phase-indicator" style="display: none;">
+                        <!-- <span class="phase-indicator upload" id="phase-indicator" style="display: none;">
                             📤 Upload
-                        </span>
-                        <span class="progress-percent">0%</span>
+                        </span> -->
+                        <!-- <span class="progress-percent">0%</span> -->
                     </div>
                 </div>
                 <div class="progress-bar">
@@ -1600,7 +1596,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const progressContainer = document.querySelector('.progress-container');
     const progressBar = document.querySelector('.progress');
     const progressText = document.querySelector('.progress-text');
-    const progressPercent = document.querySelector('.progress-percent');
+    // const progressPercent = document.querySelector('.progress-percent');
     const progressSpeed = document.querySelector('.progress-speed');
     const progressETA = document.querySelector('.progress-eta');
     const fileList = document.querySelector('.file-list');
@@ -1883,42 +1879,42 @@ document.addEventListener('DOMContentLoaded', function() {
     modal.focus();
 }
 
-    // Phase indicator helper functions
-    function showPhaseIndicator(phase, label) {
-        const phaseIndicator = document.getElementById('phase-indicator');
-        if (!phaseIndicator) return;
+    // // Phase indicator helper functions
+    // function showPhaseIndicator(phase, label) {
+    //     const phaseIndicator = document.getElementById('phase-indicator');
+    //     if (!phaseIndicator) return;
         
-        // Remove all phase classes
-        phaseIndicator.classList.remove('upload', 'processing', 'ocr', 'completed');
+    //     // Remove all phase classes
+    //     phaseIndicator.classList.remove('upload', 'processing', 'ocr', 'completed');
         
-        // Add new phase class
-        phaseIndicator.classList.add(phase);
+    //     // Add new phase class
+    //     phaseIndicator.classList.add(phase);
         
-        // Update label and icon
-        const phaseIcons = {
-            'upload': '📤',
-            'processing': '⚙️',
-            'ocr': '🤖',
-            'completed': '✅'
-        };
+    //     // Update label and icon
+    //     const phaseIcons = {
+    //         // 'upload': '📤',
+    //         'processing': '⚙️',
+    //         'ocr': '🤖',
+    //         'completed': '✅'
+    //     };
         
-        const phaseLabels = {
-            'upload': 'Upload',
-            'processing': 'Processing',
-            'ocr': 'OCR Processing',
-            'completed': 'Completed'
-        };
+    //     const phaseLabels = {
+    //         // 'upload': 'Upload',
+    //         'processing': 'Processing',
+    //         'ocr': 'OCR Processing',
+    //         'completed': 'Completed'
+    //     };
         
-        phaseIndicator.innerHTML = `${phaseIcons[phase]} ${label || phaseLabels[phase]}`;
-        phaseIndicator.style.display = 'inline-flex';
-    }
+    //     phaseIndicator.innerHTML = `${phaseIcons[phase]} ${label || phaseLabels[phase]}`;
+    //     phaseIndicator.style.display = 'inline-flex';
+    // }
 
-    function hidePhaseIndicator() {
-        const phaseIndicator = document.getElementById('phase-indicator');
-        if (phaseIndicator) {
-            phaseIndicator.style.display = 'none';
-        }
-    }
+    // function hidePhaseIndicator() {
+    //     const phaseIndicator = document.getElementById('phase-indicator');
+    //     if (phaseIndicator) {
+    //         phaseIndicator.style.display = 'none';
+    //     }
+    // }
 
     // Enhanced progress update function with phase support
     function updateProgress(percent, message, phase = 'processing') {
@@ -1932,7 +1928,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Update progress bar with phase-specific styling
         progressBar.style.width = percent + '%';
-        progressPercent.textContent = percent + '%';
+        // progressPercent.textContent = percent + '%';
         
         // Update progress bar class based on phase
         const progressBarContainer = document.querySelector('.progress-bar');
@@ -1942,7 +1938,7 @@ document.addEventListener('DOMContentLoaded', function() {
             progressBarContainer.classList.add('uploading');
             progressText.classList.remove('ocr-processing', 'processing');
             progressText.classList.add('uploading');
-            showPhaseIndicator('upload');
+            // showPhaseIndicator('upload');
         } else if (phase === 'processing') {
             progressBarContainer.classList.remove('uploading', 'completed');
             progressText.classList.remove('uploading');
@@ -1950,19 +1946,19 @@ document.addEventListener('DOMContentLoaded', function() {
             if (message && message.includes('OCR')) {
                 progressBarContainer.classList.add('ocr-processing');
                 progressText.classList.add('ocr-processing');
-                showPhaseIndicator('ocr');
+                // showPhaseIndicator('ocr');
             } else {
                 progressBarContainer.classList.remove('ocr-processing');
                 progressBarContainer.classList.add('processing');
                 progressText.classList.remove('ocr-processing');
                 progressText.classList.add('processing');
-                showPhaseIndicator('processing');
+                // showPhaseIndicator('processing');
             }
         } else if (phase === 'completed') {
             progressBarContainer.classList.remove('uploading', 'processing', 'ocr-processing');
             progressBarContainer.classList.add('completed');
             progressText.classList.remove('uploading', 'processing', 'ocr-processing');
-            showPhaseIndicator('completed');
+            // showPhaseIndicator('completed');
         }
         
         // Update message
@@ -1970,6 +1966,340 @@ document.addEventListener('DOMContentLoaded', function() {
             progressText.textContent = message;
         }
     }
+
+
+        function updateProgress(percent, message, phase = 'processing') {
+    const now = Date.now();
+    
+    // Throttle updates but allow important milestones
+    const isImportantUpdate = percent === 0 || percent === 100 || percent % 10 === 0;
+    if (!isImportantUpdate && now - lastProgressUpdate < 300 && percent < 100) {
+        return;
+    }
+    lastProgressUpdate = now;
+    
+    // Update progress bar
+    progressBar.style.width = percent + '%';
+    // progressPercent.textContent = percent + '%';
+    
+    // Update progress bar styling for FULL processing
+    const progressBarContainer = document.querySelector('.progress-bar');
+    progressBarContainer.classList.remove('uploading', 'processing', 'ocr-processing', 'completed');
+    
+    if (phase === 'upload') {
+        progressBarContainer.classList.add('uploading');
+        progressText.classList.remove('ocr-processing', 'processing', 'full-processing');
+        progressText.classList.add('uploading');
+        // showPhaseIndicator('upload');
+    } else if (phase === 'processing') {
+        progressText.classList.remove('uploading');
+        
+        if (message && (message.includes('OCR') || message.includes('🖼️'))) {
+            progressBarContainer.classList.add('ocr-processing');
+            progressText.classList.add('ocr-processing');
+            // showPhaseIndicator('ocr');
+        } else if (message && message.includes('FULL')) {
+            progressBarContainer.classList.add('processing', 'full-processing');
+            progressText.classList.remove('ocr-processing');
+            progressText.classList.add('processing', 'full-processing');
+            // showPhaseIndicator('processing', 'Full Processing');
+        } else {
+            progressBarContainer.classList.add('processing');
+            progressText.classList.remove('ocr-processing', 'full-processing');
+            progressText.classList.add('processing');
+            // showPhaseIndicator('processing');
+        }
+    } else if (phase === 'completed') {
+        progressBarContainer.classList.add('completed');
+        progressText.classList.remove('uploading', 'processing', 'ocr-processing', 'full-processing');
+        // showPhaseIndicator('completed');
+    }
+    
+    // Update message with FULL processing indicators
+    if (message && progressText.textContent !== message) {
+        progressText.textContent = message;
+    }
+}
+
+
+const fullProcessingCSS = `
+<style>
+.enhanced-success-message {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 500px;
+    max-width: 90vw;
+    background: linear-gradient(135deg, #4361ee, #7209b7);
+    color: white;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(67, 97, 238, 0.4);
+    z-index: 2000;
+    animation: fadeInUp 0.5s ease-out;
+    overflow: hidden;
+}
+
+.success-content {
+    padding: 30px;
+}
+
+.success-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+    text-align: center;
+    animation: pulse 2s infinite;
+}
+
+.success-subtitle {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 15px 0 10px 0;
+    color: #ffd700;
+}
+
+.success-feature {
+    font-size: 0.95rem;
+    margin: 8px 0;
+    padding-left: 20px;
+    opacity: 0.95;
+}
+
+.success-detail {
+    font-size: 0.9rem;
+    margin: 6px 0;
+    opacity: 0.9;
+}
+
+.success-spacer {
+    height: 10px;
+}
+
+.success-actions {
+    display: flex;
+    gap: 15px;
+    margin-top: 25px;
+}
+
+.success-dismiss,
+.success-continue {
+    flex: 1;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.success-dismiss {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+.success-continue {
+    background: white;
+    color: #4361ee;
+}
+
+.success-continue:hover {
+    background: #f8f9fa;
+    transform: translateY(-2px);
+}
+
+.full-processing-notice {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 420px;
+    max-width: calc(100vw - 60px);
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+    z-index: 1500;
+    animation: slideInUp 0.6s ease-out;
+    border-left: 6px solid #4361ee;
+}
+
+.notice-content {
+    padding: 25px;
+}
+
+.notice-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.notice-icon {
+    font-size: 2rem;
+    margin-right: 15px;
+    animation: pulse 2s infinite;
+}
+
+.notice-header h3 {
+    margin: 0;
+    color: #2b2d42;
+    font-size: 1.3rem;
+}
+
+.notice-stats {
+    display: flex;
+    justify-content: space-around;
+    margin: 20px 0;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 10px;
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-number {
+    display: block;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #4361ee;
+}
+
+.stat-label {
+    display: block;
+    font-size: 0.8rem;
+    color: #6c757d;
+    margin-top: 5px;
+}
+
+.notice-features {
+    margin: 20px 0;
+}
+
+.feature-item {
+    font-size: 0.9rem;
+    margin: 8px 0;
+    color: #495057;
+}
+
+.notice-continue-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #4361ee, #7209b7);
+    color: white;
+    border: none;
+    padding: 15px;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: all 0.3s ease;
+}
+
+.notice-continue-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(67, 97, 238, 0.4);
+}
+
+.btn-arrow {
+    font-size: 1.2rem;
+    transition: transform 0.2s ease;
+}
+
+.notice-continue-btn:hover .btn-arrow {
+    transform: translateX(5px);
+}
+
+.full-processing {
+    animation: fullProcessingPulse 2s infinite;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -40%);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%);
+    }
+}
+
+@keyframes fadeOutUp {
+    from {
+        opacity: 1;
+        transform: translate(-50%, -50%);
+    }
+    to {
+        opacity: 0;
+        transform: translate(-50%, -60%);
+    }
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(100%);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideOutDown {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(100%);
+    }
+}
+
+@keyframes fullProcessingPulse {
+    0%, 100% {
+        background: linear-gradient(90deg, #4361ee, #7209b7);
+    }
+    50% {
+        background: linear-gradient(90deg, #7209b7, #f72585);
+    }
+}
+
+@media (max-width: 768px) {
+    .enhanced-success-message {
+        width: calc(100vw - 40px);
+    }
+    
+    .full-processing-notice {
+        width: calc(100vw - 40px);
+        bottom: 20px;
+        right: 20px;
+    }
+    
+    .notice-stats {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .success-actions {
+        flex-direction: column;
+    }
+}
+</style>
+`;
+
+// Inject the CSS for FULL processing
+if (!document.querySelector('#full-processing-styles')) {
+    const styleElement = document.createElement('style');
+    styleElement.id = 'full-processing-styles';
+    styleElement.innerHTML = fullProcessingCSS;
+    document.head.appendChild(styleElement);
+}
+
 
     // Enhanced file upload function with separate 0-100% phases
     async function uploadFiles(files) {
@@ -1997,7 +2327,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Show progress UI
         progressContainer.style.display = 'block';
         progressBar.style.width = '0%';
-        progressPercent.textContent = '0%';
+        // progressPercent.textContent = '0%';
         progressText.textContent = '📤 Starting upload...';
         document.querySelector('.processing-summary').style.display = 'block';
         updateProcessingSummary(files.length, 0, 0, 0);
@@ -2035,7 +2365,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     updateProgress(
                         percent, 
-                        `📤 Uploading files... (${formatSize(uploadedMB)}/${formatSize(totalMB)})`,
+                        `📤 Uploading and extracting files... It may take a while (${formatSize(uploadedMB)}/${formatSize(totalMB)})`,
                         'upload'
                     );
                     
@@ -2348,8 +2678,8 @@ document.addEventListener('DOMContentLoaded', function() {
         currentPage.textContent = pageProgressData.current;
         totalPages.textContent = pageProgressData.total;
         
-        const progressPercent = (pageProgressData.current / pageProgressData.total) * 100;
-        pageProgressFill.style.width = progressPercent + '%';
+        // const progressPercent = (pageProgressData.current / pageProgressData.total) * 100;
+        // pageProgressFill.style.width = progressPercent + '%';
     }
 
     // Show/hide OCR progress details
@@ -2459,48 +2789,194 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Handle upload completion with final progress
-    function handleUploadCompleted(data) {
-        // Ensure progress is at 100% with completed phase
-        updateProgress(100, data.message || '✅ Processing completed!', 'completed');
-        
-        // Use server-provided counts
-        const processedCount = data.processed_count || filesCompleted;
-        const ocrCount = data.processing_summary?.images_ocr_processed || ocrFilesProcessed;
-        
-        // Show enhanced success message
-        let successMsg = `Successfully processed ${processedCount} files`;
-        if (ocrCount > 0) {
-            successMsg += ` (${ocrCount} with OCR)`;
-        }
-        if (filesFailed > 0) {
-            successMsg += ` • ${filesFailed} failed`;
-        }
-        
-        showSuccess(successMsg);
-        hideOCRProgress();
-        hideFileTypeAnalysis();
-        uploadArea.classList.remove('ocr-processing');
-        
-        // Update final summary
-        updateProcessingSummary(processedCount + filesFailed, processedCount, filesFailed, ocrCount);
-        
-        // Hide phase indicator after a delay
-        setTimeout(() => {
-            hidePhaseIndicator();
-        }, 2000);
-        
-        // Redirect to chat after delay
-        setTimeout(() => {
-            window.location.href = '/new_chat';
-        }, 3000);
+   function handleUploadCompleted(data) {
+    // Ensure progress is at 100% with completed phase
+    updateProgress(100, data.message || '✅ FULL processing completed!', 'completed');
+    
+    // Calculate comprehensive performance metrics
+    const processedCount = data.processed_count || filesCompleted;
+    const uploadTime = (Date.now() - uploadStartTime) / 1000;
+    const totalSizeGB = totalBytes / (1024 * 1024 * 1024);
+    const avgSpeedMBps = (totalBytes / (1024 * 1024)) / uploadTime;
+    
+    // Build comprehensive success message
+    let successMsg = `🔥 FULL CONTENT PROCESSING COMPLETED!\n`;
+    successMsg += `⏱️ Total time: ${formatDetailedTime(uploadTime)}\n`;
+    successMsg += `📁 Files processed: ${processedCount} with ALL content\n`;
+    
+    if (totalSizeGB > 0.01) {
+        successMsg += `📊 Total size: ${totalSizeGB.toFixed(2)}GB at ${avgSpeedMBps.toFixed(1)} MB/s\n`;
     }
+    
+    // Highlight FULL processing features
+    if (data.full_processing) {
+        successMsg += `\n🔥 FULL PROCESSING FEATURES:\n`;
+        successMsg += `   ✅ ALL pages processed (no limits)\n`;
+        successMsg += `   ✅ ALL paragraphs extracted\n`;
+        successMsg += `   ✅ ALL embeddings generated\n`;
+        successMsg += `   ✅ Complete OCR processing\n`;
+        successMsg += `   ✅ Full content searchable immediately\n`;
+    }
+    
+    if (data.no_limits_applied) {
+        successMsg += `\n⚡ NO CONTENT LIMITS APPLIED - Maximum quality processing!`;
+    }
+    
+    if (filesFailed > 0) {
+        successMsg += `\n⚠️ ${filesFailed} files failed processing`;
+    }
+    
+    // Show enhanced success notification
+    showEnhancedSuccess(successMsg, data);
+    
+    // Cleanup UI
+    hideOCRProgress();
+    hideFileTypeAnalysis();
+    uploadArea.classList.remove('ocr-processing');
+    
+    // Update final summary with FULL processing stats
+    updateProcessingSummary(processedCount + filesFailed, processedCount, filesFailed, ocrFilesProcessed);
+    
+    // Show FULL processing completion notice
+    if (data.full_processing) {
+        showFullProcessingCompletionNotice(data);
+    }
+    
+    // Hide phase indicator after delay
+    setTimeout(() => {
+        hidePhaseIndicator();
+    }, 3000);
+    
+    // Redirect to chat with appropriate delay
+    setTimeout(() => {
+        window.location.href = '/new_chat';
+    }, 4000); // Longer delay to show full processing message
+}
+
+
+
+function formatDetailedTime(seconds) {
+    if (seconds < 60) {
+        return `${seconds.toFixed(1)}s`;
+    } else if (seconds < 3600) {
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = Math.floor(seconds % 60);
+        return `${minutes}m ${remainingSeconds}s`;
+    } else {
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        return `${hours}h ${minutes}m`;
+    }
+}
+
+
+
+function showEnhancedSuccess(message, data) {
+    const successDiv = document.createElement('div');
+    successDiv.className = 'enhanced-success-message';
+    
+    const lines = message.split('\n');
+    const htmlContent = lines.map(line => {
+        if (line.includes('🔥 FULL CONTENT PROCESSING COMPLETED!')) {
+            return `<div class="success-title">${line}</div>`;
+        } else if (line.includes('🔥 FULL PROCESSING FEATURES:')) {
+            return `<div class="success-subtitle">${line}</div>`;
+        } else if (line.trim().startsWith('✅') || line.trim().startsWith('⚡') || line.trim().startsWith('📊')) {
+            return `<div class="success-feature">${line}</div>`;
+        } else if (line.trim()) {
+            return `<div class="success-detail">${line}</div>`;
+        }
+        return '<div class="success-spacer"></div>';
+    }).join('');
+    
+    successDiv.innerHTML = `
+        <div class="success-content">
+            ${htmlContent}
+            <div class="success-actions">
+                <button class="success-dismiss" onclick="dismissEnhancedSuccess()">Dismiss</button>
+                <button class="success-continue" onclick="window.location.href='/new_chat'">Start Chatting →</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(successDiv);
+    
+    // Auto-dismiss after 15 seconds (longer for full processing)
+    setTimeout(() => {
+        dismissEnhancedSuccess();
+    }, 15000);
+}
+
+function dismissEnhancedSuccess() {
+    const successDiv = document.querySelector('.enhanced-success-message');
+    if (successDiv) {
+        successDiv.style.animation = 'fadeOutUp 0.4s ease-in';
+        setTimeout(() => successDiv.remove(), 400);
+    }
+}
+
+// Show FULL processing completion notice
+function showFullProcessingCompletionNotice(data) {
+    const noticeDiv = document.createElement('div');
+    noticeDiv.className = 'full-processing-notice';
+    
+    const processedCount = data.processed_count || 0;
+    const successRate = data.success_rate || 100;
+    
+    noticeDiv.innerHTML = `
+        <div class="notice-content">
+            <div class="notice-header">
+                <span class="notice-icon">🔥</span>
+                <h3>Full Content Processing Complete!</h3>
+            </div>
+            <div class="notice-stats">
+                <div class="stat-item">
+                    <span class="stat-number">${processedCount}</span>
+                    <span class="stat-label">Files Fully Processed</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">${successRate}%</span>
+                    <span class="stat-label">Success Rate</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">100%</span>
+                    <span class="stat-label">Content Extracted</span>
+                </div>
+            </div>
+            <div class="notice-features">
+                <div class="feature-item">✅ All pages and content processed</div>
+                <div class="feature-item">✅ Complete embedding generation</div>
+                <div class="feature-item">✅ Full OCR processing applied</div>
+                <div class="feature-item">✅ Maximum search accuracy enabled</div>
+            </div>
+            <div class="notice-actions">
+                <button class="notice-continue-btn" onclick="window.location.href='/new_chat'">
+                    <span>Start Using Your Documents</span>
+                    <span class="btn-arrow">→</span>
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(noticeDiv);
+    
+    // Auto-dismiss after 20 seconds
+    setTimeout(() => {
+        if (document.body.contains(noticeDiv)) {
+            noticeDiv.style.animation = 'slideOutDown 0.5s ease-in';
+            setTimeout(() => noticeDiv.remove(), 500);
+        }
+    }, 20000);
+}
+
+
 
     // Handle upload error
     function handleUploadError(data) {
         showError(data.message || 'Upload failed');
         markAllFilesFailed();
         progressBar.style.width = '0%';
-        progressPercent.textContent = '0%';
+        // progressPercent.textContent = '0%';
         hideOCRProgress();
         hideFileTypeAnalysis();
         hidePhaseIndicator();

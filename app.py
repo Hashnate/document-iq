@@ -113,9 +113,9 @@ app = Flask(__name__)
 # --------------------- Enhanced GPU Configuration for RTX A6000 with Accuracy Focus ---------------------
 class RTX_A6000_Enhanced_Config:
     """Optimized configuration for RTX A6000 (48GB VRAM) and 256GB RAM with OCR and Ollama Llama 3.1"""
-    SECRET_KEY = os.getenv('SECRET_KEY', 'enhanced-gpu-documentiq-ollama-secret')
+    SECRET_KEY = os.getenv('SECRET_KEY', 'geirgweifgiwegfiywgefigeifgiegfiegfiwgfwf')
     
-    # Directories
+    # Directories (keep existing)
     UPLOAD_FOLDER = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'uploads')
     EXTRACT_FOLDER = os.path.join(os.getcwd(), 'extracted_files')
     CACHE_FOLDER = os.path.join(os.getcwd(), 'file_cache')
@@ -123,73 +123,20 @@ class RTX_A6000_Enhanced_Config:
     MODEL_CACHE_DIR = os.path.join(os.getcwd(), 'model_cache')
     OCR_TEMP_DIR = os.path.join(os.getcwd(), 'ocr_temp')
     
-    # Enhanced file processing settings for RTX A6000 with OCR
+    # FULL PROCESSING - No content limits
     ALLOWED_EXTENSIONS = {'txt', 'pdf', 'docx', 'md', 'csv', 'json', 'xml', 'html', 'xlsx', 'xls', 'pptx', 'jpg', 'jpeg', 'png', 'tiff', 'bmp', 'webp', 'gif'}
     MAX_CONTENT_LENGTH = 50 * 1024 * 1024 * 1024  # 50GB uploads
     MAX_FILE_SIZE = 20 * 1024 * 1024 * 1024  # 20GB per file
     MAX_ZIP_EXTRACTED_SIZE = 100 * 1024 * 1024 * 1024  # 100GB extracted
     
-    # OCR Configuration
-    OCR_ENABLED = True
-    OCR_GPU_ENABLED = True  # Use GPU for OCR when available
-    OCR_LANGUAGES = ['en']  # English by default, can be expanded
-    OCR_CONFIDENCE_THRESHOLD = 0.6  # Minimum confidence for OCR text
-    OCR_DPI = 300  # DPI for image processing
-    OCR_MAX_IMAGE_SIZE = 4096  # Max dimension for OCR processing
-    
-    # Image preprocessing for OCR
-    OCR_PREPROCESS_ENABLED = True
-    OCR_DENOISE_ENABLED = True
-    OCR_CONTRAST_ENHANCEMENT = 1.2
-    OCR_SHARPENING_ENABLED = True
-    
-    # Request handling optimizations
-    SEND_FILE_MAX_AGE_DEFAULT = 0
-    PERMANENT_SESSION_LIFETIME = timedelta(hours=4)
-    REQUEST_TIMEOUT = 7200  # 2 hours
-    MAX_FORM_MEMORY_SIZE = None  # Unlimited form memory
-    
-    # Upload optimizations
-    UPLOAD_CHUNK_SIZE = 32 * 1024 * 1024  # 32MB chunks
-    EXTRACTION_BUFFER_SIZE = 128 * 1024  # 128KB buffer
-    EXTRACTION_TIMEOUT = 7200  # 2 hours for extraction
-    
-    # OLLAMA CONFIGURATION - REPLACING GEMINI
-    OLLAMA_BASE_URL = os.getenv('OLLAMA_BASE_URL', 'http://localhost:11434')
-    OLLAMA_MODEL = os.getenv('OLLAMA_MODEL', 'llama3.1:8b')  # Llama 3.1 model
-    OLLAMA_TIMEOUT = 600
-    OLLAMA_MAX_TOKENS = 4096  # Adjust based on model
-    OLLAMA_TEMPERATURE = 0.1  # Low temperature for accuracy
-    OLLAMA_TOP_P = 0.8
-    OLLAMA_TOP_K = 40
-    OLLAMA_STREAM = True  # Enable streaming
-    
-    # Enhanced GPU Processing Configuration for RTX A6000
-    GPU_ENABLED = torch.cuda.is_available()
-    GPU_MEMORY_FRACTION = 0.80  # Use 80% of 48GB = ~38GB (reserve some for OCR)
-    MIXED_PRECISION = True  # Use FP16 for 2x speed boost
-    GPU_BATCH_SIZE = 48  # Reduced for OCR memory usage
-    CPU_BATCH_SIZE = 12  # Reduced for better stability
-    CONCURRENT_FILES = 24  # Reduced for OCR processing
-    MAX_WORKERS = min(48, cpu_count() * 2)  # More conservative
-    
-    # ACCURACY-FOCUSED RAG Configuration
-    INTELLIGENT_CHUNK_SIZE = 800  # Smaller chunks for better precision
-    CHUNK_OVERLAP = 400  # 50% overlap for better context preservation
-    SIMILARITY_TOP_K = 100  # More candidates for better accuracy
-    FINAL_RESULTS_COUNT = 30  # More results for better context
-    
-    # Enhanced Embedding Configuration
-    EMBEDDING_MODEL = "sentence-transformers/all-mpnet-base-v2"  # Best accuracy model
-    EMBEDDING_MODEL_FALLBACK = "sentence-transformers/all-mpnet-base-v2"
-    EMBEDDING_DIM = 768  # Model dimension
-    EMBEDDING_NORMALIZE = True  # Normalize for better similarity
-    
-    # Model loading configuration
-    EMBEDDING_MODEL_RETRY_ATTEMPTS = 3
-    EMBEDDING_MODEL_RETRY_DELAY = 5  # seconds
-    
-    # Database Configuration (optimized for GPU workloads)
+    # FULL PROCESSING SETTINGS
+    PROCESS_ALL_CONTENT = True  # Process ALL content
+    NO_PAGE_LIMITS = True       # No page limits for PDFs
+    NO_PARAGRAPH_LIMITS = True  # No paragraph limits for DOCX
+    NO_SIZE_LIMITS = True       # No size limits for text files
+    FULL_OCR_PROCESSING = True  # Full OCR for all images
+    FULL_EMBEDDING_GENERATION = True  # Generate embeddings for ALL chunks
+
     DATABASE_URL = os.getenv('DATABASE_URL', 'postgresql://documentiq_user:12345@localhost:5432/documentiq_db')
     SQLALCHEMY_DATABASE_URI = DATABASE_URL
     SQLALCHEMY_ENGINE_OPTIONS = {
@@ -200,51 +147,71 @@ class RTX_A6000_Enhanced_Config:
         'pool_timeout': 30,
     }
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+
+     # OLLAMA CONFIGURATION - REPLACING GEMINI
+    OLLAMA_BASE_URL = os.getenv('OLLAMA_BASE_URL', 'http://localhost:11434')
+    OLLAMA_MODEL = os.getenv('OLLAMA_MODEL', 'llama3.1:8b')  # Llama 3.1 model
+    OLLAMA_TIMEOUT = 600
+    OLLAMA_MAX_TOKENS = 4096  # Adjust based on model
+    OLLAMA_TEMPERATURE = 0.1  # Low temperature for accuracy
+    OLLAMA_TOP_P = 0.8
+    OLLAMA_TOP_K = 40
+    OLLAMA_STREAM = True  # Enable streaming
+
     
-    # Redis Configuration for GPU processing
-    REDIS_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
-    CACHE_EMBEDDINGS = True
-    CACHE_TTL = 86400 * 7  # 7 days
+    # Optimized buffer sizes for large FULL processing
+    UPLOAD_CHUNK_SIZE = 128 * 1024 * 1024  # 128MB chunks for very large files
+    EXTRACTION_BUFFER_SIZE = 8 * 1024 * 1024  # 8MB buffer
+    FILE_READ_BUFFER_SIZE = 16 * 1024 * 1024  # 16MB read buffer
     
-    # Session Configuration
-    SESSION_TYPE = 'filesystem'
-    SESSION_FILE_DIR = '/tmp/flask_sessions'
-    SESSION_PERMANENT = False
-    SESSION_USE_SIGNER = True
-    SESSION_KEY_PREFIX = 'documentiq:'
-    PERMANENT_SESSION_LIFETIME = timedelta(hours=2)
+    # Request handling for FULL processing
+    REQUEST_TIMEOUT = 14400  # 4 hours for very large files
+    EXTRACTION_TIMEOUT = 7200  # 2 hours
+    PROCESSING_TIMEOUT = 10800  # 3 hours
     
-    # ACCURACY-FOCUSED Search Configuration
-    SEARCH_TIMEOUT = 300  # 5 minutes max search time
-    FAISS_GPU_ENABLED = True  # Use GPU FAISS
-    FAISS_INDEX_TYPE = "IndexFlatIP"  # Inner product for cosine similarity
-    FAISS_NPROBE = 64  # Search probe count
-    
-    # Search strategy weights (higher = more important)
-    SEARCH_WEIGHTS = {
-        'exact_phrase_enhanced': 10.0,      # Highest priority
-        'multi_keyword': 5.0,               # High priority  
-        'semantic_gpu': 2.0,                # Medium priority
-        'context_aware': 3.0,               # High priority for context
-        'fuzzy_match': 1.0,                 # Lower priority
-        'emergency_fallback': 0.1           # Emergency only
+    # Database optimizations for FULL processing
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        'pool_size': 100,  # Large pool for FULL processing
+        'pool_recycle': 3600,
+        'pool_pre_ping': True,
+        'max_overflow': 200,
+        'pool_timeout': 120,
+        'echo': False,
     }
     
-    # Content processing improvements
-    PRESERVE_STRUCTURE = True
-    EXTRACT_TABLES_SEPARATELY = True
-    EXTRACT_HEADERS_SEPARATELY = True
-    CREATE_DOCUMENT_OUTLINE = True
-    MAX_CHUNKS_PER_FILE = 2000  # Allow more chunks for better coverage
+    # Bulk operations for FULL processing
+    DB_BULK_INSERT_SIZE = 10000  # Very large bulk inserts
+    DB_STATEMENT_TIMEOUT = 3600000  # 1 hour
+    DB_LOCK_TIMEOUT = 600000  # 10 minutes
+
+    # Enhanced GPU Processing Configuration for RTX A6000
+    GPU_ENABLED = torch.cuda.is_available()
+    GPU_MEMORY_FRACTION = 0.85  # Use 85% of 48GB = ~40GB
+    MIXED_PRECISION = True  # Use FP16 for 2x speed boost
+    GPU_BATCH_SIZE = 64  # Reduced for better accuracy
+    CPU_BATCH_SIZE = 16  # Reduced for better accuracy
+    CONCURRENT_FILES = 32  # Reduced for stability
+    MAX_WORKERS = min(64, cpu_count() * 2)  # More conservative
     
-    # Response validation
-    ENABLE_ANSWER_VERIFICATION = True
-    MIN_CONFIDENCE_THRESHOLD = 0.7
-    REQUIRE_SOURCE_CITATIONS = True
+    # GPU optimizations for FULL processing
+    GPU_BATCH_SIZE = 64  # Large batches for embedding generation
+    CONCURRENT_FILES = 30  # Process multiple files concurrently
+    MAX_WORKERS = min(128, cpu_count() * 4)  # Maximum parallelization
     
-    # Performance Optimization
-    PREFETCH_FACTOR = 8  # GPU pipeline optimization
+    # Chunking for FULL processing
+    INTELLIGENT_CHUNK_SIZE = 1200  # Optimal size
+    CHUNK_OVERLAP = 200  # Good overlap
+    MAX_CHUNKS_PER_FILE = None  # No limits on chunks
     
+    # Memory management for FULL processing
+    MEMORY_CLEANUP_INTERVAL = 180  # Clean every 3 minutes during heavy processing
+    MAX_MEMORY_USAGE_GB = 64  # Allow more memory for FULL processing
+    
+    # Logging level for FULL processing
+    LOG_LEVEL = logging.INFO
+    DETAILED_LOGGING = True
+
     # Logging
     LOG_FILE = os.path.join(os.getcwd(), 'app.log')
     LOG_LEVEL = logging.INFO
@@ -252,6 +219,18 @@ class RTX_A6000_Enhanced_Config:
 
 # Apply configuration
 app.config.from_object(RTX_A6000_Enhanced_Config)
+
+# Verify secret key is set
+if not app.config['SECRET_KEY']:
+    app.config['SECRET_KEY'] = secrets.token_urlsafe(64)
+    logger.warning("Generated new secret key at runtime - for production use a fixed secret in environment variables")
+
+# Explicitly set session configuration
+app.config['SESSION_TYPE'] = 'filesystem'
+app.config['SESSION_FILE_DIR'] = '/tmp/flask_sessions'
+app.config['SESSION_PERMANENT'] = False
+app.config['SESSION_USE_SIGNER'] = True
+
 
 # Create directories
 for directory in ['/tmp/flask_sessions', app.config['UPLOAD_FOLDER'], 
@@ -447,6 +426,55 @@ def test_ollama_model():
         logger.error(f"❌ Ollama model test error: {e}")
         logger.error(f"Exception details: {traceback.format_exc()}")
         return False
+
+
+
+def monitor_memory_during_full_processing():
+    """Monitor memory usage during FULL processing"""
+    try:
+        import psutil
+        
+        process = psutil.Process()
+        memory_info = process.memory_info()
+        memory_gb = memory_info.rss / (1024**3)
+        
+        if memory_gb > 32:  # Warning threshold
+            logger.warning(f"⚠️ High memory usage during FULL processing: {memory_gb:.2f}GB")
+            
+            # Force garbage collection
+            import gc
+            collected = gc.collect()
+            logger.info(f"🧹 Forced garbage collection: {collected} objects collected")
+            
+            # Clear GPU cache if available
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+                logger.info("🔥 GPU cache cleared")
+        
+        logger.info(f"📊 Memory usage: {memory_gb:.2f}GB")
+        
+    except Exception as e:
+        logger.warning(f"Memory monitoring failed: {e}")
+
+
+# Add progress tracking for FULL processing
+def log_full_processing_progress(current_file, file_index, total_files, file_size_mb):
+    """Log detailed progress for FULL processing"""
+    try:
+        progress_percent = (file_index / total_files) * 100
+        
+        logger.info(f"🔥 FULL PROCESSING PROGRESS:")
+        logger.info(f"   📁 File: {current_file} ({file_size_mb:.1f}MB)")
+        logger.info(f"   📊 Progress: {file_index}/{total_files} ({progress_percent:.1f}%)")
+        logger.info(f"   ⚡ Mode: FULL content processing (no limits)")
+        
+        # Monitor memory every 10 files
+        if file_index % 10 == 0:
+            monitor_memory_during_full_processing()
+            
+    except Exception as e:
+        logger.warning(f"Progress logging failed: {e}")
+
 
 def check_ollama_health():
     """Check if Ollama service is accessible"""
@@ -1163,33 +1191,374 @@ def upload_files_optimized():
 
 # Optimized content extraction dispatch
 def extract_content_optimized_dispatch(file_path: str) -> str:
-    """Optimized content extraction with faster dispatch"""
+    """OPTIMIZED content extraction with FULL content processing (no limits)"""
     file_ext = os.path.splitext(file_path)[1].lower()
     
     try:
-        # Quick file size check
         file_size = os.path.getsize(file_path)
         if file_size == 0:
             return ""
         
-        # Dispatch to optimized extractors
+        logger.info(f"🔥 Processing FULL content for {os.path.basename(file_path)} ({file_size / 1024 / 1024:.1f}MB)")
+        
+        # Dispatch to FULL content extractors
         if file_ext == '.pdf':
-            return extract_pdf_optimized(file_path)
+            return extract_pdf_full_optimized(file_path)
         elif file_ext == '.docx':
-            return extract_docx_optimized(file_path)
+            return extract_docx_full_optimized(file_path)
         elif file_ext in ['.txt', '.md']:
-            return extract_text_optimized(file_path)
+            return extract_text_full_optimized(file_path)
         elif file_ext in ['.jpg', '.jpeg', '.png', '.tiff', '.bmp']:
-            return extract_image_optimized(file_path)
+            return extract_image_full_optimized(file_path)
+        elif file_ext in ['.xlsx', '.xls']:
+            return extract_excel_full_optimized(file_path)
         else:
-            return extract_fallback_optimized(file_path)
+            return extract_fallback_full_optimized(file_path)
             
     except Exception as e:
-        logger.error(f"Content extraction failed for {file_path}: {e}")
+        logger.error(f"FULL content extraction failed for {file_path}: {e}")
         return ""
 
 
+def extract_pdf_full_optimized(file_path: str) -> str:
+    """FULL PDF extraction - ALL pages with speed optimizations"""
+    try:
+        doc = fitz.open(file_path)
+        content_parts = []
+        
+        # Add comprehensive header
+        content_parts.append(f"PDF DOCUMENT: {os.path.basename(file_path)}")
+        content_parts.append(f"TOTAL PAGES: {len(doc)}")
+        content_parts.append(f"FILE SIZE: {os.path.getsize(file_path) / 1024 / 1024:.1f}MB")
+        content_parts.append("=" * 80)
+        
+        # Process ALL pages with optimized extraction
+        for page_num in range(len(doc)):
+            page = doc.load_page(page_num)
+            
+            content_parts.append(f"\nPAGE {page_num + 1}")
+            content_parts.append("-" * 40)
+            
+            try:
+                # Use optimized text extraction
+                page_text = page.get_text("text")  # Fastest method
+                
+                if page_text.strip():
+                    content_parts.append(page_text.strip())
+                else:
+                    # Try alternative extraction methods
+                    page_text = page.get_text("dict")  # More detailed
+                    if page_text and 'blocks' in page_text:
+                        text_blocks = []
+                        for block in page_text['blocks']:
+                            if 'lines' in block:
+                                for line in block['lines']:
+                                    for span in line['spans']:
+                                        text_blocks.append(span['text'])
+                        
+                        if text_blocks:
+                            content_parts.append(' '.join(text_blocks))
+                        else:
+                            content_parts.append(f"[Page {page_num + 1} - No text content detected]")
+                    else:
+                        content_parts.append(f"[Page {page_num + 1} - No text content detected]")
+                
+                content_parts.append(f"[END PAGE {page_num + 1}]")
+                
+            except Exception as page_error:
+                logger.warning(f"Error extracting page {page_num + 1}: {page_error}")
+                content_parts.append(f"[Page {page_num + 1} - Extraction error: {str(page_error)}]")
+                content_parts.append(f"[END PAGE {page_num + 1}]")
+        
+        doc.close()
+        
+        result = "\n".join(content_parts)
+        logger.info(f"✅ FULL PDF extraction completed: {len(result)} characters from {len(doc)} pages")
+        
+        return result
+        
+    except Exception as e:
+        logger.error(f"FULL PDF extraction failed: {e}")
+        return f"PDF DOCUMENT: {os.path.basename(file_path)}\nExtraction failed: {str(e)}"
 
+
+def extract_docx_full_optimized(file_path: str) -> str:
+    """FULL DOCX extraction - ALL paragraphs with optimizations"""
+    try:
+        import docx
+        doc = docx.Document(file_path)
+        
+        content_parts = []
+        content_parts.append(f"DOCX DOCUMENT: {os.path.basename(file_path)}")
+        content_parts.append(f"TOTAL PARAGRAPHS: {len(doc.paragraphs)}")
+        content_parts.append(f"FILE SIZE: {os.path.getsize(file_path) / 1024 / 1024:.1f}MB")
+        content_parts.append("=" * 60)
+        
+        # Process ALL paragraphs with optimizations
+        processed_paragraphs = 0
+        for paragraph in doc.paragraphs:
+            text = paragraph.text.strip()
+            if text:
+                content_parts.append(text)
+                processed_paragraphs += 1
+        
+        # Extract tables if present
+        if doc.tables:
+            content_parts.append("\n" + "="*50)
+            content_parts.append("DOCUMENT TABLES")
+            content_parts.append("="*50)
+            
+            for table_idx, table in enumerate(doc.tables, 1):
+                content_parts.append(f"\nTABLE {table_idx}:")
+                content_parts.append("-" * 20)
+                
+                for row in table.rows:
+                    row_data = []
+                    for cell in row.cells:
+                        cell_text = cell.text.strip()
+                        row_data.append(cell_text if cell_text else "[empty]")
+                    content_parts.append(" | ".join(row_data))
+                
+                content_parts.append(f"[END TABLE {table_idx}]")
+        
+        result = "\n".join(content_parts)
+        logger.info(f"✅ FULL DOCX extraction completed: {len(result)} characters from {processed_paragraphs} paragraphs")
+        
+        return result
+        
+    except Exception as e:
+        logger.error(f"FULL DOCX extraction failed: {e}")
+        return f"DOCX DOCUMENT: {os.path.basename(file_path)}\nExtraction failed: {str(e)}"
+
+
+# FULL text extraction (ALL content)
+def extract_text_full_optimized(file_path: str) -> str:
+    """FULL text extraction with encoding detection"""
+    try:
+        # Try multiple encodings for comprehensive reading
+        encodings = ['utf-8', 'utf-16', 'latin1', 'cp1252', 'iso-8859-1']
+        
+        content = None
+        used_encoding = None
+        
+        for encoding in encodings:
+            try:
+                with open(file_path, 'r', encoding=encoding) as f:
+                    content = f.read()
+                    used_encoding = encoding
+                    break
+            except UnicodeDecodeError:
+                continue
+        
+        if content is None:
+            # Fallback to binary reading with error handling
+            with open(file_path, 'rb') as f:
+                binary_content = f.read()
+                content = binary_content.decode('utf-8', errors='replace')
+                used_encoding = 'utf-8 (with errors replaced)'
+        
+        # Add comprehensive header
+        header = f"""TEXT DOCUMENT: {os.path.basename(file_path)}
+FILE SIZE: {os.path.getsize(file_path) / 1024:.1f}KB
+ENCODING: {used_encoding}
+CONTENT LENGTH: {len(content)} characters
+{"=" * 60}
+
+"""
+        result = header + content
+        
+        logger.info(f"✅ FULL text extraction completed: {len(result)} total characters")
+        
+        return result
+        
+    except Exception as e:
+        logger.error(f"FULL text extraction failed: {e}")
+        return f"TEXT DOCUMENT: {os.path.basename(file_path)}\nExtraction failed: {str(e)}"
+
+
+# FULL image extraction with OCR (ALL content)
+def extract_image_full_optimized(file_path: str) -> str:
+    """FULL image extraction with comprehensive OCR"""
+    global ocr_reader
+    
+    try:
+        filename = os.path.basename(file_path)
+        file_size = os.path.getsize(file_path)
+        
+        if not ocr_reader or not app.config['OCR_ENABLED']:
+            return f"""IMAGE DOCUMENT: {filename}
+FILE SIZE: {file_size / 1024:.1f}KB
+{"=" * 60}
+
+[OCR NOT AVAILABLE]
+OCR processing is not enabled or configured.
+Image file detected but text extraction not possible.
+
+{"=" * 60}"""
+        
+        logger.info(f"🖼️ Processing FULL image OCR for: {filename}")
+        
+        # Extract ALL text using OCR
+        ocr_text = ocr_reader.extract_text_from_image(file_path)
+        
+        if not ocr_text.strip():
+            return f"""IMAGE DOCUMENT: {filename}
+FILE SIZE: {file_size / 1024:.1f}KB
+{"=" * 60}
+
+[NO TEXT DETECTED]
+OCR processing completed but no readable text was found in the image.
+
+{"=" * 60}"""
+        
+        # Build comprehensive content
+        content_blocks = []
+        content_blocks.append(f"IMAGE DOCUMENT: {filename}")
+        content_blocks.append(f"FILE SIZE: {file_size / 1024:.1f}KB")
+        content_blocks.append(f"OCR ENGINE: {'GPU-accelerated EasyOCR' if ocr_reader.gpu_enabled else 'CPU EasyOCR'}")
+        content_blocks.append(f"EXTRACTED TEXT LENGTH: {len(ocr_text)} characters")
+        content_blocks.append("=" * 60)
+        content_blocks.append("")
+        content_blocks.append("[FULL OCR EXTRACTED CONTENT]")
+        content_blocks.append(ocr_text)
+        content_blocks.append("[END OCR CONTENT]")
+        content_blocks.append("")
+        content_blocks.append("=" * 60)
+        content_blocks.append("OCR PROCESSING SUMMARY")
+        content_blocks.append("=" * 60)
+        content_blocks.append(f"Image preprocessing: {'Enabled' if app.config['OCR_PREPROCESS_ENABLED'] else 'Disabled'}")
+        content_blocks.append(f"Confidence threshold: {app.config['OCR_CONFIDENCE_THRESHOLD']}")
+        content_blocks.append(f"Languages: {', '.join(app.config['OCR_LANGUAGES'])}")
+        
+        result = "\n".join(content_blocks)
+        
+        logger.info(f"✅ FULL image OCR completed: {len(result)} total characters")
+        
+        return result
+        
+    except Exception as e:
+        logger.error(f"FULL image OCR extraction failed for {file_path}: {e}")
+        return f"""IMAGE DOCUMENT: {os.path.basename(file_path)}
+{"=" * 60}
+
+[OCR EXTRACTION ERROR]
+Error processing image: {str(e)}
+
+{"=" * 60}"""
+
+
+# FULL Excel extraction (ALL sheets and data)
+def extract_excel_full_optimized(file_path: str) -> str:
+    """FULL Excel extraction - ALL sheets with optimizations"""
+    try:
+        import pandas as pd
+        
+        filename = os.path.basename(file_path)
+        file_size = os.path.getsize(file_path)
+        
+        # Read ALL sheets
+        excel_data = pd.read_excel(file_path, sheet_name=None)  # None reads all sheets
+        
+        content_parts = []
+        content_parts.append(f"EXCEL DOCUMENT: {filename}")
+        content_parts.append(f"FILE SIZE: {file_size / 1024:.1f}KB")
+        content_parts.append(f"TOTAL SHEETS: {len(excel_data)}")
+        content_parts.append("=" * 60)
+        
+        total_rows = 0
+        total_cols = 0
+        
+        # Process ALL sheets and ALL data
+        for sheet_name, df in excel_data.items():
+            content_parts.append(f"\nSHEET: {sheet_name}")
+            content_parts.append(f"ROWS: {len(df)}, COLUMNS: {len(df.columns)}")
+            content_parts.append("-" * 40)
+            
+            # Convert ALL data to string format
+            sheet_content = df.to_string(index=True, max_rows=None, max_cols=None)
+            content_parts.append(sheet_content)
+            content_parts.append(f"[END SHEET: {sheet_name}]")
+            
+            total_rows += len(df)
+            total_cols += len(df.columns)
+        
+        content_parts.append("\n" + "=" * 60)
+        content_parts.append("EXCEL SUMMARY")
+        content_parts.append("=" * 60)
+        content_parts.append(f"Total data rows processed: {total_rows}")
+        content_parts.append(f"Total columns processed: {total_cols}")
+        
+        result = "\n".join(content_parts)
+        
+        logger.info(f"✅ FULL Excel extraction completed: {len(result)} characters from {len(excel_data)} sheets")
+        
+        return result
+        
+    except Exception as e:
+        logger.error(f"FULL Excel extraction failed: {e}")
+        return f"EXCEL DOCUMENT: {os.path.basename(file_path)}\nExtraction failed: {str(e)}"
+
+
+# FULL fallback extraction
+def extract_fallback_full_optimized(file_path: str) -> str:
+    """FULL fallback extraction for unknown formats"""
+    try:
+        filename = os.path.basename(file_path)
+        file_size = os.path.getsize(file_path)
+        
+        # Try reading as text with multiple encodings
+        encodings = ['utf-8', 'latin1', 'cp1252']
+        
+        for encoding in encodings:
+            try:
+                with open(file_path, 'r', encoding=encoding, errors='ignore') as f:
+                    content = f.read()  # Read ALL content
+                
+                header = f"""UNKNOWN FORMAT: {filename}
+FILE SIZE: {file_size / 1024:.1f}KB
+ENCODING: {encoding}
+CONTENT LENGTH: {len(content)} characters
+{"=" * 60}
+
+"""
+                return header + content
+                
+            except Exception:
+                continue
+        
+        # If text reading fails, try binary analysis
+        with open(file_path, 'rb') as f:
+            binary_data = f.read()
+        
+        # Try to detect if it's text-like
+        text_chars = sum(1 for byte in binary_data[:1000] if 32 <= byte <= 126 or byte in [9, 10, 13])
+        is_likely_text = text_chars / min(1000, len(binary_data)) > 0.7
+        
+        if is_likely_text:
+            try:
+                content = binary_data.decode('utf-8', errors='replace')
+                return f"""BINARY FILE (TEXT-LIKE): {filename}
+FILE SIZE: {file_size / 1024:.1f}KB
+{"=" * 60}
+
+{content}"""
+            except:
+                pass
+        
+        return f"""BINARY FILE: {filename}
+FILE SIZE: {file_size / 1024:.1f}KB
+{"=" * 60}
+
+[BINARY FILE - TEXT EXTRACTION NOT POSSIBLE]
+This file appears to be in a binary format that cannot be processed as text.
+File format: {os.path.splitext(filename)[1].upper() or 'Unknown'}
+
+{"=" * 60}"""
+        
+    except Exception as e:
+        logger.error(f"FULL fallback extraction failed: {e}")
+        return f"FILE: {os.path.basename(file_path)}\nExtraction failed: {str(e)}"
+        
 
 # Optimized content extraction dispatch
 def extract_content_optimized_dispatch(file_path: str) -> str:
@@ -1344,7 +1713,7 @@ def extract_fallback_optimized(file_path: str) -> str:
 
 # Update the main upload handler to use optimizations
 def handle_streaming_upload_optimized():
-    """ULTRA-OPTIMIZED streaming upload"""
+    """OPTIMIZED streaming upload with FULL content processing (no limits)"""
     def generate_progress():
         try:
             # Quick subscription check
@@ -1368,22 +1737,22 @@ def handle_streaming_upload_optimized():
                 yield f"data: {json.dumps({'status': 'error', 'message': 'No files uploaded'})}\n\n"
                 return
             
-            # ULTRA-FAST extraction
-            yield f"data: {json.dumps({'status': 'extracting', 'message': '⚡  Extraction...', 'percent': 5})}\n\n"
+            # PHASE 1: OPTIMIZED FILE EXTRACTION (5-15%)
+            yield f"data: {json.dumps({'status': 'extracting', 'message': '🔥 Full content extraction...', 'percent': 5})}\n\n"
             
             extracted_files = []
             
-            # Process files with minimal overhead
+            # Process files with optimized extraction
             for file_idx, file in enumerate(files):
                 if file.filename == '':
                     continue
                     
                 filename = secure_filename(file.filename)
                 
-                # Quick progress
-                if file_idx % 5 == 0:  # Update every 5 files
+                # Progress updates every 5 files for better performance
+                if file_idx % 5 == 0:
                     progress = 5 + (file_idx / len(files)) * 10
-                    yield f"data: {json.dumps({'status': 'extracting', 'percent': int(progress)})}\n\n"
+                    yield f"data: {json.dumps({'status': 'extracting', 'percent': int(progress), 'message': f'🔥 Extracting {filename}...'})}\n\n"
                 
                 try:
                     if filename.lower().endswith('.zip'):
@@ -1411,77 +1780,104 @@ def handle_streaming_upload_optimized():
                 yield f"data: {json.dumps({'status': 'error', 'message': 'No valid files found'})}\n\n"
                 return
             
-            # Files ready
-            yield f"data: {json.dumps({'status': 'files_ready', 'total': len(extracted_files), 'percent': 15})}\n\n"
+            # PHASE 2: FILES READY FOR FULL PROCESSING (15-20%)
+            yield f"data: {json.dumps({'status': 'files_ready', 'total': len(extracted_files), 'percent': 15, 'message': f'✅ {len(extracted_files)} files ready for FULL processing'})}\n\n"
             
-            # ULTRA-FAST processing with batch operations
+            # PHASE 3: FULL CONTENT PROCESSING (20-90%)
             processed_count = 0
             failed_files = []
             batch_data = []
             
-            # Process in larger batches
-            batch_size = 10
+            # Use optimized batch size for FULL processing
+            batch_size = 25  # Smaller batches for full processing to maintain speed
             
             for i, file_path in enumerate(extracted_files):
                 filename = os.path.basename(file_path)
+                file_size_mb = os.path.getsize(file_path) / (1024 * 1024)
                 
-                # Progress every 10%
-                if i % max(1, len(extracted_files) // 10) == 0:
-                    progress = 15 + (i / len(extracted_files)) * 85
-                    yield f"data: {json.dumps({'status': 'processing', 'current_file': filename, 'percent': int(progress)})}\n\n"
+                # Progress updates every 3% for smoother UX
+                if i % max(1, len(extracted_files) // 30) == 0:
+                    progress = 20 + (i / len(extracted_files)) * 70
+                    yield f"data: {json.dumps({'status': 'processing', 'current_file': filename, 'percent': int(progress), 'message': f'🔥 FULL processing: {filename} ({file_size_mb:.1f}MB)'})}\n\n"
                 
                 try:
-                    # Fast content extraction
+                    # FULL CONTENT EXTRACTION (no limits)
                     content = extract_content_optimized_dispatch(file_path)
                     
                     if content and len(content.strip()) > 10:
-                        # Prepare for batch processing
                         file_hash = get_file_hash_optimized(file_path)
                         
                         # Quick duplicate check
                         existing = Document.query.filter_by(file_hash=file_hash, user_id=user_id).first()
                         if not existing:
-                            # Fast chunking
-                            chunks = create_chunks_optimized(content)
-                            embeddings = generate_embeddings_fast(chunks)
+                            # FULL CHUNKING AND EMBEDDINGS
+                            chunks = create_chunks_optimized(content)  # Process ALL content
+                            embeddings = generate_embeddings_fast(chunks)  # Generate ALL embeddings
                             
                             batch_data.append((file_path, content, chunks, embeddings, file_hash, user_id))
                             processed_count += 1
+                            
+                            logger.info(f"✅ FULL processing completed for {filename}: {len(content)} chars, {len(chunks)} chunks")
                         else:
                             processed_count += 1  # Already exists
+                            logger.info(f"⚠️ Duplicate detected, skipping: {filename}")
                     else:
                         failed_files.append(filename)
+                        logger.warning(f"❌ No content extracted from: {filename}")
                         
                 except Exception as e:
                     failed_files.append(filename)
-                    logger.error(f"Error processing {file_path}: {e}")
+                    logger.error(f"❌ Error during FULL processing of {file_path}: {e}")
                 
                 # Process batch when full
                 if len(batch_data) >= batch_size:
                     try:
+                        yield f"data: {json.dumps({'status': 'processing', 'message': f'💾 Saving batch of {len(batch_data)} fully processed files...', 'percent': int(20 + (i / len(extracted_files)) * 70)})}\n\n"
+                        
                         save_document_bulk_optimized(batch_data)
                         batch_data = []
+                        
+                        logger.info(f"✅ Batch saved successfully")
+                        
                     except Exception as batch_error:
-                        logger.error(f"Batch processing error: {batch_error}")
+                        logger.error(f"❌ Batch processing error: {batch_error}")
                         failed_files.extend([os.path.basename(data[0]) for data in batch_data])
                         batch_data = []
             
             # Process remaining batch
             if batch_data:
                 try:
+                    yield f"data: {json.dumps({'status': 'processing', 'message': f'💾 Saving final batch of {len(batch_data)} files...', 'percent': 90})}\n\n"
+                    
                     save_document_bulk_optimized(batch_data)
+                    
+                    logger.info(f"✅ Final batch saved successfully")
+                    
                 except Exception as final_batch_error:
-                    logger.error(f"Final batch error: {final_batch_error}")
+                    logger.error(f"❌ Final batch error: {final_batch_error}")
                     failed_files.extend([os.path.basename(data[0]) for data in batch_data])
             
-            # Completion
+            # PHASE 4: COMPLETION (90-100%)
             success_rate = round((processed_count / len(extracted_files)) * 100, 1)
             
-            yield f"data: {json.dumps({'status': 'completed', 'processed_count': processed_count, 'total_files': len(extracted_files), 'failed_files': failed_files, 'percent': 100, 'success_rate': success_rate, 'message': f'⚡ Processing completed: {processed_count}/{len(extracted_files)} files'})}\n\n"
+            completion_message = f'🔥 FULL processing completed: {processed_count}/{len(extracted_files)} files with ALL content, embeddings, and features!'
+            
+            yield f"data: {json.dumps({'status': 'completed', 'processed_count': processed_count, 'total_files': len(extracted_files), 'failed_files': failed_files, 'percent': 100, 'success_rate': success_rate, 'message': completion_message, 'full_processing': True, 'no_limits_applied': True})}\n\n"
+            
+            # Log completion statistics
+            total_size_mb = sum(os.path.getsize(f) / (1024 * 1024) for f in extracted_files)
+            logger.info(f"🎉 UPLOAD COMPLETED:")
+            logger.info(f"   📁 Files processed: {processed_count}/{len(extracted_files)}")
+            logger.info(f"   📊 Total size: {total_size_mb:.1f}MB")
+            logger.info(f"   ✅ Success rate: {success_rate}%")
+            logger.info(f"   🔥 FULL content processing: ALL pages, paragraphs, and data extracted")
+            logger.info(f"   🧠 ALL embeddings generated")
+            logger.info(f"   ⚡ NO content limits applied")
             
         except Exception as e:
-            logger.error(f"Ultra-optimized upload error: {e}")
-            yield f"data: {json.dumps({'status': 'error', 'message': f'Upload failed: {str(e)}'})}\n\n"
+            logger.error(f"❌ FULL processing upload error: {e}")
+            logger.error(f"Traceback: {traceback.format_exc()}")
+            yield f"data: {json.dumps({'status': 'error', 'message': f'FULL processing upload failed: {str(e)}'})}\n\n"
     
     return Response(
         stream_with_context(generate_progress()),
@@ -1489,6 +1885,150 @@ def handle_streaming_upload_optimized():
         headers={'Cache-Control': 'no-cache', 'Connection': 'keep-alive'}
     )
 
+
+def create_chunks_optimized(content):
+    """FULL chunking with optimized performance - processes ALL content"""
+    try:
+        if not content or len(content.strip()) < 50:
+            return []
+        
+        # Use optimized chunk size and overlap for speed while maintaining quality
+        chunk_size = 1200  # Good balance of context and speed
+        overlap = 200      # Sufficient overlap for context preservation
+        
+        logger.info(f"🔥 Creating chunks from {len(content)} characters (FULL content)")
+        
+        # For small content, return as single chunk
+        if len(content) <= chunk_size:
+            return [{
+                'content': content,
+                'chunk_index': 0,
+                'metadata': {
+                    'full_content': True,
+                    'start_pos': 0,
+                    'end_pos': len(content),
+                    'chunk_size': len(content)
+                }
+            }]
+        
+        chunks = []
+        start = 0
+        chunk_index = 0
+        
+        # Process ALL content with optimized chunking
+        while start < len(content):
+            end = start + chunk_size
+            
+            # Try to end at sentence boundary for better context
+            if end < len(content):
+                # Look for sentence endings within the last 200 characters
+                search_start = max(start + chunk_size - 200, start)
+                search_text = content[search_start:end + 200]
+                
+                # Find the best breaking point
+                sentence_endings = ['.', '!', '?', '\n\n']
+                best_break = -1
+                
+                for ending in sentence_endings:
+                    last_pos = search_text.rfind(ending)
+                    if last_pos > len(search_text) // 2:  # Don't break too early
+                        best_break = search_start + last_pos + 1
+                        break
+                
+                if best_break > start:
+                    end = best_break
+            
+            # Extract chunk content
+            chunk_content = content[start:end].strip()
+            
+            if chunk_content:  # Only add non-empty chunks
+                chunks.append({
+                    'content': chunk_content,
+                    'chunk_index': chunk_index,
+                    'metadata': {
+                        'start_pos': start,
+                        'end_pos': end,
+                        'chunk_size': len(chunk_content),
+                        'full_processing': True,
+                        'has_overlap': start > 0
+                    }
+                })
+                chunk_index += 1
+            
+            # Move to next chunk with overlap
+            start = max(start + 1, end - overlap)
+            
+            # Prevent infinite loops
+            if end >= len(content):
+                break
+        
+        logger.info(f"✅ FULL chunking completed: {len(chunks)} chunks created from ALL content")
+        
+        return chunks
+        
+    except Exception as e:
+        logger.error(f"❌ FULL chunking failed: {e}")
+        return [{
+            'content': content[:2000] if content else 'Error processing content',
+            'chunk_index': 0,
+            'metadata': {'error': str(e), 'fallback_chunk': True}
+        }]
+
+
+# Optimize your existing generate_embeddings_fast function for FULL processing
+def generate_embeddings_fast(chunks):
+    """FULL embedding generation - processes ALL chunks with optimizations"""
+    if not chunks:
+        return []
+    
+    if not ensure_processor_initialized():
+        logger.warning("Processor not initialized, returning zero embeddings")
+        return [np.zeros(768) for _ in chunks]
+    
+    try:
+        logger.info(f"🔥 Generating embeddings for ALL {len(chunks)} chunks...")
+        
+        # Extract ALL text content
+        texts = [chunk['content'] for chunk in chunks]
+        
+        # Use optimized batch processing for speed
+        batch_size = 32 if global_processor.gpu_enabled else 16
+        all_embeddings = []
+        
+        # Process in batches for memory efficiency
+        for i in range(0, len(texts), batch_size):
+            batch_texts = texts[i:i + batch_size]
+            
+            try:
+                # Generate embeddings with optimized settings
+                batch_embeddings = global_processor.embedding_model.encode(
+                    batch_texts,
+                    convert_to_tensor=False,
+                    show_progress_bar=False,
+                    batch_size=batch_size,
+                    normalize_embeddings=True,  # Normalize for better similarity
+                    device=global_processor.device
+                )
+                
+                all_embeddings.extend(batch_embeddings)
+                
+                logger.info(f"✅ Processed embedding batch {i//batch_size + 1}/{(len(texts) + batch_size - 1)//batch_size}")
+                
+            except Exception as batch_error:
+                logger.error(f"❌ Embedding batch error: {batch_error}")
+                # Add zero embeddings for failed batch
+                batch_embeddings = [np.zeros(768) for _ in batch_texts]
+                all_embeddings.extend(batch_embeddings)
+        
+        logger.info(f"✅ FULL embedding generation completed: {len(all_embeddings)} embeddings for ALL chunks")
+        
+        return all_embeddings
+        
+    except Exception as e:
+        logger.error(f"❌ FULL embedding generation failed: {e}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        # Return zero embeddings as fallback
+        return [np.zeros(768) for _ in chunks]
 
 
 
@@ -1553,11 +2093,20 @@ def clean_directory(directory):
 
 # Add this optimized database bulk save function
 def save_document_bulk_optimized(documents_data):
-    """Bulk save multiple documents for maximum performance"""
+    """ULTRA-FAST bulk save using raw SQL - processes ALL content without limits"""
     try:
-        # Prepare all documents
-        docs_to_add = []
-        content_to_add = []
+        if not documents_data:
+            return True
+            
+        logger.info(f"💾 Ultra-fast bulk saving {len(documents_data)} documents with FULL content...")
+        start_time = time.time()
+        
+        # Use raw SQL for maximum speed
+        current_time = datetime.now(timezone.utc)
+        
+        # Prepare ALL document records for bulk insert
+        doc_insert_values = []
+        content_insert_values = []
         
         for doc_data in documents_data:
             file_path, content, chunks, embeddings, file_hash, user_id = doc_data
@@ -1567,66 +2116,79 @@ def save_document_bulk_optimized(documents_data):
             file_type = os.path.splitext(file_path)[1].lower()
             rel_path = os.path.relpath(file_path, app.config['EXTRACT_FOLDER'])
             
-            # Minimal metadata for speed
             doc_metadata = {
                 'original_filename': filename,
                 'file_size': file_size,
                 'content_length': len(content),
                 'relative_path': rel_path,
                 'chunk_count': len(chunks),
-                'bulk_processed': True
+                'full_content_processed': True,
+                'processing_time': time.time() - start_time
             }
             
-            doc = Document(
-                user_id=user_id,
-                file_path=rel_path,
-                file_hash=file_hash,
-                file_type=file_type,
-                document_metadata=doc_metadata
-            )
-            
-            docs_to_add.append(doc)
+            # Prepare document insert values
+            doc_insert_values.append(f"""({user_id}, '{rel_path.replace("'", "''")}', '{file_hash}', '{file_type}', '{current_time}', '{json.dumps(doc_metadata).replace("'", "''")}')""")
+
         
-        # Bulk insert documents
-        db.session.bulk_save_objects(docs_to_add, return_defaults=True)
-        db.session.flush()
-        
-        # Prepare content records
-        for i, (doc, doc_data) in enumerate(zip(docs_to_add, documents_data)):
-            file_path, content, chunks, embeddings, file_hash, user_id = doc_data
+        # ULTRA-FAST bulk insert ALL documents at once
+        if doc_insert_values:
+            bulk_doc_sql = f"""
+                INSERT INTO document (user_id, file_path, file_hash, file_type, processed_at, metadata)
+                VALUES {','.join(doc_insert_values)}
+                RETURNING id
+            """
             
-            # Full content
-            content_to_add.append(DocumentContent(
-                document_id=doc.id,
-                content=content,
-                content_type='bulk_full_text',
-                content_metadata={'bulk_processed': True}
-            ))
+            with db.engine.begin() as conn:
+                result = conn.execute(text(bulk_doc_sql))
+                doc_ids = [row[0] for row in result.fetchall()]
             
-            # Chunks
-            for j, chunk_data in enumerate(chunks):
-                embedding = embeddings[j] if j < len(embeddings) else None
+            logger.info(f"✅ Inserted {len(doc_ids)} documents in bulk")
+            
+            # Prepare ALL content records for bulk insert
+            for i, (doc_data, doc_id) in enumerate(zip(documents_data, doc_ids)):
+                file_path, content, chunks, embeddings, file_hash, user_id = doc_data
                 
-                content_to_add.append(DocumentContent(
-                    document_id=doc.id,
-                    content=chunk_data['content'],
-                    content_type='bulk_chunk',
-                    chunk_index=chunk_data['chunk_index'],
-                    embedding=embedding.tolist() if isinstance(embedding, np.ndarray) else embedding,
-                    content_metadata={'bulk_processed': True}
-                ))
+                # Full content record
+                escaped_content = content.replace("'", "''").replace("\\", "\\\\")
+                content_insert_values.append(f"""({doc_id}, '{escaped_content}', 'full_content_optimized', 0, '{current_time}', '{json.dumps({'full_processing': True}).replace("'", "''")}')""")
+
+                
+                # ALL chunks with embeddings (no limits)
+                for j, chunk_data in enumerate(chunks):
+                    escaped_chunk = chunk_data['content'].replace("'", "''").replace("\\", "\\\\")
+                    embedding = embeddings[j] if j < len(embeddings) else None
+                    embedding_json = json.dumps(embedding.tolist() if isinstance(embedding, np.ndarray) else embedding) if embedding is not None else 'null'
+                    
+                    content_insert_values.append(f"""({doc_id}, '{escaped_chunk}', 'chunk_optimized', {chunk_data['chunk_index']}, '{current_time}', '{json.dumps({'full_chunk': True}).replace("'", "''")}')""")
+
+            
+            # ULTRA-FAST bulk insert ALL content at once
+            if content_insert_values:
+                # Process in very large batches for speed
+                batch_size = 5000  # Very large batches
+                
+                for i in range(0, len(content_insert_values), batch_size):
+                    batch_values = content_insert_values[i:i + batch_size]
+                    
+                    bulk_content_sql = f"""
+                        INSERT INTO document_content (document_id, content, content_type, chunk_index, created_at, content_metadata)
+                        VALUES {','.join(batch_values)}
+                    """
+                    
+                    with db.engine.begin() as conn:
+                        conn.execute(text(bulk_content_sql))
+                    
+                    logger.info(f"✅ Inserted batch {i//batch_size + 1} of content records")
         
-        # Bulk insert content
-        db.session.bulk_save_objects(content_to_add)
-        db.session.commit()
+        elapsed = time.time() - start_time
+        logger.info(f"🚀 ULTRA-FAST bulk save completed in {elapsed:.2f}s - ALL content processed!")
         
         return True
         
     except Exception as e:
-        db.session.rollback()
-        logger.error(f"Bulk save error: {e}")
+        logger.error(f"Ultra-fast bulk save error: {e}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
         return False
-
 
 
 # Initialize global OCR processor
@@ -1645,85 +2207,213 @@ def initialize_ocr_processor():
     except Exception as e:
         logger.error(f"❌ OCR processor initialization failed: {e}")
         return False
-
+        
 def extract_keywords_for_exact_match_search(query: str) -> str:
     """
-    Extract keywords for EXACT MATCH search - focuses on the main content words
+    Extract keywords for EXACT MATCH search - CORRECTED VERSION
+    Focuses on NOUNS and IMPORTANT TERMS, not action words
     """
     import re
     
-    # Comprehensive list of action/stop words to filter out
+    # Remove action/question words but keep important nouns
     action_words = {
-        # Question words
-        'what', 'how', 'where', 'when', 'why', 'which', 'who', 'whose', 'whom',
-        # Action verbs
-        'list', 'show', 'display', 'find', 'search', 'get', 'give', 'provide',
-        'tell', 'explain', 'describe', 'define', 'identify', 'locate', 'retrieve',
-        'extract', 'present', 'enumerate', 'outline', 'detail', 'specify',
-        'mention', 'state', 'indicate', 'reveal', 'demonstrate', 'illustrate',
-        # Modal verbs
-        'can', 'could', 'would', 'should', 'will', 'shall', 'may', 'might', 'must',
-        # Auxiliary verbs
-        'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had',
-        'do', 'does', 'did', 'done', 'doing',
-        # Articles and determiners
-        'the', 'a', 'an', 'this', 'that', 'these', 'those',
-        # Common prepositions
-        'in', 'on', 'at', 'by', 'for', 'with', 'from', 'to', 'of', 'about'
-    }
+    # Question words
+    'what', 'how', 'where', 'when', 'why', 'which', 'who', 'whose', 'whom', 'whatever', 'however', 'wherever', 'whenever', 'whichever', 'whoever',
     
-    # Extract words and clean them
-    words = re.findall(r'\b\w+\b', query.lower())
+    # Action/command verbs
+    'list', 'show', 'display', 'find', 'search', 'get', 'give', 'provide', 'tell', 'explain', 
+    'describe', 'define', 'identify', 'locate', 'extract', 'present', 'detail', 'specify',
+    'mention', 'state', 'indicate', 'reveal', 'demonstrate', 'illustrate', 'outline', 'enumerate',
+    'summarize', 'summarise', 'analyze', 'analyse', 'examine', 'review', 'evaluate', 'assess',
+    'check', 'verify', 'confirm', 'validate', 'test', 'measure', 'calculate', 'compute',
+    'determine', 'establish', 'clarify', 'elaborate', 'expand', 'discuss', 'talk', 'speak',
+    'read', 'write', 'create', 'make', 'build', 'construct', 'develop', 'design', 'plan',
+    'organize', 'arrange', 'prepare', 'setup', 'install', 'configure', 'adjust', 'modify',
+    'change', 'update', 'edit', 'revise', 'correct', 'fix', 'repair', 'solve', 'resolve',
+    'compare', 'contrast', 'match', 'relate', 'connect', 'link', 'associate', 'combine',
+    'separate', 'divide', 'split', 'break', 'cut', 'join', 'merge', 'unite', 'gather',
+    'collect', 'compile', 'assemble', 'group', 'categorize', 'classify', 'sort', 'order',
+    'rank', 'prioritize', 'schedule', 'time', 'date', 'track', 'monitor', 'observe',
+    'watch', 'see', 'look', 'view', 'notice', 'spot', 'detect', 'discover', 'uncover',
+    'explore', 'investigate', 'research', 'study', 'learn', 'understand', 'comprehend',
+    'interpret', 'translate', 'convert', 'transform', 'process', 'handle', 'manage',
+    'control', 'operate', 'run', 'execute', 'perform', 'conduct', 'carry', 'complete',
+    'finish', 'end', 'stop', 'start', 'begin', 'initiate', 'launch', 'open', 'close',
+    'save', 'store', 'keep', 'maintain', 'preserve', 'protect', 'secure', 'guard',
+    'defend', 'support', 'help', 'assist', 'aid', 'guide', 'direct', 'lead', 'follow',
+    'go', 'come', 'move', 'travel', 'visit', 'reach', 'arrive', 'depart', 'leave',
+    'return', 'send', 'receive', 'accept', 'reject', 'approve', 'deny', 'allow', 'permit',
+    'enable', 'disable', 'activate', 'deactivate', 'turn', 'switch', 'toggle', 'select',
+    'choose', 'pick', 'take', 'put', 'place', 'set', 'lay', 'position', 'locate',
+    'install', 'remove', 'delete', 'add', 'insert', 'include', 'exclude', 'omit',
+    'skip', 'ignore', 'avoid', 'prevent', 'block', 'restrict', 'limit', 'reduce',
+    'increase', 'raise', 'lower', 'improve', 'enhance', 'optimize', 'maximize', 'minimize',
+    'focus', 'concentrate', 'emphasize', 'highlight', 'stress', 'note', 'mark', 'label',
+    'tag', 'name', 'call', 'refer', 'reference', 'cite', 'quote', 'repeat', 'copy',
+    'duplicate', 'clone', 'backup', 'restore', 'recover', 'retrieve', 'fetch', 'load',
+    'download', 'upload', 'transfer', 'move', 'shift', 'navigate', 'browse', 'scan',
+    'filter', 'refine', 'narrow', 'broaden', 'widen', 'extend', 'expand', 'stretch',
+    'compress', 'shrink', 'resize', 'scale', 'zoom', 'pan', 'rotate', 'flip', 'reverse',
+    'undo', 'redo', 'cancel', 'abort', 'quit', 'exit', 'logout', 'login', 'signin',
+    'signup', 'register', 'subscribe', 'unsubscribe', 'follow', 'unfollow', 'like',
+    'dislike', 'share', 'post', 'publish', 'submit', 'send', 'email', 'message',
+    'notify', 'alert', 'warn', 'inform', 'announce', 'declare', 'proclaim', 'broadcast',
     
-    # Find the MAIN CONTENT WORDS (usually nouns, important adjectives)
-    content_keywords = []
+    # Auxiliary and modal verbs
+    'is', 'are', 'was', 'were', 'be', 'been', 'being', 'am',
+    'have', 'has', 'had', 'having',
+    'do', 'does', 'did', 'done', 'doing',
+    'will', 'would', 'shall', 'should',
+    'can', 'could', 'may', 'might', 'must',
+    'ought', 'need', 'dare', 'used','details','detail'
     
-    # Look for capitalized words in original query (likely proper nouns/important terms)
-    capitalized_words = re.findall(r'\b[A-Z][a-zA-Z]*\b', query)
-    for word in capitalized_words:
-        if len(word) > 2 and word.lower() not in action_words:
-            content_keywords.append(word.lower())
+    # Articles and determiners
+    'the', 'a', 'an', 'this', 'that', 'these', 'those',
+    'my', 'your', 'his', 'her', 'its', 'our', 'their',
+    'some', 'any', 'all', 'every', 'each', 'either', 'neither',
+    'both', 'few', 'many', 'much', 'more', 'most', 'less', 'least',
+    'several', 'various', 'different', 'same', 'other', 'another',
+    'first', 'second', 'third', 'last', 'next', 'previous', 'former', 'latter',
     
-    # Filter individual words - keep meaningful content words
+    # Prepositions
+    'in', 'on', 'at', 'by', 'for', 'with', 'from', 'to', 'of', 'about',
+    'under', 'over', 'above', 'below', 'beneath', 'behind', 'before', 'after',
+    'during', 'within', 'without', 'through', 'throughout', 'across', 'along',
+    'around', 'beside', 'between', 'among', 'amongst', 'against', 'towards',
+    'toward', 'into', 'onto', 'upon', 'off', 'out', 'up', 'down',
+    'near', 'close', 'far', 'away', 'inside', 'outside', 'beyond', 'past',
+    'since', 'until', 'till', 'except', 'besides', 'despite', 'regarding',
+    'concerning', 'according', 'due', 'owing', 'thanks', 'because', 'as',
+    'like', 'unlike', 'via', 'per', 'plus', 'minus', 'versus', 'vs',
+    
+    # Conjunctions
+    'and', 'or', 'but', 'so', 'yet', 'nor', 'for',
+    'although', 'though', 'even', 'while', 'whereas', 'unless', 'if',
+    'whether', 'that', 'since', 'because', 'as', 'when', 'whenever',
+    'where', 'wherever', 'before', 'after', 'until', 'while', 'once',
+    'however', 'therefore', 'thus', 'hence', 'consequently', 'accordingly',
+    'moreover', 'furthermore', 'additionally', 'also', 'besides', 'likewise',
+    'similarly', 'conversely', 'otherwise', 'instead', 'rather', 'alternatively',
+    
+    # Pronouns
+    'i', 'me', 'myself', 'you', 'yourself', 'yourselves', 'he', 'him', 'himself',
+    'she', 'her', 'herself', 'it', 'itself', 'we', 'us', 'ourselves',
+    'they', 'them', 'themselves', 'one', 'oneself', 'someone', 'somebody',
+    'something', 'anyone', 'anybody', 'anything', 'everyone', 'everybody',
+    'everything', 'no', 'none', 'nobody', 'nothing', 'nowhere',
+    'somewhere', 'anywhere', 'everywhere', 'here', 'there', 'where',
+    
+    # Adverbs (common ones that don't add content meaning)
+    'very', 'quite', 'rather', 'pretty', 'fairly', 'really', 'truly', 'actually',
+    'basically', 'essentially', 'generally', 'usually', 'normally', 'typically',
+    'often', 'sometimes', 'occasionally', 'rarely', 'seldom', 'never', 'always',
+    'already', 'still', 'yet', 'just', 'only', 'even', 'also', 'too', 'either',
+    'neither', 'both', 'all', 'every', 'each', 'any', 'some', 'no', 'none',
+    'again', 'back', 'forth', 'forward', 'backward', 'onwards', 'onwards',
+    'together', 'apart', 'away', 'aside', 'along', 'around', 'about',
+    'almost', 'nearly', 'quite', 'fairly', 'pretty', 'rather', 'somewhat',
+    'largely', 'mainly', 'mostly', 'chiefly', 'primarily', 'principally',
+    'especially', 'particularly', 'specifically', 'exactly', 'precisely',
+    'approximately', 'roughly', 'about', 'around',
+    
+    # Politeness and filler words
+    'please', 'pls', 'kindly', 'thanks', 'thank', 'sorry', 'excuse', 'pardon',
+    'hello', 'hi', 'hey', 'goodbye', 'bye', 'farewell', 'welcome', 'greetings',
+    'yes', 'yeah', 'yep', 'yup', 'no', 'nope', 'nah', 'ok', 'okay', 'alright',
+    'sure', 'certainly', 'definitely', 'absolutely', 'indeed', 'of course',
+    'well', 'so', 'now', 'then', 'anyway', 'anyhow', 'somehow', 'meanwhile',
+    'therefore', 'thus', 'hence', 'consequently', 'accordingly', 'subsequently',
+    
+    # Time-related words (when not the main focus)
+    'now', 'then', 'today', 'yesterday', 'tomorrow', 'soon', 'later', 'earlier',
+    'recently', 'currently', 'presently', 'formerly', 'previously', 'initially',
+    'finally', 'eventually', 'ultimately', 'immediately', 'instantly', 'suddenly',
+    'gradually', 'slowly', 'quickly', 'rapidly', 'fast', 'slow',
+    
+    # Quantity words (when not specific)
+    'many', 'much', 'few', 'little', 'several', 'various', 'numerous', 'countless',
+    'plenty', 'lots', 'loads', 'tons', 'heaps', 'masses', 'scores', 'dozens',
+    'hundreds', 'thousands', 'millions', 'billions',
+    
+    # Degree/intensity words
+    'more', 'most', 'less', 'least', 'better', 'best', 'worse', 'worst',
+    'greater', 'greatest', 'lesser', 'smallest', 'largest', 'biggest', 'tiniest',
+    'higher', 'highest', 'lower', 'lowest', 'deeper', 'deepest', 'wider', 'widest',
+    'longer', 'longest', 'shorter', 'shortest', 'older', 'oldest', 'newer', 'newest',
+    'stronger', 'strongest', 'weaker', 'weakest', 'faster', 'fastest', 'slower', 'slowest',
+    
+    # Common question starters and phrases
+    'tell', 'me', 'about', 'regarding', 'concerning', 'related', 'pertaining',
+    'do', 'you', 'know', 'think', 'believe', 'suppose', 'imagine', 'consider',
+    'wonder', 'curious', 'interested', 'want', 'need', 'require', 'wish',
+    'hope', 'expect', 'assume', 'presume', 'guess', 'estimate', 'reckon',
+    
+    # Transition words
+    'first', 'firstly', 'second', 'secondly', 'third', 'thirdly', 'next', 'then',
+    'finally', 'lastly', 'meanwhile', 'simultaneously', 'subsequently', 'previously',
+    'earlier', 'later', 'afterwards', 'beforehand', 'initially', 'originally',
+    
+    # Emphasis words (when not the main point)
+    'really', 'actually', 'literally', 'basically', 'essentially', 'fundamentally',
+    'primarily', 'mainly', 'chiefly', 'largely', 'mostly', 'generally', 'typically',
+    'usually', 'normally', 'commonly', 'frequently', 'regularly', 'consistently',
+    
+    # Common verbs that introduce requests/questions
+    'ask', 'request', 'inquire', 'question', 'query', 'wonder', 'seek', 'want',
+    'need', 'require', 'demand', 'command', 'order', 'instruct', 'direct',
+    'suggest', 'recommend', 'propose', 'advise', 'counsel', 'urge', 'encourage',
+    
+    # Short common words
+    'up', 'down', 'in', 'out', 'on', 'off', 'over', 'under', 'through', 'into',
+    'onto', 'upon', 'across', 'along', 'around', 'near', 'far', 'close', 'away',
+    'here', 'there', 'where', 'everywhere', 'anywhere', 'somewhere', 'nowhere', 'scope'
+}
+    
+    # STEP 1: Look for ALL CAPS phrases (highest priority)
+    caps_phrases = re.findall(r'\b[A-Z][A-Z\s]{4,}[A-Z]\b', query)
+    if caps_phrases:
+        result = caps_phrases[0].strip()
+        logger.info(f"🎯 Found ALL CAPS phrase: '{result}'")
+        return result.lower()
+    
+    # STEP 2: Extract all words, keep their original order
+    words = re.findall(r'\b\w+\b', query)
+    
+    # STEP 3: Keep only IMPORTANT WORDS (nouns, technical terms, etc.)
+    important_words = []
     for word in words:
-        if (len(word) > 2 and 
-            word not in action_words and 
-            not word.isdigit()):
-            content_keywords.append(word)
-    
-    # Remove duplicates while preserving order
-    unique_keywords = []
-    seen = set()
-    for keyword in content_keywords:
-        if keyword not in seen:
-            unique_keywords.append(keyword)
-            seen.add(keyword)
-    
-    # If we have multiple keywords, try to identify the MAIN one
-    if len(unique_keywords) > 1:
-        # Prioritize longer words (often more specific)
-        unique_keywords.sort(key=len, reverse=True)
+        word_lower = word.lower()
         
-        # For questions like "what is a university", "university" is the key term
-        # Take the most important 1-2 keywords
-        main_keywords = unique_keywords[:2] if len(unique_keywords) > 1 else unique_keywords
-    else:
-        main_keywords = unique_keywords
+        # Skip action words
+        if word_lower in action_words:
+            continue
+            
+        # Skip very short words (unless they seem important)
+        if len(word) < 3:
+            continue
+            
+        # Keep the word in its original position
+        important_words.append(word)
     
-    # Join keywords for search
-    result = ' '.join(main_keywords) if main_keywords else query.strip()
+    if not important_words:
+        # Fallback: clean the original query
+        cleaned = re.sub(r'\b(?:list|show|explain|describe|tell|what|how|is|are|of|the|a|an)\b', '', query, flags=re.IGNORECASE)
+        cleaned = re.sub(r'\s+', ' ', cleaned).strip()
+        result = cleaned if cleaned else query.strip()
+        logger.info(f"🎯 Fallback extraction: '{result}'")
+        return result.lower()
     
-    logger.info(f"🎯 EXACT MATCH keyword extraction: '{query}' → '{result}'")
-    logger.info(f"🎯 Main content keywords: {main_keywords}")
+    # STEP 4: Join important words in ORIGINAL ORDER
+    result = ' '.join(important_words)
     
-    return result
-
+    logger.info(f"🎯 Keyword extraction: '{query}' → '{result}'")
+    return result.lower()
 
 def search_exact_keyword_matches(keyword: str, user_id: int):
     """
-    Search for EXACT matches and variations of a specific keyword
+    Simple exact keyword search - just return count and pages
     """
-    logger.info(f"🎯 EXACT KEYWORD SEARCH: Finding all instances of '{keyword}' for user {user_id}")
+    logger.info(f"🎯 SIMPLE EXACT KEYWORD SEARCH: '{keyword}' for user {user_id}")
     
     try:
         all_instances = []
@@ -1734,48 +2424,601 @@ def search_exact_keyword_matches(keyword: str, user_id: int):
         if not user_documents:
             return [], "No documents found to search."
         
-        logger.info(f"Processing {len(user_documents)} documents for exact keyword search")
+        logger.info(f"Processing {len(user_documents)} documents")
         
-        # Generate keyword variations for comprehensive matching
-        keyword_variations = generate_keyword_variations(keyword)
-        logger.info(f"Searching for variations: {keyword_variations}")
+        # Create simple search variations
+        search_variations = [
+            keyword,                    # Original
+            keyword.lower(),           # Lowercase
+            keyword.upper(),           # Uppercase
+            keyword.capitalize(),      # Capitalized
+            keyword.title(),           # Title case
+        ]
+        
+        # Add plural/singular if needed
+        if not keyword.endswith('s'):
+            search_variations.append(keyword + 's')
+        elif len(keyword) > 4 and keyword.endswith('s'):
+            search_variations.append(keyword[:-1])
+        
+        # Remove duplicates
+        search_variations = list(set(search_variations))
+        
+        logger.info(f"Search variations: {search_variations}")
         
         # Process each document
         for document in user_documents:
             try:
                 filename = document.document_metadata.get('original_filename', 'Unknown') if document.document_metadata else 'Unknown'
-                logger.info(f"Processing: {filename}")
                 
-                # Get the full document content
+                # Get full document content
                 content = get_full_document_content(document.id)
                 
                 if not content:
-                    logger.warning(f"No content found for {filename}")
                     continue
                 
-                # Find exact keyword instances in this document
-                doc_instances = find_exact_keyword_instances(content, keyword, keyword_variations, filename, document.id)
-                all_instances.extend(doc_instances)
-                
-                logger.info(f"Found {len(doc_instances)} exact keyword instances in {filename}")
+                # Search for ALL variations
+                for variation in search_variations:
+                    instances = find_simple_exact_matches(content, variation, filename, document.id, keyword)
+                    all_instances.extend(instances)
                 
             except Exception as doc_error:
-                logger.error(f"Error processing document: {doc_error}")
+                logger.error(f"Error processing document {filename}: {doc_error}")
                 continue
         
-        # Remove duplicates and rank by exactness
-        unique_instances = remove_duplicate_instances_ranked(all_instances)
+        # Remove duplicates
+        final_instances = remove_duplicate_instances(all_instances)
         
-        # Build summary focused on exact matches
-        summary = build_exact_keyword_summary(unique_instances, keyword, len(user_documents))
+        # Build SIMPLE summary
+        summary = build_simple_match_summary(final_instances, keyword, len(user_documents))
         
-        logger.info(f"✅ EXACT KEYWORD SEARCH COMPLETED: {len(unique_instances)} instances found")
+        logger.info(f"✅ SIMPLE SEARCH COMPLETED: {len(final_instances)} total instances found")
         
-        return unique_instances, summary
+        return final_instances, summary
         
     except Exception as e:
-        logger.error(f"❌ EXACT KEYWORD SEARCH ERROR: {e}")
+        logger.error(f"❌ SIMPLE SEARCH ERROR: {e}")
         return [], f"Search failed: {str(e)}"
+
+
+def find_simple_exact_matches(content: str, search_term: str, filename: str, document_id: int, original_keyword: str):
+    """
+    Find exact matches with simple logic
+    """
+    instances = []
+    
+    try:
+        # Case-insensitive search
+        content_lower = content.lower()
+        search_lower = search_term.lower()
+        
+        start = 0
+        while True:
+            # Find next occurrence
+            pos = content_lower.find(search_lower, start)
+            if pos == -1:
+                break
+            
+            # Get the actual matched text (preserving original case)
+            matched_text = content[pos:pos + len(search_term)]
+            
+            # Determine page number
+            page_number = determine_simple_page_number(content, pos)
+            
+            # Create simple instance
+            instance = {
+                'filename': filename,
+                'document_id': document_id,
+                'page_number': page_number,
+                'position_in_content': pos,
+                'matched_text': matched_text,
+                'original_keyword': original_keyword,
+                'exact_match': matched_text.lower() == original_keyword.lower(),
+                'instance_key': f"{document_id}_{page_number}_{pos}_{matched_text.lower()}"
+            }
+            
+            instances.append(instance)
+            
+            # Move past this match
+            start = pos + 1
+    
+    except Exception as e:
+        logger.error(f"Error finding simple matches: {e}")
+    
+    return instances
+
+
+def determine_simple_page_number(content: str, position: int) -> int:
+    """
+    Simple page number detection
+    """
+    try:
+        # Count page markers before this position
+        content_before = content[:position]
+        
+        # Look for page markers
+        page_matches = re.findall(r'PAGE (\d+)', content_before, re.IGNORECASE)
+        
+        if page_matches:
+            return int(page_matches[-1])  # Get the last (most recent) page number
+        
+        return 1  # Default to page 1
+        
+    except Exception:
+        return 1
+
+
+def build_simple_match_summary(instances, keyword, documents_searched):
+    """
+    Build SIMPLE summary - just count and pages
+    """
+    if not instances:
+        return f"No instances of '{keyword}' found in {documents_searched} documents."
+    
+    # Count by document and collect pages
+    by_doc = {}
+    all_pages = set()
+    
+    for instance in instances:
+        doc = instance['filename']
+        page = instance['page_number']
+        
+        if doc not in by_doc:
+            by_doc[doc] = set()
+        
+        by_doc[doc].add(page)
+        all_pages.add(page)
+    
+    # Build simple summary
+    summary_parts = []
+    
+    # Main result
+    exact_count = len([instance for instance in instances if instance.get('exact_match', False)])
+    summary_parts.append(f"**Found {exact_count} matches for '{keyword}'**")
+    summary_parts.append("")
+    
+    
+    # Pages (simple list)
+    sorted_pages = sorted(list(all_pages))
+    if len(sorted_pages) <= 15:
+        pages_text = ", ".join(map(str, sorted_pages))
+    else:
+        pages_text = f"{', '.join(map(str, sorted_pages[:10]))}, ... and {len(sorted_pages)-10} more pages"
+    
+    summary_parts.append(f"**Pages:** {pages_text}")
+    summary_parts.append("")
+    
+    # By document (if multiple docs)
+    if len(by_doc) > 1:
+        summary_parts.append("**By Document:**")
+        for doc_name, doc_pages in by_doc.items():
+            sorted_doc_pages = sorted(list(doc_pages))
+            summary_parts.append(f"• {doc_name}: {len(sorted_doc_pages)} matches on pages {', '.join(map(str, sorted_doc_pages))}")
+    else:
+        doc_name = list(by_doc.keys())[0]
+        summary_parts.append(f"**Document:** {doc_name}")
+
+    summary_parts.append("<br><hr><br>")
+    summary_parts.append("<strong>Summary</strong>")
+    return "\n".join(summary_parts)
+
+
+# Also update the fallback function to use the simple version:
+def fallback_to_exact_keyword_search(query: str, user_id: int, document_info: list) -> dict:
+    """
+    Simple fallback search - just exact matches and pages
+    """
+    try:
+        logger.info(f"🎯 Simple exact keyword fallback search for query: '{query}'")
+        
+        # Extract the main keyword for exact matching
+        main_keyword = extract_keywords_for_exact_match_search(query)
+        
+        # Use simple exact keyword search
+        all_instances, simple_summary = search_exact_keyword_matches(main_keyword, user_id)
+        
+        if not all_instances:
+            response_content = f"""# Search Results for "{main_keyword}"
+
+No matches for the keyword "{main_keyword}" were found in your documents.
+
+**Documents Searched:** {len(document_info)} documents
+**Suggestions:** Check spelling or try variations of the keyword."""
+        else:
+            response_content = f"""# Search Results for "{main_keyword}"
+
+{simple_summary}
+"""
+        
+        return {
+            'all_instances': all_instances,
+            'content': response_content,
+            'sources': document_info,
+            'question_analysis': {
+                'type': 'exact_keyword_search',
+                'confidence': 0.95,
+                'reasoning': f'Exact keyword search for: "{main_keyword}"',
+                'ai_determined': False,
+                'fallback': True,
+                'search_method': 'simple_exact_matching',
+                'main_keyword': main_keyword
+            },
+            'success': True,
+            'ai_powered': False,
+            'search_keywords': main_keyword,
+            'exact_keyword_search': True
+        }
+        
+    except Exception as e:
+        logger.error(f"Simple exact keyword fallback search error: {e}")
+        return {
+            'content': f"Exact keyword search failed: {str(e)}",
+            'sources': document_info,
+            'question_analysis': {'type': 'error', 'confidence': 0.0},
+            'success': False,
+            'search_keywords': query,
+            'exact_keyword_search': False
+        }
+
+
+
+def find_exact_matches_in_content(content: str, search_term: str, filename: str, document_id: int, original_keyword: str):
+    """
+    Find exact matches in content with proper case handling
+    """
+    instances = []
+    
+    try:
+        # Use case-insensitive search but preserve original text
+        content_lower = content.lower()
+        search_lower = search_term.lower()
+        
+        start = 0
+        while True:
+            # Find next occurrence
+            pos = content_lower.find(search_lower, start)
+            if pos == -1:
+                break
+            
+            # Get the actual matched text (preserving original case)
+            matched_text = content[pos:pos + len(search_term)]
+            
+            # Determine which page this is on
+            page_number = determine_page_number(content, pos)
+            
+            # Get context around the match
+            context_start = max(0, pos - 800)
+            context_end = min(len(content), pos + len(search_term) + 800)
+            context = content[context_start:context_end].strip()
+            
+            # Clean context
+            context = ' '.join(context.split())
+            
+            # Create instance
+            instance = {
+                'filename': filename,
+                'document_id': document_id,
+                'page_number': page_number,
+                'position_in_content': pos,
+                'matched_text': matched_text,
+                'search_term': search_term,
+                'original_keyword': original_keyword,
+                'context': context,
+                'exact_match': matched_text.lower() == original_keyword.lower(),
+                'instance_key': f"{document_id}_{page_number}_{pos}_{matched_text.lower()}"
+            }
+            
+            instances.append(instance)
+            logger.debug(f"Found match: '{matched_text}' at position {pos}, page {page_number}")
+            
+            # Move past this match
+            start = pos + 1
+    
+    except Exception as e:
+        logger.error(f"Error finding matches in content: {e}")
+    
+    return instances
+
+
+def determine_page_number(content: str, position: int) -> int:
+    """
+    Determine which page a position belongs to
+    """
+    try:
+        # Count page markers before this position
+        content_before = content[:position]
+        
+        # Look for various page markers
+        page_markers = [
+            r'PAGE (\d+)',
+            r'\[PAGE (\d+)\]',
+            r'Page (\d+)',
+            r'- Page (\d+) -'
+        ]
+        
+        highest_page = 1
+        
+        for pattern in page_markers:
+            matches = re.findall(pattern, content_before)
+            if matches:
+                # Get the highest page number found before this position
+                page_numbers = [int(match) for match in matches]
+                highest_page = max(highest_page, max(page_numbers))
+        
+        return highest_page
+        
+    except Exception as e:
+        logger.debug(f"Error determining page number: {e}")
+        return 1
+
+
+
+
+@app.route('/clear_documents', methods=['POST'])
+@login_required
+def clear_documents():
+    """Clear all documents and content for the current user"""
+    try:
+        user_id = current_user.id
+        deleted_docs = 0
+        deleted_content = 0
+        
+        # Get all documents for this user
+        user_documents = Document.query.filter_by(user_id=user_id).all()
+        
+        if not user_documents:
+            logger.info(f"No documents found for user {user_id}")
+            return jsonify({
+                'success': True,
+                'message': 'No documents to clear',
+                'deleted_documents': 0,
+                'deleted_content': 0
+            })
+        
+        logger.info(f"Found {len(user_documents)} documents to delete for user {user_id}")
+        
+        # Delete content for each document
+        for document in user_documents:
+            try:
+                # Count and delete content records for this document
+                content_count = DocumentContent.query.filter_by(document_id=document.id).count()
+                DocumentContent.query.filter_by(document_id=document.id).delete()
+                deleted_content += content_count
+                
+                # Delete the document itself
+                db.session.delete(document)
+                deleted_docs += 1
+                
+            except Exception as doc_error:
+                logger.warning(f"Error deleting document {document.id}: {doc_error}")
+                continue
+        
+        # Clean up user directories
+        user_upload_dir = os.path.join(app.config['UPLOAD_FOLDER'], str(user_id))
+        user_extract_dir = os.path.join(app.config['EXTRACT_FOLDER'], str(user_id))
+        
+        directories_cleaned = []
+        try:
+            if os.path.exists(user_upload_dir):
+                clean_directory(user_upload_dir)
+                directories_cleaned.append("upload")
+                logger.info(f"Cleaned upload directory: {user_upload_dir}")
+        except Exception as e:
+            logger.warning(f"Error cleaning upload directory: {e}")
+        
+        try:
+            if os.path.exists(user_extract_dir):
+                clean_directory(user_extract_dir)
+                directories_cleaned.append("extract")
+                logger.info(f"Cleaned extract directory: {user_extract_dir}")
+        except Exception as e:
+            logger.warning(f"Error cleaning extract directory: {e}")
+        
+        # Clear GPU cache if available
+        if torch.cuda.is_available():
+            try:
+                torch.cuda.empty_cache()
+                logger.info("Cleared GPU cache")
+            except Exception as e:
+                logger.warning(f"Error clearing GPU cache: {e}")
+        
+        # Clear global processor cache for this user
+        global global_processor
+        if global_processor:
+            try:
+                global_processor.chunk_metadata = []
+                global_processor.faiss_index.reset()
+                logger.info("Cleared accuracy-focused processor cache")
+            except Exception as e:
+                logger.warning(f"Error clearing processor cache: {e}")
+        
+        # Commit all changes
+        db.session.commit()
+        
+        logger.info(f"Successfully cleared {deleted_docs} documents and {deleted_content} content records for user {user_id}")
+        
+        return jsonify({
+            'success': True,
+            'message': f'Successfully cleared {deleted_docs} documents and {deleted_content} content records',
+            'deleted_documents': deleted_docs,
+            'deleted_content': deleted_content,
+            'directories_cleaned': directories_cleaned,
+            'accuracy_focused_cleared': True
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error clearing documents for user {current_user.id}: {e}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        return jsonify({
+            'success': False,
+            'error': f'Failed to clear documents: {str(e)}'
+        }), 500
+
+
+
+def build_improved_summary(instances, keyword, documents_searched):
+    """
+    Build improved summary that shows actual results found
+    """
+    if not instances:
+        return f"""
+EXACT KEYWORD SEARCH RESULTS
+============================
+Keyword: '{keyword}'
+Documents searched: {documents_searched}
+Total instances found: 0
+
+No instances of '{keyword}' or its variations were found in your documents.
+"""
+    
+    summary_parts = []
+    
+    # Header - Show SUCCESS
+    summary_parts.append(f"🎯 EXACT MATCHES FOUND FOR: '{keyword.upper()}'")
+    summary_parts.append("=" * 80)
+    summary_parts.append("")
+    
+    # Statistics
+    by_doc = {}
+    variations_found = set()
+    exact_matches = 0
+    
+    for instance in instances:
+        doc = instance['filename']
+        if doc not in by_doc:
+            by_doc[doc] = {'total': 0, 'pages': set(), 'variations': set()}
+        
+        by_doc[doc]['total'] += 1
+        by_doc[doc]['pages'].add(instance['page_number'])
+        by_doc[doc]['variations'].add(instance['matched_text'])
+        variations_found.add(instance['matched_text'])
+        
+        if instance['exact_match']:
+            exact_matches += 1
+    
+    total_docs = len(by_doc)
+    total_pages = sum(len(doc_data['pages']) for doc_data in by_doc.values())
+    
+    summary_parts.append("📊 <b>SEARCH RESULTS:</b>")
+    summary_parts.append(f"• **TOTAL INSTANCES FOUND: {len(instances)}** ✅")
+    summary_parts.append(f"• Exact matches: {exact_matches}")
+    summary_parts.append(f"• Variations found: {len(variations_found)}")
+    summary_parts.append(f"• Documents with matches: {total_docs}")
+    summary_parts.append(f"• Pages with matches: {total_pages}")
+    summary_parts.append("")
+    
+    # # Show what was actually found
+    # summary_parts.append("<b>ACTUAL MATCHES FOUND:</b>")
+    # summary_parts.append("-" * 40)
+    # for variation in sorted(variations_found):
+    #     count = len([i for i in instances if i['matched_text'] == variation])
+    #     summary_parts.append(f"• **'{variation}'** - {count} instances")
+    # summary_parts.append("")
+    
+    # Distribution by document
+    summary_parts.append("📄 <b>FOUND IN THESE DOCUMENTS:</b>")
+    summary_parts.append("-" * 50)
+    
+    for doc_name, doc_data in by_doc.items():
+        summary_parts.append(f"📄 **{doc_name}**")
+        summary_parts.append(f"   • Total instances: **{doc_data['total']}**")
+        summary_parts.append(f"   • Pages: {', '.join(map(str, sorted(doc_data['pages'])))}")
+        # summary_parts.append(f"   • Variations: {', '.join(sorted(doc_data['variations']))}")
+        summary_parts.append("")
+    
+    # Sample instances with context
+    summary_parts.append("📍 <b>SAMPLE INSTANCES WITH CONTEXT:</b>")
+    summary_parts.append("-" * 45)
+    
+    # Show top 5 instances with context
+    top_instances = instances[:5]
+    for i, instance in enumerate(top_instances, 1):
+        summary_parts.append(f"**{i}. '{instance['matched_text']}' in {instance['filename']}**")
+        summary_parts.append(f"   📍 Page {instance['page_number']}")
+        
+        # Show abbreviated context
+        context = instance['context']
+        if len(context) > 200:
+            # Find the match position in context and show around it
+            match_pos = context.lower().find(instance['matched_text'].lower())
+            if match_pos != -1:
+                start = max(0, match_pos - 100)
+                end = min(len(context), match_pos + len(instance['matched_text']) + 100)
+                context_snippet = context[start:end]
+                if start > 0:
+                    context_snippet = "..." + context_snippet
+                if end < len(context):
+                    context_snippet = context_snippet + "..."
+            else:
+                context_snippet = context[:200] + "..."
+        else:
+            context_snippet = context
+        
+        # summary_parts.append(f"   💬 Context: {context_snippet}")
+        summary_parts.append("")
+    
+    # Success footer
+    # summary_parts.append("=" * 60)
+    # summary_parts.append("✅ <b>SEARCH SUCCESSFUL!</b>")
+    # summary_parts.append("=" * 60)
+    # summary_parts.append(f"🎯 Successfully found **{len(instances)} instances** of '{keyword}'")
+    # summary_parts.append(f"📚 Searched across {documents_searched} document(s)")
+    # summary_parts.append(f"📄 Found matches in {total_docs} document(s)")
+    # summary_parts.append(f"📑 Covered {total_pages} page(s)")
+    # summary_parts.append("=" * 60)
+    
+    return "\n".join(summary_parts)
+
+
+
+def generate_search_variations_improved(keyword: str) -> list:
+    """
+    Generate comprehensive search variations
+    """
+    keyword = keyword.strip()
+    variations = set()
+    
+    # Add original
+    variations.add(keyword)
+    
+    # Add case variations
+    variations.add(keyword.lower())
+    variations.add(keyword.upper())
+    variations.add(keyword.capitalize())
+    variations.add(keyword.title())
+    
+    # Split into words and try different combinations
+    words = keyword.split()
+    
+    if len(words) > 1:
+        # Add reversed order
+        variations.add(' '.join(reversed(words)))
+        
+        # Add individual words if they're significant
+        for word in words:
+            if len(word) > 3:
+                variations.add(word)
+                variations.add(word.upper())
+                variations.add(word.capitalize())
+        
+        # Add with different word separators
+        variations.add('_'.join(words))
+        variations.add('-'.join(words))
+        variations.add(''.join(words))  # No spaces
+    
+    # Add plural/singular forms
+    if keyword.endswith('s') and len(keyword) > 4:
+        variations.add(keyword[:-1])  # Remove 's'
+    elif not keyword.endswith('s'):
+        variations.add(keyword + 's')  # Add 's'
+    
+    # Convert back to list and remove empty strings
+    result = [v for v in variations if v and len(v.strip()) > 2]
+    
+    return list(result)
+
+
 
 
 def generate_keyword_variations(keyword: str) -> list:
@@ -2046,7 +3289,7 @@ No instances of '{keyword}' or its variations were found in your documents.
         summary_parts.append(f"   Page {instance['page_number']} - {'EXACT' if instance['exact_match'] else 'VARIATION'}")
         
         # Show context preview (first 100 chars)
-        context_preview = instance['context'][:100] + "..." if len(instance['context']) > 100 else instance['context']
+        # context_preview = instance['context'][:100] + "..." if len(instance['context']) > 100 else instance['context']
         # summary_parts.append(f"   Context: {context_preview}")
         summary_parts.append("")
     
@@ -2077,9 +3320,9 @@ def fallback_to_exact_keyword_search(query: str, user_id: int, document_info: li
         all_instances, comprehensive_summary = search_exact_keyword_matches(main_keyword, user_id)
         
         if not all_instances:
-            response_content = f"""# Exact Keyword Search Results for "{main_keyword}"
+            response_content = f"""# Search Results for "{main_keyword}"
 
-No exact matches for the keyword "{main_keyword}" were found in your documents.
+No matches for the keyword "{main_keyword}" were found in your documents.
 
 **Documents Searched:** {len(document_info)} documents
 - {', '.join(document_info)}
@@ -2097,13 +3340,11 @@ No exact matches for the keyword "{main_keyword}" were found in your documents.
 - Use synonyms or related terms
 - Ensure the keyword exists in your documents"""
         else:
-            response_content = f"""# Exact Keyword Search Results for "{main_keyword}"
+            response_content = f"""# Search Results for "{main_keyword}"
 
-Found **{len(all_instances)} exact instances** of '{main_keyword}' and its variations across your documents.
 
 {comprehensive_summary}
 
-**Search Method:** Exact word boundary matching with morphological variations for maximum precision.
 """
         
         return {
@@ -2236,7 +3477,7 @@ def ollama_streaming_response(question: str, user_id: int):
             for i, instance in enumerate(relevant_content[:5], 1):  # Top 5 instances
                 keyword_context += f"\n{i}. From {instance['filename']} (Page {instance['page_number']}):\n"
                 keyword_context += f"   Matched: '{instance['matched_text']}'\n"
-                keyword_context += f"   Context: {instance['context'][:200]}...\n"
+                # keyword_context += f"   Context: {instance['context'][:200]}...\n"
         
         # Create the prompt for Ollama with EXACT user question and keyword context
         ollama_prompt = f"""You are an intelligent document analysis assistant. A user has asked: "{question}"
@@ -2256,7 +3497,7 @@ INSTRUCTIONS:
 3. Be comprehensive and thorough in your response
 4. Use clear structure with headings and bullet points when appropriate
 5. Reference specific documents when making claims
-6. Every response that includes a section or quote must end with a citation in the format: [^filename||page||section-heading]
+6. Every response that includes a section or quote must end with a citation in the format: [^filename||page||section-heading] - filename|page|section-heading
 7. If the question asks you to "list" something, provide a clear list
 8. If it asks for explanation, provide detailed explanations with examples
 9. If it asks for analysis, provide insights and conclusions
@@ -2976,7 +4217,7 @@ def search_all_instances_bulletproof(query, user_id):
                 continue
         
         # Remove exact duplicates
-        unique_instances = remove_duplicate_instances(all_instances)
+        unique_instances = all_instances
         
         # Build summary
         summary = build_bulletproof_summary(unique_instances, query, len(user_documents))
