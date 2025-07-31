@@ -189,9 +189,9 @@ class RTX_A6000_Enhanced_Config:
     GPU_ENABLED = torch.cuda.is_available()
     GPU_MEMORY_FRACTION = 0.85  # Use 85% of 48GB = ~40GB
     MIXED_PRECISION = True  # Use FP16 for 2x speed boost
-    GPU_BATCH_SIZE = 64  # Reduced for better accuracy
+    GPU_BATCH_SIZE = 128  # Reduced for better accuracy
     CPU_BATCH_SIZE = 16  # Reduced for better accuracy
-    CONCURRENT_FILES = 32  # Reduced for stability
+    CONCURRENT_FILES = 50  # Reduced for stability
     MAX_WORKERS = min(64, cpu_count() * 2)  # More conservative
     
     # GPU optimizations for FULL processing
@@ -2207,213 +2207,290 @@ def initialize_ocr_processor():
     except Exception as e:
         logger.error(f"❌ OCR processor initialization failed: {e}")
         return False
-        
-def extract_keywords_for_exact_match_search(query: str) -> str:
+
+
+def extract_keywords_using_ai(query: str) -> str:
     """
-    Extract keywords for EXACT MATCH search - CORRECTED VERSION
-    Focuses on NOUNS and IMPORTANT TERMS, not action words
+    Use Ollama/Llama to intelligently extract key terms from user questions
     """
-    import re
-    
-    # Remove action/question words but keep important nouns
-    action_words = {
-    # Question words
-    'what', 'how', 'where', 'when', 'why', 'which', 'who', 'whose', 'whom', 'whatever', 'however', 'wherever', 'whenever', 'whichever', 'whoever',
-    
-    # Action/command verbs
-    'list', 'show', 'display', 'find', 'search', 'get', 'give', 'provide', 'tell', 'explain', 
-    'describe', 'define', 'identify', 'locate', 'extract', 'present', 'detail', 'specify',
-    'mention', 'state', 'indicate', 'reveal', 'demonstrate', 'illustrate', 'outline', 'enumerate',
-    'summarize', 'summarise', 'analyze', 'analyse', 'examine', 'review', 'evaluate', 'assess',
-    'check', 'verify', 'confirm', 'validate', 'test', 'measure', 'calculate', 'compute',
-    'determine', 'establish', 'clarify', 'elaborate', 'expand', 'discuss', 'talk', 'speak',
-    'read', 'write', 'create', 'make', 'build', 'construct', 'develop', 'design', 'plan',
-    'organize', 'arrange', 'prepare', 'setup', 'install', 'configure', 'adjust', 'modify',
-    'change', 'update', 'edit', 'revise', 'correct', 'fix', 'repair', 'solve', 'resolve',
-    'compare', 'contrast', 'match', 'relate', 'connect', 'link', 'associate', 'combine',
-    'separate', 'divide', 'split', 'break', 'cut', 'join', 'merge', 'unite', 'gather',
-    'collect', 'compile', 'assemble', 'group', 'categorize', 'classify', 'sort', 'order',
-    'rank', 'prioritize', 'schedule', 'time', 'date', 'track', 'monitor', 'observe',
-    'watch', 'see', 'look', 'view', 'notice', 'spot', 'detect', 'discover', 'uncover',
-    'explore', 'investigate', 'research', 'study', 'learn', 'understand', 'comprehend',
-    'interpret', 'translate', 'convert', 'transform', 'process', 'handle', 'manage',
-    'control', 'operate', 'run', 'execute', 'perform', 'conduct', 'carry', 'complete',
-    'finish', 'end', 'stop', 'start', 'begin', 'initiate', 'launch', 'open', 'close',
-    'save', 'store', 'keep', 'maintain', 'preserve', 'protect', 'secure', 'guard',
-    'defend', 'support', 'help', 'assist', 'aid', 'guide', 'direct', 'lead', 'follow',
-    'go', 'come', 'move', 'travel', 'visit', 'reach', 'arrive', 'depart', 'leave',
-    'return', 'send', 'receive', 'accept', 'reject', 'approve', 'deny', 'allow', 'permit',
-    'enable', 'disable', 'activate', 'deactivate', 'turn', 'switch', 'toggle', 'select',
-    'choose', 'pick', 'take', 'put', 'place', 'set', 'lay', 'position', 'locate',
-    'install', 'remove', 'delete', 'add', 'insert', 'include', 'exclude', 'omit',
-    'skip', 'ignore', 'avoid', 'prevent', 'block', 'restrict', 'limit', 'reduce',
-    'increase', 'raise', 'lower', 'improve', 'enhance', 'optimize', 'maximize', 'minimize',
-    'focus', 'concentrate', 'emphasize', 'highlight', 'stress', 'note', 'mark', 'label',
-    'tag', 'name', 'call', 'refer', 'reference', 'cite', 'quote', 'repeat', 'copy',
-    'duplicate', 'clone', 'backup', 'restore', 'recover', 'retrieve', 'fetch', 'load',
-    'download', 'upload', 'transfer', 'move', 'shift', 'navigate', 'browse', 'scan',
-    'filter', 'refine', 'narrow', 'broaden', 'widen', 'extend', 'expand', 'stretch',
-    'compress', 'shrink', 'resize', 'scale', 'zoom', 'pan', 'rotate', 'flip', 'reverse',
-    'undo', 'redo', 'cancel', 'abort', 'quit', 'exit', 'logout', 'login', 'signin',
-    'signup', 'register', 'subscribe', 'unsubscribe', 'follow', 'unfollow', 'like',
-    'dislike', 'share', 'post', 'publish', 'submit', 'send', 'email', 'message',
-    'notify', 'alert', 'warn', 'inform', 'announce', 'declare', 'proclaim', 'broadcast',
-    
-    # Auxiliary and modal verbs
-    'is', 'are', 'was', 'were', 'be', 'been', 'being', 'am',
-    'have', 'has', 'had', 'having',
-    'do', 'does', 'did', 'done', 'doing',
-    'will', 'would', 'shall', 'should',
-    'can', 'could', 'may', 'might', 'must',
-    'ought', 'need', 'dare', 'used','details','detail'
-    
-    # Articles and determiners
-    'the', 'a', 'an', 'this', 'that', 'these', 'those',
-    'my', 'your', 'his', 'her', 'its', 'our', 'their',
-    'some', 'any', 'all', 'every', 'each', 'either', 'neither',
-    'both', 'few', 'many', 'much', 'more', 'most', 'less', 'least',
-    'several', 'various', 'different', 'same', 'other', 'another',
-    'first', 'second', 'third', 'last', 'next', 'previous', 'former', 'latter',
-    
-    # Prepositions
-    'in', 'on', 'at', 'by', 'for', 'with', 'from', 'to', 'of', 'about',
-    'under', 'over', 'above', 'below', 'beneath', 'behind', 'before', 'after',
-    'during', 'within', 'without', 'through', 'throughout', 'across', 'along',
-    'around', 'beside', 'between', 'among', 'amongst', 'against', 'towards',
-    'toward', 'into', 'onto', 'upon', 'off', 'out', 'up', 'down',
-    'near', 'close', 'far', 'away', 'inside', 'outside', 'beyond', 'past',
-    'since', 'until', 'till', 'except', 'besides', 'despite', 'regarding',
-    'concerning', 'according', 'due', 'owing', 'thanks', 'because', 'as',
-    'like', 'unlike', 'via', 'per', 'plus', 'minus', 'versus', 'vs',
-    
-    # Conjunctions
-    'and', 'or', 'but', 'so', 'yet', 'nor', 'for',
-    'although', 'though', 'even', 'while', 'whereas', 'unless', 'if',
-    'whether', 'that', 'since', 'because', 'as', 'when', 'whenever',
-    'where', 'wherever', 'before', 'after', 'until', 'while', 'once',
-    'however', 'therefore', 'thus', 'hence', 'consequently', 'accordingly',
-    'moreover', 'furthermore', 'additionally', 'also', 'besides', 'likewise',
-    'similarly', 'conversely', 'otherwise', 'instead', 'rather', 'alternatively',
-    
-    # Pronouns
-    'i', 'me', 'myself', 'you', 'yourself', 'yourselves', 'he', 'him', 'himself',
-    'she', 'her', 'herself', 'it', 'itself', 'we', 'us', 'ourselves',
-    'they', 'them', 'themselves', 'one', 'oneself', 'someone', 'somebody',
-    'something', 'anyone', 'anybody', 'anything', 'everyone', 'everybody',
-    'everything', 'no', 'none', 'nobody', 'nothing', 'nowhere',
-    'somewhere', 'anywhere', 'everywhere', 'here', 'there', 'where',
-    
-    # Adverbs (common ones that don't add content meaning)
-    'very', 'quite', 'rather', 'pretty', 'fairly', 'really', 'truly', 'actually',
-    'basically', 'essentially', 'generally', 'usually', 'normally', 'typically',
-    'often', 'sometimes', 'occasionally', 'rarely', 'seldom', 'never', 'always',
-    'already', 'still', 'yet', 'just', 'only', 'even', 'also', 'too', 'either',
-    'neither', 'both', 'all', 'every', 'each', 'any', 'some', 'no', 'none',
-    'again', 'back', 'forth', 'forward', 'backward', 'onwards', 'onwards',
-    'together', 'apart', 'away', 'aside', 'along', 'around', 'about',
-    'almost', 'nearly', 'quite', 'fairly', 'pretty', 'rather', 'somewhat',
-    'largely', 'mainly', 'mostly', 'chiefly', 'primarily', 'principally',
-    'especially', 'particularly', 'specifically', 'exactly', 'precisely',
-    'approximately', 'roughly', 'about', 'around',
-    
-    # Politeness and filler words
-    'please', 'pls', 'kindly', 'thanks', 'thank', 'sorry', 'excuse', 'pardon',
-    'hello', 'hi', 'hey', 'goodbye', 'bye', 'farewell', 'welcome', 'greetings',
-    'yes', 'yeah', 'yep', 'yup', 'no', 'nope', 'nah', 'ok', 'okay', 'alright',
-    'sure', 'certainly', 'definitely', 'absolutely', 'indeed', 'of course',
-    'well', 'so', 'now', 'then', 'anyway', 'anyhow', 'somehow', 'meanwhile',
-    'therefore', 'thus', 'hence', 'consequently', 'accordingly', 'subsequently',
-    
-    # Time-related words (when not the main focus)
-    'now', 'then', 'today', 'yesterday', 'tomorrow', 'soon', 'later', 'earlier',
-    'recently', 'currently', 'presently', 'formerly', 'previously', 'initially',
-    'finally', 'eventually', 'ultimately', 'immediately', 'instantly', 'suddenly',
-    'gradually', 'slowly', 'quickly', 'rapidly', 'fast', 'slow',
-    
-    # Quantity words (when not specific)
-    'many', 'much', 'few', 'little', 'several', 'various', 'numerous', 'countless',
-    'plenty', 'lots', 'loads', 'tons', 'heaps', 'masses', 'scores', 'dozens',
-    'hundreds', 'thousands', 'millions', 'billions',
-    
-    # Degree/intensity words
-    'more', 'most', 'less', 'least', 'better', 'best', 'worse', 'worst',
-    'greater', 'greatest', 'lesser', 'smallest', 'largest', 'biggest', 'tiniest',
-    'higher', 'highest', 'lower', 'lowest', 'deeper', 'deepest', 'wider', 'widest',
-    'longer', 'longest', 'shorter', 'shortest', 'older', 'oldest', 'newer', 'newest',
-    'stronger', 'strongest', 'weaker', 'weakest', 'faster', 'fastest', 'slower', 'slowest',
-    
-    # Common question starters and phrases
-    'tell', 'me', 'about', 'regarding', 'concerning', 'related', 'pertaining',
-    'do', 'you', 'know', 'think', 'believe', 'suppose', 'imagine', 'consider',
-    'wonder', 'curious', 'interested', 'want', 'need', 'require', 'wish',
-    'hope', 'expect', 'assume', 'presume', 'guess', 'estimate', 'reckon',
-    
-    # Transition words
-    'first', 'firstly', 'second', 'secondly', 'third', 'thirdly', 'next', 'then',
-    'finally', 'lastly', 'meanwhile', 'simultaneously', 'subsequently', 'previously',
-    'earlier', 'later', 'afterwards', 'beforehand', 'initially', 'originally',
-    
-    # Emphasis words (when not the main point)
-    'really', 'actually', 'literally', 'basically', 'essentially', 'fundamentally',
-    'primarily', 'mainly', 'chiefly', 'largely', 'mostly', 'generally', 'typically',
-    'usually', 'normally', 'commonly', 'frequently', 'regularly', 'consistently',
-    
-    # Common verbs that introduce requests/questions
-    'ask', 'request', 'inquire', 'question', 'query', 'wonder', 'seek', 'want',
-    'need', 'require', 'demand', 'command', 'order', 'instruct', 'direct',
-    'suggest', 'recommend', 'propose', 'advise', 'counsel', 'urge', 'encourage',
-    
-    # Short common words
-    'up', 'down', 'in', 'out', 'on', 'off', 'over', 'under', 'through', 'into',
-    'onto', 'upon', 'across', 'along', 'around', 'near', 'far', 'close', 'away',
-    'here', 'there', 'where', 'everywhere', 'anywhere', 'somewhere', 'nowhere', 'scope'
-}
-    
-    # STEP 1: Look for ALL CAPS phrases (highest priority)
-    caps_phrases = re.findall(r'\b[A-Z][A-Z\s]{4,}[A-Z]\b', query)
-    if caps_phrases:
-        result = caps_phrases[0].strip()
-        logger.info(f"🎯 Found ALL CAPS phrase: '{result}'")
-        return result.lower()
-    
-    # STEP 2: Extract all words, keep their original order
-    words = re.findall(r'\b\w+\b', query)
-    
-    # STEP 3: Keep only IMPORTANT WORDS (nouns, technical terms, etc.)
-    important_words = []
-    for word in words:
-        word_lower = word.lower()
+    try:
+        if not OLLAMA_AVAILABLE:
+            logger.warning("Ollama not available, falling back to simple extraction")
+            return extract_keywords_simple_fallback(query)
         
-        # Skip action words
-        if word_lower in action_words:
-            continue
+        # Prompt specifically designed for keyword extraction - let AI do ALL the work
+        extraction_prompt = f"""Extract the main subject/keyword from this question for document search.
+
+Question: "{query}"
+
+Rules:
+- Extract ONLY the core subject/topic the user wants to know about
+- Remove question words and action words naturally
+- Return 1-3 words maximum
+- Focus on nouns and important terms
+
+Examples:
+"What is a mango?" → mango
+"Tell me about universities" → universities
+"How do companies work?" → companies
+"List all students" → students
+"Explain artificial intelligence" → artificial intelligence
+"Show me financial reports" → financial reports
+"What are the benefits of exercise?" → benefits exercise
+"Describe the research methodology" → research methodology
+
+Now extract the keyword from: "{query}"
+
+Keyword:"""
+
+        logger.info(f"🤖 AI extracting keywords from: '{query}'")
+        
+        response = requests.post(
+            f"{app.config['OLLAMA_BASE_URL']}/api/generate",
+            json={
+                "model": app.config['OLLAMA_MODEL'],
+                "prompt": extraction_prompt,
+                "stream": False,
+                "options": {
+                    "temperature": 0.1,  # Very low for consistent extraction
+                    "top_p": 0.9,
+                    "top_k": 40,
+                    "num_predict": 50
+                }
+            },
+            timeout=30
+        )
+        
+        if response.status_code == 200:
+            result = response.json()
+            extracted = result.get('response', '').strip()
             
-        # Skip very short words (unless they seem important)
-        if len(word) < 3:
-            continue
+            # Minimal cleaning - just remove common prefixes the AI might include
+            extracted = re.sub(r'^(keyword:|key term:|answer:|result:)\s*', '', extracted, flags=re.IGNORECASE)
+            extracted = extracted.strip(' :"\'')
             
-        # Keep the word in its original position
-        important_words.append(word)
-    
-    if not important_words:
-        # Fallback: clean the original query
-        cleaned = re.sub(r'\b(?:list|show|explain|describe|tell|what|how|is|are|of|the|a|an)\b', '', query, flags=re.IGNORECASE)
-        cleaned = re.sub(r'\s+', ' ', cleaned).strip()
-        result = cleaned if cleaned else query.strip()
-        logger.info(f"🎯 Fallback extraction: '{result}'")
-        return result.lower()
-    
-    # STEP 4: Join important words in ORIGINAL ORDER
-    result = ' '.join(important_words)
-    
-    logger.info(f"🎯 Keyword extraction: '{query}' → '{result}'")
-    return result.lower()
+            if extracted and len(extracted) > 0:
+                logger.info(f"✅ AI extracted: '{query}' → '{extracted}'")
+                return extracted.lower()
+            else:
+                logger.warning(f"AI returned empty keyword, using fallback")
+                return extract_keywords_simple_fallback(query)
+        else:
+            logger.warning(f"AI extraction failed with status {response.status_code}")
+            return extract_keywords_simple_fallback(query)
+            
+    except Exception as e:
+        logger.error(f"AI keyword extraction error: {e}")
+        return extract_keywords_simple_fallback(query)
+
+def extract_keywords_simple_fallback(query: str) -> str:
+    """Simple fallback when AI is not available - just return the original query"""
+    # No manual pattern removal - let the search handle the full query
+    return query.strip().lower()
+
+
+
+
+def dual_system_response(question: str, user_id: int):
+    """
+    FIXED dual system implementation with proper error handling
+    """
+    try:
+        # Get user documents
+        user_documents = Document.query.filter_by(user_id=user_id).all()
+        
+        if not user_documents:
+            yield json.dumps({
+                'status': 'error',
+                'message': 'No documents found. Please upload documents first.'
+            }) + "\n"
+            return
+        
+        document_info = []
+        all_content = []
+        
+        # Load all document content
+        for doc in user_documents:
+            filename = doc.document_metadata.get('original_filename', 'Unknown') if doc.document_metadata else 'Unknown'
+            content = get_full_document_content(doc.id)
+            if content:
+                all_content.append(f"=== DOCUMENT: {filename} ===\n{content}\n")
+                document_info.append(filename)
+        
+        if not all_content:
+            yield json.dumps({
+                'status': 'error',
+                'message': 'No content found in documents.'
+            }) + "\n"
+            return
+        
+        # STEP 1: AI extracts keywords from the question
+        yield json.dumps({
+            'status': 'status_update',
+            'message': '🤖 AI analyzing question to extract key terms...'
+        }) + "\n"
+        
+        extracted_keyword = extract_keywords_using_ai(question)
+        
+        yield json.dumps({
+            'status': 'status_update',
+            'message': f'✅ AI identified key term: "{extracted_keyword}"'
+        }) + "\n"
+        
+        # STEP 2: Find exact keyword matches in documents
+        yield json.dumps({
+            'status': 'status_update',
+            'message': f'🔍 Searching documents for matches of "{extracted_keyword}"...'
+        }) + "\n"
+        
+        keyword_instances, keyword_summary = search_exact_keyword_matches(extracted_keyword, user_id)
+        
+        # STEP 3: Stream the keyword matches found
+        yield json.dumps({'status': 'stream_start', 'stream_type': 'keyword_matches'}) + "\n"
+        
+        keyword_content = f"""# Keyword Matches for "{extracted_keyword}"
+
+**Original Question:** {question}
+**AI Extracted Keyword:** {extracted_keyword}
+
+{keyword_summary}
+
+---
+
+"""
+        
+        # Stream keyword matches
+        chunk_size = 150
+        for i in range(0, len(keyword_content), chunk_size):
+            chunk = keyword_content[i:i + chunk_size]
+            yield json.dumps({
+                'status': 'stream_chunk', 
+                'content': chunk, 
+                'stream_type': 'keyword_matches'
+            }) + "\n"
+            time.sleep(0.1)
+        
+        yield json.dumps({'status': 'stream_end', 'stream_type': 'keyword_matches'}) + "\n"
+        
+        # STEP 4: Prepare relevant content for AI answer
+        yield json.dumps({
+            'status': 'status_update',
+            'message': '🦙 Preparing AI answer using relevant document content...'
+        }) + "\n"
+        
+        # Build context from keyword matches + surrounding content - FIXED
+        relevant_content = ""
+        if keyword_instances:
+            relevant_content += f"\n=== RELEVANT CONTENT FOR '{extracted_keyword}' ===\n"
+            for i, instance in enumerate(keyword_instances[:5], 1):  # Top 5 matches
+                relevant_content += f"\nMatch {i} - {instance['filename']} (Page {instance['page_number']}):\n"
+                relevant_content += f"Found: '{instance['matched_text']}'\n"
+                
+                # FIXED: Safely get context with fallback
+                context = instance.get('context', f"Found '{instance['matched_text']}' in {instance['filename']}")
+                if len(context) > 500:
+                    context = context[:500] + "..."
+                
+                relevant_content += f"Context: {context}\n"
+                relevant_content += "---\n"
+        
+        # Add full document content (limited)
+        combined_content = "\n".join(all_content)
+        if len(combined_content) > 10000:
+            combined_content = combined_content[:10000] + "\n[Content truncated...]"
+        
+        # STEP 5: AI answers the original question
+        yield json.dumps({
+            'status': 'status_update',
+            'message': f'🤖 AI answering: "{question}"'
+        }) + "\n"
+        
+        answer_prompt = f"""You are an intelligent document analysis assistant. Answer the user's question based on the provided documents.
+
+USER QUESTION: "{question}"
+
+EXTRACTED KEYWORD: "{extracted_keyword}"
+
+KEYWORD MATCHES FOUND IN DOCUMENTS:
+{relevant_content}
+
+ADDITIONAL DOCUMENT CONTENT:
+{combined_content}
+
+INSTRUCTIONS:
+1. Answer the user's EXACT question: "{question}"
+2. Use the information from the documents provided above
+3. If keyword matches were found, prioritize that information
+4. Be comprehensive and helpful
+5. Structure your answer clearly with headings if needed
+6. Cite specific documents when making claims: [^filename||page]
+7. If the question asks for a list, provide a clear list
+8. If asking for explanation, provide detailed explanations
+9. Only use information from the provided documents
+10. If the answer isn't in the documents, say so clearly
+
+Answer the question now:"""
+
+        yield json.dumps({'status': 'stream_start', 'stream_type': 'ai_answer'}) + "\n"
+        
+        # Stream AI answer
+        full_answer = ""
+        try:
+            for chunk in get_ollama_response_stream(answer_prompt):
+                if chunk.strip():
+                    full_answer += chunk
+                    yield json.dumps({
+                        'status': 'stream_chunk', 
+                        'content': chunk, 
+                        'stream_type': 'ai_answer'
+                    }) + "\n"
+                    time.sleep(0.01)
+            
+            # Final completion
+            yield json.dumps({
+                'status': 'stream_end',
+                'stream_type': 'ai_answer',
+                'sources': [{'filename': s, 'path': s} for s in document_info],
+                'question_analysis': {
+                    'original_question': question,
+                    'ai_extracted_keyword': extracted_keyword,
+                    'keyword_matches_found': len(keyword_instances),
+                    'documents_searched': len(user_documents),
+                    'system_type': 'dual_ai_system'
+                }
+            }) + "\n"
+            
+        except Exception as answer_error:
+            logger.error(f"AI answer generation error: {answer_error}")
+            yield json.dumps({
+                'status': 'error',
+                'message': f'AI answer failed: {str(answer_error)}',
+                'stream_type': 'ai_answer'
+            }) + "\n"
+        
+        # Complete
+        yield json.dumps({
+            'status': 'complete',
+            'message': 'Dual system complete: keyword matches + AI answer',
+            'keyword_matches': len(keyword_instances),
+            'extracted_keyword': extracted_keyword,
+            'original_question': question
+        }) + "\n"
+        
+    except Exception as e:
+        logger.error(f"Dual system error: {e}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        yield json.dumps({
+            'status': 'error',
+            'message': f'System error: {str(e)}'
+        }) + "\n"
+
 
 def search_exact_keyword_matches(keyword: str, user_id: int):
     """
-    Simple exact keyword search - just return count and pages
+    Simple exact keyword search - FIXED to include context
     """
-    logger.info(f"🎯 SIMPLE EXACT KEYWORD SEARCH: '{keyword}' for user {user_id}")
+    logger.info(f"🎯 EXACT KEYWORD SEARCH: '{keyword}' for user {user_id}")
     
     try:
         all_instances = []
@@ -2459,7 +2536,7 @@ def search_exact_keyword_matches(keyword: str, user_id: int):
                 
                 # Search for ALL variations
                 for variation in search_variations:
-                    instances = find_simple_exact_matches(content, variation, filename, document.id, keyword)
+                    instances = find_exact_matches_with_context(content, variation, filename, document.id, keyword)
                     all_instances.extend(instances)
                 
             except Exception as doc_error:
@@ -2469,16 +2546,103 @@ def search_exact_keyword_matches(keyword: str, user_id: int):
         # Remove duplicates
         final_instances = remove_duplicate_instances(all_instances)
         
-        # Build SIMPLE summary
+        # Build summary
         summary = build_simple_match_summary(final_instances, keyword, len(user_documents))
         
-        logger.info(f"✅ SIMPLE SEARCH COMPLETED: {len(final_instances)} total instances found")
+        logger.info(f"✅ SEARCH COMPLETED: {len(final_instances)} total instances found")
         
         return final_instances, summary
         
     except Exception as e:
-        logger.error(f"❌ SIMPLE SEARCH ERROR: {e}")
+        logger.error(f"❌ SEARCH ERROR: {e}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
         return [], f"Search failed: {str(e)}"
+
+
+def find_exact_matches_with_context(content: str, search_term: str, filename: str, document_id: int, original_keyword: str):
+    """
+    Find exact matches with proper context - FIXED VERSION
+    """
+    instances = []
+    
+    try:
+        # Case-insensitive search
+        content_lower = content.lower()
+        search_lower = search_term.lower()
+        
+        start = 0
+        while True:
+            # Find next occurrence
+            pos = content_lower.find(search_lower, start)
+            if pos == -1:
+                break
+            
+            # Get the actual matched text (preserving original case)
+            matched_text = content[pos:pos + len(search_term)]
+            
+            # Determine page number
+            page_number = determine_simple_page_number(content, pos)
+            
+            # FIXED: Get proper context around the match
+            context_start = max(0, pos - 800)
+            context_end = min(len(content), pos + len(search_term) + 800)
+            context = content[context_start:context_end].strip()
+            
+            # Clean context (remove excessive whitespace)
+            context = ' '.join(context.split())
+            
+            # Ensure context is not empty
+            if not context:
+                context = f"Found '{matched_text}' in {filename}"
+            
+            # Create instance with guaranteed context
+            instance = {
+                'filename': filename,
+                'document_id': document_id,
+                'page_number': page_number,
+                'position_in_content': pos,
+                'matched_text': matched_text,
+                'original_keyword': original_keyword,
+                'exact_match': matched_text.lower() == original_keyword.lower(),
+                'context': context,  # FIXED: Always include context
+                'instance_key': f"{document_id}_{page_number}_{pos}_{matched_text.lower()}"
+            }
+            
+            instances.append(instance)
+            
+            # Move past this match
+            start = pos + 1
+    
+    except Exception as e:
+        logger.error(f"Error finding exact matches: {e}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
+    
+    return instances
+
+def determine_simple_page_number(content: str, position: int) -> int:
+    """
+    Simple page number detection - FIXED
+    """
+    try:
+        # Count page markers before this position
+        content_before = content[:position]
+        
+        # Look for page markers
+        page_matches = re.findall(r'PAGE (\d+)', content_before, re.IGNORECASE)
+        
+        if page_matches:
+            return int(page_matches[-1])  # Get the last (most recent) page number
+        
+        # Look for other page patterns
+        page_matches = re.findall(r'\[PAGE (\d+)\]', content_before, re.IGNORECASE)
+        if page_matches:
+            return int(page_matches[-1])
+        
+        return 1  # Default to page 1
+        
+    except Exception as e:
+        logger.error(f"Error determining page number: {e}")
+        return 1
 
 
 def find_simple_exact_matches(content: str, search_term: str, filename: str, document_id: int, original_keyword: str):
@@ -2526,26 +2690,6 @@ def find_simple_exact_matches(content: str, search_term: str, filename: str, doc
         logger.error(f"Error finding simple matches: {e}")
     
     return instances
-
-
-def determine_simple_page_number(content: str, position: int) -> int:
-    """
-    Simple page number detection
-    """
-    try:
-        # Count page markers before this position
-        content_before = content[:position]
-        
-        # Look for page markers
-        page_matches = re.findall(r'PAGE (\d+)', content_before, re.IGNORECASE)
-        
-        if page_matches:
-            return int(page_matches[-1])  # Get the last (most recent) page number
-        
-        return 1  # Default to page 1
-        
-    except Exception:
-        return 1
 
 
 def build_simple_match_summary(instances, keyword, documents_searched):
@@ -2601,65 +2745,6 @@ def build_simple_match_summary(instances, keyword, documents_searched):
     summary_parts.append("<br><hr><br>")
     summary_parts.append("<strong>Summary</strong>")
     return "\n".join(summary_parts)
-
-
-# Also update the fallback function to use the simple version:
-def fallback_to_exact_keyword_search(query: str, user_id: int, document_info: list) -> dict:
-    """
-    Simple fallback search - just exact matches and pages
-    """
-    try:
-        logger.info(f"🎯 Simple exact keyword fallback search for query: '{query}'")
-        
-        # Extract the main keyword for exact matching
-        main_keyword = extract_keywords_for_exact_match_search(query)
-        
-        # Use simple exact keyword search
-        all_instances, simple_summary = search_exact_keyword_matches(main_keyword, user_id)
-        
-        if not all_instances:
-            response_content = f"""# Search Results for "{main_keyword}"
-
-No matches for the keyword "{main_keyword}" were found in your documents.
-
-**Documents Searched:** {len(document_info)} documents
-**Suggestions:** Check spelling or try variations of the keyword."""
-        else:
-            response_content = f"""# Search Results for "{main_keyword}"
-
-{simple_summary}
-"""
-        
-        return {
-            'all_instances': all_instances,
-            'content': response_content,
-            'sources': document_info,
-            'question_analysis': {
-                'type': 'exact_keyword_search',
-                'confidence': 0.95,
-                'reasoning': f'Exact keyword search for: "{main_keyword}"',
-                'ai_determined': False,
-                'fallback': True,
-                'search_method': 'simple_exact_matching',
-                'main_keyword': main_keyword
-            },
-            'success': True,
-            'ai_powered': False,
-            'search_keywords': main_keyword,
-            'exact_keyword_search': True
-        }
-        
-    except Exception as e:
-        logger.error(f"Simple exact keyword fallback search error: {e}")
-        return {
-            'content': f"Exact keyword search failed: {str(e)}",
-            'sources': document_info,
-            'question_analysis': {'type': 'error', 'confidence': 0.0},
-            'success': False,
-            'search_keywords': query,
-            'exact_keyword_search': False
-        }
-
 
 
 def find_exact_matches_in_content(content: str, search_term: str, filename: str, document_id: int, original_keyword: str):
@@ -3305,83 +3390,10 @@ No instances of '{keyword}' or its variations were found in your documents.
     return "\n".join(summary_parts)
 
 
-# Update the fallback function to use exact keyword search
-def fallback_to_exact_keyword_search(query: str, user_id: int, document_info: list) -> dict:
-    """
-    Enhanced fallback search optimized for EXACT keyword matching
-    """
-    try:
-        logger.info(f"🎯 Exact keyword fallback search for query: '{query}'")
-        
-        # Extract the main keyword for exact matching
-        main_keyword = extract_keywords_for_exact_match_search(query)
-        
-        # Use exact keyword search
-        all_instances, comprehensive_summary = search_exact_keyword_matches(main_keyword, user_id)
-        
-        if not all_instances:
-            response_content = f"""# Search Results for "{main_keyword}"
-
-No matches for the keyword "{main_keyword}" were found in your documents.
-
-**Documents Searched:** {len(document_info)} documents
-- {', '.join(document_info)}
-
-
-**Keyword Variations Searched:**
-- {main_keyword} (original)
-- {main_keyword}s (plural)
-- {main_keyword.capitalize()} (capitalized)
-- And other common variations
-
-**Suggestions:**
-- Check spelling of the keyword
-- Try a different form of the word
-- Use synonyms or related terms
-- Ensure the keyword exists in your documents"""
-        else:
-            response_content = f"""# Search Results for "{main_keyword}"
-
-
-{comprehensive_summary}
-
-"""
-        
-        return {
-            'all_instances': all_instances,
-            'content': response_content,
-            'sources': document_info,
-            'question_analysis': {
-                'type': 'exact_keyword_search',
-                'confidence': 0.95,
-                'reasoning': f'Exact keyword search for: "{main_keyword}"',
-                'ai_determined': False,
-                'fallback': True,
-                'search_method': 'exact_word_boundary_matching',
-                'main_keyword': main_keyword
-            },
-            'success': True,
-            'ai_powered': False,
-            'search_keywords': main_keyword,
-            'exact_keyword_search': True
-        }
-        
-    except Exception as e:
-        logger.error(f"Exact keyword fallback search error: {e}")
-        return {
-            'content': f"Exact keyword search failed: {str(e)}",
-            'sources': document_info,
-            'question_analysis': {'type': 'error', 'confidence': 0.0},
-            'success': False,
-            'search_keywords': query,
-            'exact_keyword_search': False
-        }
-
-
 # OLLAMA HELPER FUNCTIONS
 def ollama_streaming_response(question: str, user_id: int):
     """
-    Streaming version that runs exact keyword search first, then Ollama with exact query
+    Updated streaming response that uses AI keyword extraction (IMPROVED)
     """
     try:
         # Get user documents info first
@@ -3420,98 +3432,101 @@ def ollama_streaming_response(question: str, user_id: int):
         combined_content = "\n".join(all_content)
         relevant_content = []
         
-        # FIRST STREAM: Exact Keyword Search
+        # AI-Powered Keyword Search
         yield json.dumps({
             'status': 'status_update',
-            'message': '🎯 Running exact keyword search analysis first...'
+            'message': '🤖 AI extracting keywords from your question...'
         }) + "\n"
         
         fallback_success = False
         
         try:
-            # Extract main keyword for exact search
-            main_keyword = extract_keywords_for_exact_match_search(question)
+            # Use AI to extract main keyword for exact search
+            main_keyword = extract_keywords_using_ai(question)
             
             yield json.dumps({
                 'status': 'status_update',
-                'message': f'🔍 Searching for exact matches of: "{main_keyword}"'
+                'message': f'🔍 AI identified: "{main_keyword}" - searching for matches...'
             }) + "\n"
             
-            # Use exact keyword search
-            response_data = fallback_to_exact_keyword_search(question, user_id, document_info)
+            # Get keyword matches
+            all_instances, keyword_summary = search_exact_keyword_matches(main_keyword, user_id)
             
-            yield json.dumps({'status': 'stream_start', 'stream_type': 'exact_keyword'}) + "\n"
+            yield json.dumps({'status': 'stream_start', 'stream_type': 'ai_keyword'}) + "\n"
             
             # Stream the keyword search response
-            content = response_data['content']
-            relevant_content = response_data.get('all_instances', [])
-            
-            logger.info(f"🎯 Exact Keyword Context: Found {len(relevant_content)} instances")
+            keyword_content = f"""# AI Keyword Analysis
 
+**Your Question:** {question}
+**AI Extracted Keyword:** {main_keyword}
+
+{keyword_summary}
+
+---
+
+"""
+            
+            relevant_content = all_instances
+            
             chunk_size = 150
-            for i in range(0, len(content), chunk_size):
-                chunk = content[i:i + chunk_size]
-                yield json.dumps({'status': 'stream_chunk', 'content': chunk, 'stream_type': 'exact_keyword'}) + "\n"
-                time.sleep(0.3)
+            for i in range(0, len(keyword_content), chunk_size):
+                chunk = keyword_content[i:i + chunk_size]
+                yield json.dumps({'status': 'stream_chunk', 'content': chunk, 'stream_type': 'ai_keyword'}) + "\n"
+                time.sleep(0.2)
             
             fallback_success = True
             
         except Exception as fallback_error:
-            logger.error(f"Exact keyword search streaming error: {fallback_error}")
+            logger.error(f"AI keyword search streaming error: {fallback_error}")
             yield json.dumps({
                 'status': 'error',
-                'message': f'Exact keyword search failed: {str(fallback_error)}',
-                'stream_type': 'exact_keyword'
+                'message': f'AI keyword search failed: {str(fallback_error)}',
+                'stream_type': 'ai_keyword'
             }) + "\n"
         
-        # SECOND STREAM: Ollama Response with EXACT QUERY
+        # AI Answer using Ollama
         yield json.dumps({
             'status': 'status_update',
-            'message': f'🦙 Analyzing your exact question: "{question}"'
+            'message': f'🦙 AI analyzing your question: "{question}"'
         }) + "\n"
         
-        # Create context from exact keyword matches
+        # Create context from AI keyword matches
         keyword_context = ""
         if relevant_content:
-            keyword_context = "\n\nRELEVANT KEYWORD MATCHES FOUND:\n"
-            for i, instance in enumerate(relevant_content[:5], 1):  # Top 5 instances
+            keyword_context = f"\n\nAI-IDENTIFIED KEYWORD MATCHES FOR '{main_keyword}':\n"
+            for i, instance in enumerate(relevant_content[:5], 1):
                 keyword_context += f"\n{i}. From {instance['filename']} (Page {instance['page_number']}):\n"
-                keyword_context += f"   Matched: '{instance['matched_text']}'\n"
-                # keyword_context += f"   Context: {instance['context'][:200]}...\n"
+                keyword_context += f"   Found: '{instance['matched_text']}'\n"
+                keyword_context += f"   Context: {instance['context'][:200]}...\n"
         
-        # Create the prompt for Ollama with EXACT user question and keyword context
-        ollama_prompt = f"""You are an intelligent document analysis assistant. A user has asked: "{question}"
+        # Create prompt for Ollama
+        ollama_prompt = f"""You are an intelligent document analysis assistant. Answer the user's question based on the provided content.
 
-You have access to {len(user_documents)} documents and found specific keyword matches for the main terms in the question.
+USER QUESTION: "{question}"
 
-EXACT KEYWORD MATCHES FOUND:
-{keyword_context if keyword_context else "No specific keyword matches found in initial search."}
+AI EXTRACTED KEYWORD: "{main_keyword}"
 
-FULL DOCUMENT CONTENT:
-{combined_content[:15000] if not keyword_context else combined_content[:10000]}
+KEYWORD MATCHES FOUND:
+{keyword_context if keyword_context else "No specific keyword matches found."}
+
+DOCUMENT CONTENT:
+{combined_content[:12000]}
 
 INSTRUCTIONS:
+1. Answer the user's EXACT question: "{question}"
+2. Use information from the documents provided
+3. If keyword matches were found, prioritize that information
+4. Be comprehensive and helpful
+5. Structure your answer with clear headings
+6. Reference specific documents: [^filename||page]
+7. Only use information from the provided documents
+8. If the answer isn't in the documents, say so clearly
 
-1. Answer the user's EXACT question: "{question}" based on the provided content
-2. Give priority to the EXACT KEYWORD MATCHES shown above
-3. Be comprehensive and thorough in your response
-4. Use clear structure with headings and bullet points when appropriate
-5. Reference specific documents when making claims
-6. Every response that includes a section or quote must end with a citation in the format: [^filename||page||section-heading] - filename|page|section-heading
-7. If the question asks you to "list" something, provide a clear list
-8. If it asks for explanation, provide detailed explanations with examples
-9. If it asks for analysis, provide insights and conclusions
-10. Always be helpful and complete
-11. Focus on answering exactly what the user asked
-12. *You Must* not provide anything from outside the context
-
-USER QUESTION: {question}
-
-Provide the most appropriate comprehensive response that directly addresses what the user is asking for:"""
+Answer:"""
 
         yield json.dumps({
             'status': 'status_update',
-            'message': f'⚡ Processing with keyword context: "{main_keyword if "main_keyword" in locals() else "keywords"}"'
+            'message': f'⚡ Generating comprehensive answer...'
         }) + "\n"
         
         # Stream response from Ollama
@@ -3526,38 +3541,27 @@ Provide the most appropriate comprehensive response that directly addresses what
                 if chunk.strip():
                     full_ollama_response += chunk
                     yield json.dumps({'status': 'stream_chunk', 'content': chunk, 'stream_type': 'ollama'}) + "\n"
-                    time.sleep(0.01)  # Small delay for better streaming
+                    time.sleep(0.01)
             
             ollama_success = True
-            
-            # Determine question type from the original question
-            question_lower = question.lower()
-            question_type = 'exact_keyword_search'
-            
-            if 'what is' in question_lower or 'what are' in question_lower:
-                question_type = 'definition_with_keyword_search'
-            elif 'list' in question_lower or 'show' in question_lower:
-                question_type = 'listing_with_keyword_search'
             
             yield json.dumps({
                 'status': 'stream_end',
                 'stream_type': 'ollama',
                 'sources': [{'filename': s, 'path': s} for s in document_info],
                 'question_analysis': {
-                    'type': question_type,
-                    'confidence': 0.95,
-                    'reasoning': f'Exact keyword search combined with AI analysis for: "{question}"',
+                    'type': 'ai_keyword_with_llama_analysis',
+                    'confidence': 0.98,
+                    'reasoning': f'AI extracted "{main_keyword}" from "{question}", then analyzed full content',
                     'ai_determined': True,
                     'model': 'Ollama Llama 3.1',
                     'original_question': question,
-                    'main_keyword_searched': main_keyword if 'main_keyword' in locals() else None,
+                    'ai_extracted_keyword': main_keyword,
                     'keyword_matches_found': len(relevant_content)
                 },
                 'ai_powered': True,
-                'ollama_native': True,
-                'exact_keyword_enhanced': True,
-                'sources_count': len(document_info),
-                'exact_query_used': question
+                'dual_system': True,
+                'sources_count': len(document_info)
             }) + "\n"
             
         except Exception as stream_error:
@@ -3571,24 +3575,25 @@ Provide the most appropriate comprehensive response that directly addresses what
         # Final summary
         yield json.dumps({
             'status': 'complete',
-            'message': 'Exact keyword search and AI analysis completed',
+            'message': 'AI keyword extraction and analysis completed',
             'fallback_success': fallback_success,
             'ollama_success': ollama_success,
             'total_sources': len(document_info),
-            'exact_keyword_matches': len(relevant_content),
+            'ai_keyword_matches': len(relevant_content),
             'search_strategy': {
-                'exact_keyword_used': main_keyword if 'main_keyword' in locals() else None,
-                'ollama_query': question,
-                'explanation': 'Exact keyword search for precise matches, then AI analysis of full context'
+                'ai_extracted_keyword': main_keyword,
+                'original_question': question,
+                'explanation': 'AI extracts keywords, finds matches, then answers using relevant content'
             }
         }) + "\n"
         
     except Exception as e:
-        logger.error(f"Enhanced exact keyword streaming response error: {e}")
+        logger.error(f"Enhanced AI streaming response error: {e}")
         yield json.dumps({
             'status': 'error',
             'message': f'Error: {str(e)}'
-        }) + "\n"
+        }) + "\n" 
+
 
 def update_search_configuration_for_exact_keywords():
     """Update the search configuration to guarantee exact keyword match priority"""
@@ -6418,61 +6423,44 @@ def load_user(user_id):
 @app.route('/chat/<chat_id>', methods=['GET', 'POST'])
 @login_required
 def chat(chat_id):
-    """Enhanced chat with intelligent question handling and message persistence using Ollama"""
+    """Chat route using the dual system"""
     try:
         conversation = Conversation.query.filter_by(
             id=chat_id,
             user_id=current_user.id
         ).first_or_404()
 
-        # Get document count
-        doc_count = Document.query.filter_by(user_id=current_user.id).count()
-        logger.info(f"Found {doc_count} documents for user {current_user.id}")
-
-        # Get all documents for this user
-        documents = Document.query.filter_by(
-            user_id=current_user.id
-        ).order_by(Document.processed_at.desc()).all()
-
         if request.method == 'GET':
-            # Load existing messages from database
+            # [Your existing GET logic remains the same]
             messages = Message.query.filter_by(
                 conversation_id=chat_id
             ).order_by(Message.timestamp.asc()).all()
             
-            # Debug logging
-            logger.info(f"Loading chat {chat_id}: Found {len(messages)} messages")
-            for i, msg in enumerate(messages):
-                logger.info(f"Message {i+1}: {msg.role} - {len(msg.content)} chars - {msg.timestamp}")
-
-            # Get user conversations for sidebar
             user_conversations = Conversation.query.filter_by(
                 user_id=current_user.id
             ).order_by(Conversation.updated_at.desc()).all()
-
-            # Prepare template context
-            template_context = {
-                'chat_id': chat_id,
-                'conversation': conversation,
-                'messages': messages,
-                'conversations': user_conversations,
-                'documents': documents,
-                'chat_title': conversation.title,
-                'doc_count': doc_count,
-                'gpu_available': torch.cuda.is_available(),
-                'enhanced_processing': True,
-                'accuracy_focused': True,
-                'comprehensive_search': True,
-                'ai_model': app.config['OLLAMA_MODEL'],
-                'ollama_powered': True  # Changed from gemini_powered
-            }
             
-            logger.info(f"Rendering chat template with {len(messages)} messages")
-            return render_template('chat.html', **template_context)
+            documents = Document.query.filter_by(
+                user_id=current_user.id
+            ).order_by(Document.processed_at.desc()).all()
+            
+            doc_count = len(documents)
+            
+            return render_template('chat.html', 
+                chat_id=chat_id,
+                conversation=conversation,
+                messages=messages,
+                conversations=user_conversations,
+                documents=documents,
+                chat_title=conversation.title,
+                doc_count=doc_count,
+                ai_model=app.config['OLLAMA_MODEL'],
+                dual_system_enabled=True
+            )
 
         elif request.method == 'POST':
-            def generate_ollama_chat_response():
-                """Ollama-powered chat response generator"""
+            def generate_dual_system_response():
+                """Generate response using dual system"""
                 try:
                     data = request.get_json()
                     question = data.get('question', '').strip()
@@ -6491,27 +6479,19 @@ def chat(chat_id):
                     db.session.add(user_msg)
                     db.session.commit()
 
-                    # Update conversation title
+                    # Update conversation title if needed
                     if conversation.title == 'New Query':
                         short_title = question[:50] + '...' if len(question) > 50 else question
                         conversation.title = short_title
-                    
-                    conversation.updated_at = datetime.now(timezone.utc)
-                    db.session.commit()
+                        conversation.updated_at = datetime.now(timezone.utc)
+                        db.session.commit()
 
-                    # Let Ollama handle everything
-                    yield json.dumps({
-                        'status': 'status_update', 
-                        'message': 'DocumentIQ taking control - analyzing question...'
-                    }) + "\n"
-                    time.sleep(0.3)
-                    
-                    # Stream response using Ollama
+                    # Use dual system
                     full_response = ""
                     sources = []
                     analysis = {}
                     
-                    for response_chunk in ollama_streaming_response(question, current_user.id):
+                    for response_chunk in dual_system_response(question, current_user.id):
                         response_data = json.loads(response_chunk)
                         
                         if response_data['status'] == 'stream_chunk':
@@ -6520,6 +6500,7 @@ def chat(chat_id):
                             sources = response_data.get('sources', [])
                             analysis = response_data.get('question_analysis', {})
                         
+                        # Stream the response chunk to frontend
                         yield response_chunk
                     
                     # Save assistant response
@@ -6536,13 +6517,13 @@ def chat(chat_id):
                         db.session.commit()
 
                 except Exception as e:
-                    logger.error(f"Ollama chat generation error: {e}")
+                    logger.error(f"Dual system chat generation error: {e}")
                     yield json.dumps({
                         'status': 'error',
                         'message': f"Error: {str(e)}"
                     }) + "\n"
             
-            return Response(stream_with_context(generate_ollama_chat_response()), mimetype='application/x-ndjson')
+            return Response(stream_with_context(generate_dual_system_response()), mimetype='application/x-ndjson')
 
     except Exception as e:
         logger.error(f"Chat route error: {e}")
@@ -6552,6 +6533,7 @@ def chat(chat_id):
             return redirect(url_for('index'))
         else:
             return jsonify({'error': str(e)}), 500
+
 
 # Update startup functions to use Ollama
 def startup_exact_match_priority_system():
